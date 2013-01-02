@@ -52,7 +52,7 @@ public class ForEachCollectionTest
         
         System.out.println("==================================");
         
-        int number = foreach(resources).select().forEachDo(Blocks.count_elems).get();
+        Integer number = foreach(resources).select().forEachDo(Blocks.count_elems).get();
         
         assertThat(number).isEqualTo(7);
         

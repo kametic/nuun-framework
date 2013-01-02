@@ -1,0 +1,162 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>org.nuunframework</groupId>
+	<artifactId>nuun-kernel</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<packaging>jar</packaging>
+
+	<name>Nuun Kernel</name>
+	<description>
+		Nuun Kernel is a software kernel for framework creation. It brings a powerful plugin design plus 
+		a JSR 311 compliant injection mechanism backed by Guice.
+		Plugin benefits from kernel capabilities by sendings request to it :
+		  - kernel params request :
+		  - Classpath scans request :on class by name, annotation, meta annotation or more generally Predicate
+		  - Binding Request : 
+		Nuun Kernel provides an SPI in order to bring IOC from other vendors.
+		Nuun Kernel come with 2 plugins:
+		  - Configuration Plugin : a plugin that inject the good property based on @Property annotation.
+		  - Log plugin : a Log handler that inject the good Log implementation 
+		 
+	</description>
+	<inceptionYear>2012</inceptionYear>
+	<licenses>
+		<license>
+			<name>LGPL 3.0</name>
+			<url>http://www.gnu.org/copyleft/lesser.html</url>
+		</license>
+	</licenses>
+
+	<url>http://nuun-framework.org/kernel</url>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<maven.compiler.source>1.6</maven.compiler.source>
+		<maven.compiler.target>1.6</maven.compiler.target>
+	</properties>
+
+	<dependencies>
+
+		<!-- ========================================================== -->
+		<!-- ============== TODO UP TO CORE ======================= -->
+		<!-- ========================================================== -->
+
+		<dependency>
+			<groupId>com.google.inject</groupId>
+			<artifactId>guice</artifactId>
+			<version>3.0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>javax.inject</groupId>
+			<artifactId>javax.inject</artifactId>
+			<version>1</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.google.code.findbugs</groupId>
+			<artifactId>jsr305</artifactId>
+			<version>2.0.1</version>
+		</dependency>
+
+		<dependency>
+			<groupId>aopalliance</groupId>
+			<artifactId>aopalliance</artifactId>
+			<version>1.0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.reflections</groupId>
+			<artifactId>reflections</artifactId>
+			<version>0.9.8</version>
+			<exclusions>
+				<exclusion>
+					<artifactId>jsr305</artifactId>
+					<groupId>com.google.code.findbugs</groupId>
+				</exclusion>
+				<exclusion>
+					<artifactId>dom4j</artifactId>
+					<groupId>dom4j</groupId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+
+		<dependency>
+			<groupId>commons-configuration</groupId>
+			<artifactId>commons-configuration</artifactId>
+			<version>1.8</version>
+		</dependency>
+
+		<dependency>
+			<groupId>commons-collections</groupId>
+			<artifactId>commons-collections</artifactId>
+			<version>3.2.1</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+			<version>1.6.6</version>
+		</dependency>
+
+		<!-- ========================================================== -->
+		<!-- ============== UNIT TEST DEPENDENCIES ==================== -->
+		<!-- ========================================================== -->
+
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.10</version>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-core</artifactId>
+			<version>1.8.5</version>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.easytesting</groupId>
+			<artifactId>fest-assert</artifactId>
+			<version>1.4</version>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-classic</artifactId>
+			<scope>test</scope>
+			<version>1.0.0</version>
+		</dependency>
+		<!-- <dependency> <groupId>com.google.inject.extensions</groupId> <artifactId>guice-multibindings</artifactId> 
+			<version>3.0</version> </dependency> -->
+	</dependencies>
+
+    <scm>
+        <url>https://github.com/kametic/nuun-framework</url>
+        <connection>scm:git:git://github.com/kametic/nuun-framewok.git</connection>
+        <developerConnection>scm:git:git@github.com:kametic/nuun-framewok.git</developerConnection>
+        <tag>HEAD</tag>
+    </scm>
+
+
+	<developers>
+		<developer>
+			<name>Epo Jemba</name>
+			<email>epo.jemba@kametic.com</email>
+			<organization>Kametic</organization>
+			<organizationUrl>www.kametic.com</organizationUrl>
+			<roles>
+				<role>Project Owner</role>
+				<role>Developer</role>
+			</roles>
+		</developer>
+	</developers>
+
+
+
+</project>

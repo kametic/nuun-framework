@@ -1,13 +1,20 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
+	
+	<parent>
+		<groupId>org.sonatype.oss</groupId>
+		<artifactId>oss-parent</artifactId>
+		<version>7</version>
+	</parent>
 
 	<groupId>org.nuunframework</groupId>
 	<artifactId>nuun-kernel</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
-	<name>Nuun Kernel</name>
+	<name>nuun-kernel</name>
+	
 	<description>
 		Nuun Kernel is a software kernel for framework creation. It brings a powerful plugin design plus 
 		a JSR 311 compliant injection mechanism backed by Guice.
@@ -21,7 +28,9 @@
 		  - Log plugin : a Log handler that inject the good Log implementation 
 		 
 	</description>
+	
 	<inceptionYear>2012</inceptionYear>
+	
 	<licenses>
 		<license>
 			<name>LGPL 3.0</name>
@@ -29,7 +38,7 @@
 		</license>
 	</licenses>
 
-	<url>http://nuun-framework.org/kernel</url>
+	<url>http://nuunframework.org/kernel</url>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -136,12 +145,29 @@
 			<version>3.0</version> </dependency> -->
 	</dependencies>
 
-    <scm>
-        <url>https://github.com/kametic/nuun-framework</url>
-        <connection>scm:git:git://github.com/kametic/nuun-framewok.git</connection>
-        <developerConnection>scm:git:git@github.com:kametic/nuun-framewok.git</developerConnection>
-        <tag>HEAD</tag>
-    </scm>
+	<build>
+		<resources>
+			<resource>
+				<directory>${basedir}/src/main/resources</directory>
+				<filtering>true</filtering>
+			</resource>
+			<resource>
+				<directory>${basedir}</directory>
+				<targetPath>META-INF</targetPath>
+				<includes>
+					<include>LICENSE</include>
+					<include>NOTICE</include>
+				</includes>
+			</resource>
+		</resources>
+	</build>
+
+	<scm>
+		<url>https://github.com/kametic/nuun-framework</url>
+		<connection>scm:git:git://github.com/kametic/nuun-framewok.git</connection>
+		<developerConnection>scm:git:git@github.com:kametic/nuun-framewok.git</developerConnection>
+		<tag>HEAD</tag>
+	</scm>
 
 
 	<developers>

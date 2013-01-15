@@ -1,7 +1,5 @@
 package com.google.inject.servlet;
 
-import org.nuunframework.kernel.annotations.KernelModule;
-
 import com.google.inject.AbstractModule;
 
 

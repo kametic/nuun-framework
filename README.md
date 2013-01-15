@@ -1,5 +1,6 @@
 nuun-framework
 ==============
 
-Maven repo
-http://repo.kametic.net/maven2
+Snapshots Maven repo
+https://oss.sonatype.org/content/repositories/snapshots
+

@@ -164,8 +164,8 @@
 
 	<scm>
 		<url>https://github.com/kametic/nuun-framework</url>
-		<connection>scm:git:git://github.com/kametic/nuun-framewok.git</connection>
-		<developerConnection>scm:git:git@github.com:kametic/nuun-framewok.git</developerConnection>
+		<connection>scm:git:git://github.com/kametic/nuun-framework.git</connection>
+		<developerConnection>scm:git:git@github.com:kametic/nuun-framework.git</developerConnection>
 		<tag>HEAD</tag>
 	</scm>
 

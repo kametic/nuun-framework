@@ -9,11 +9,11 @@
 	</parent>
 
 	<groupId>org.nuunframework</groupId>
-	<artifactId>nuun-web-plugin</artifactId>
+	<artifactId>nuun-rest-plugin</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
-	<name>nuun-web-plugin</name>
+	<name>nuun-rest-plugin</name>
 
 	<description>
         
@@ -28,7 +28,7 @@
 		</license>
 	</licenses>
 
-	<url>http://nuunframework.org/web-plugin</url>
+	<url>http://nuunframework.org/rest-plugin</url>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -39,8 +39,8 @@
 	<dependencies>
 		<dependency>
 			<groupId>org.nuunframework</groupId>
-			<artifactId>nuun-kernel</artifactId>
-			<version>0.0.2-SNAPSHOT</version>
+			<artifactId>nuun-web-plugin</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
@@ -49,15 +49,15 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>com.google.inject.extensions</groupId>
-			<artifactId>guice-servlet</artifactId>
-			<version>3.0</version>
-		</dependency>
-		<dependency>
 			<groupId>javax.servlet</groupId>
 			<artifactId>servlet-api</artifactId>
 			<version>2.5</version>
 			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.sun.jersey.contribs</groupId>
+			<artifactId>jersey-guice</artifactId>
+			<version>1.16</version>
 		</dependency>
 	</dependencies>
 

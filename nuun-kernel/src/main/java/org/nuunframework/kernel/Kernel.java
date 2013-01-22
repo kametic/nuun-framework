@@ -39,6 +39,8 @@ public final class Kernel
 {
 
     public static final String          NUUN_ROOT_PACKAGE      = "nuun.root.package";
+    public static final String          NUUN_NUM_CP_PATH      = "nuun.num.classpath.path";
+    public static final String          NUUN_CP_PATH_PREFIX      = "nuun.classpath.path.prefix-";
     private Logger                      logger                = LoggerFactory.getLogger(Kernel.class);
     private static Kernel               kernel;
 
@@ -195,6 +197,7 @@ public final class Kernel
             while (iterator.hasNext())
             {
                 plugin = iterator.next();
+                logger.info("checking Plugin {}." , plugin.name());
                 if (!Strings.isNullOrEmpty(plugin.name()))
                 {
                     Object ok = plugins.put(plugin.name(), plugin);
@@ -338,6 +341,7 @@ public final class Kernel
         // Check for dependencies
         for (Plugin plugin : plugins.values())
         {
+            logger.info("initializing Plugin {}." , plugin.name());
             plugin.init(currentContext);
         }
 

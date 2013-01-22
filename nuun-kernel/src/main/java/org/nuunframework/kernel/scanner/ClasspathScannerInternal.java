@@ -290,9 +290,14 @@ class ClasspathScannerInternal implements ClasspathScanner
         
         for (String packageRoot : packageRoots)
         {
-            Set<URL> tmp = ClasspathHelper.forPackage(packageRoot);
+            Set<URL> tmp = ClasspathHelper.forPackage(packageRoot ,  ClasspathHelper.classLoaders()  );
             urls.addAll(tmp);
         }
+        
+        urls.addAll(ClasspathHelper.forJavaClassPath());
+        
+        urls.addAll(ClasspathHelper 
+                .forClassLoader(ClasspathHelper.classLoaders())); 
         
         return urls;
     }

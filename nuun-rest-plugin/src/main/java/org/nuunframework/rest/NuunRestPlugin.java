@@ -20,8 +20,6 @@ public class NuunRestPlugin extends AbstractPlugin
     public static String NUUN_REST_PACKAGE_ROOT                 = "nuun.rest.package.root";
     public static String NUUN_REST_POJO_MAPPING_FEATURE_ENABLED = "nuun.rest.pojo.mapping.feature.enabled";
 
-    private String       packageRoot;
-
     private boolean      enablePojoMappingFeature              = true;
 
     private String       urlPattern;

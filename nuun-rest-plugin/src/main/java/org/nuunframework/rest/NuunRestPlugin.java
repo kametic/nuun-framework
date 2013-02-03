@@ -4,9 +4,10 @@ import java.util.Collection;
 
 import javax.ws.rs.Path;
 
-import org.nuunframework.kernel.context.RequestContext;
+import org.nuunframework.kernel.context.InitContext;
 import org.nuunframework.kernel.plugin.AbstractPlugin;
 import org.nuunframework.kernel.plugin.Plugin;
+import org.nuunframework.kernel.plugin.request.BindingRequest;
 import org.nuunframework.kernel.plugin.request.ClasspathScanRequest;
 import org.nuunframework.kernel.plugin.request.KernelParamsRequest;
 import org.nuunframework.web.NuunWebPlugin;
@@ -46,24 +47,22 @@ public class NuunRestPlugin extends AbstractPlugin
     }
 
     @Override
-    public void init(RequestContext requestContext)
+    public void init(InitContext initContext)
     {
 
-        this.urlPattern = requestContext.getKernelParam(NUUN_REST_URL_PATTERN);
-        String tmp = requestContext.getKernelParam(NUUN_REST_POJO_MAPPING_FEATURE_ENABLED);
+        this.urlPattern = initContext.getKernelParam(NUUN_REST_URL_PATTERN);
+        String tmp = initContext.getKernelParam(NUUN_REST_POJO_MAPPING_FEATURE_ENABLED);
         if (tmp != null && !tmp.isEmpty())
         {
             this.enablePojoMappingFeature = Boolean.valueOf(tmp);
         }
     }
-
     
     @Override
-    public Collection<ClasspathScanRequest> classpathScanRequests()
+    public Collection<BindingRequest> bindingRequests()
     {
-        return classpathScanRequestBuilder().annotationType(Path.class).build();
+        return bindingRequestsBuilder().annotationType(Path.class).build();
     }
-    
 
     /*
      * (non-Javadoc)

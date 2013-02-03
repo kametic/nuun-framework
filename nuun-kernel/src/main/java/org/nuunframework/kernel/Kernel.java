@@ -4,6 +4,7 @@
 package org.nuunframework.kernel;
 
 import java.lang.annotation.Annotation;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -14,10 +15,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
+import java.util.Set;
 
 import org.apache.commons.collections.iterators.ArrayIterator;
 import org.nuunframework.kernel.context.Context;
-import org.nuunframework.kernel.context.RequestContextInternal;
+import org.nuunframework.kernel.context.InitContextInternal;
 import org.nuunframework.kernel.internal.InternalKernelGuiceModule;
 import org.nuunframework.kernel.plugin.Plugin;
 import org.nuunframework.kernel.plugin.request.BindingRequest;
@@ -38,28 +40,34 @@ import com.google.inject.Injector;
 public final class Kernel
 {
 
-    public static final String          NUUN_ROOT_PACKAGE      = "nuun.root.package";
-    public static final String          NUUN_NUM_CP_PATH      = "nuun.num.classpath.path";
-    public static final String          NUUN_CP_PATH_PREFIX      = "nuun.classpath.path.prefix-";
-    private Logger                      logger                = LoggerFactory.getLogger(Kernel.class);
-    private static Kernel               kernel;
+    public static final String                      NUUN_ROOT_PACKAGE      = "nuun.root.package";
+    public static final String                      NUUN_NUM_CP_PATH       = "nuun.num.classpath.path";
+    public static final String                      NUUN_CP_PATH_PREFIX    = "nuun.classpath.path.prefix-";
+    private Logger                                  logger                 = LoggerFactory.getLogger(Kernel.class);
+    private static Kernel                           kernel;
 
-    private final String                NUUN_PROPERTIES_PREFIX = "nuun-";
+    private final String                            NUUN_PROPERTIES_PREFIX = "nuun-";
 
-    private ServiceLoader<Plugin>       pluginLoader;
-    private Map<String, Plugin>         plugins               = Collections.synchronizedMap(new HashMap<String, Plugin>()); //
-    private Map<String, Plugin>         pluginsToAdd          = Collections.synchronizedMap(new HashMap<String, Plugin>()); //
+    private ServiceLoader<Plugin>                   pluginLoader;
+    private Map<String, Plugin>                     plugins                = Collections.synchronizedMap(new HashMap<String, Plugin>()); //
+    private Map<String, Plugin>                     pluginsToAdd           = Collections.synchronizedMap(new HashMap<String, Plugin>()); //
 
-    private final RequestContextInternal currentContext;
-    private Injector                    mainInjector;
-    private final Map<String, String>   kernelParams;
+    private final InitContextInternal               initContext;
+    private Injector                                mainInjector;
+    private final Map<String, String>               kernelParams;
+
+    private boolean                                 started                = false;
+    private boolean                                 initialized            = false;
+    private Context                                 context;
+    private Collection<DependencyInjectionProvider> dependencyInjectionProviders;
+    private Object                                  containerContext;
 
     private Kernel(String... keyValues)
     {
 
         kernelParams = new HashMap<String, String>();
 
-        this.currentContext = new RequestContextInternal(NUUN_PROPERTIES_PREFIX, kernelParams);
+        this.initContext = new InitContextInternal(NUUN_PROPERTIES_PREFIX, kernelParams);
 
         @SuppressWarnings("unchecked")
         Iterator<String> it = new ArrayIterator(keyValues);
@@ -69,7 +77,7 @@ public final class Kernel
             String value = "";
             if (it.hasNext())
                 value = it.next();
-            logger.info("Adding {} = {} as param to kernel", key, value   );
+            logger.info("Adding {} = {} as param to kernel", key, value);
             kernelParams.put(key, value);
         }
 
@@ -86,27 +94,22 @@ public final class Kernel
                 for (String pack : packages)
                 {
                     logger.info("Adding {} as nuun.package.root", pack);
-                    this.currentContext.addPackageRoot(pack);
+                    this.initContext.addPackageRoot(pack);
                 }
             }
         }
     }
 
-    private boolean                                 started     = false;
-    private boolean                                 initialized = false;
-    private Context                                 context;
-    private Collection<DependencyInjectionProvider> dependencyInjectionProviders;
-    
-    public boolean isStarted ()
+    public boolean isStarted()
     {
         return started;
     }
-    
+
     public boolean isInitialized()
     {
         return initialized;
     }
-    
+
     /**
      * 
      * 
@@ -130,7 +133,7 @@ public final class Kernel
         if (initialized)
         {
             // All bindings will be computed
-            mainInjector = Guice.createInjector(new InternalKernelGuiceModule(currentContext));
+            mainInjector = Guice.createInjector(new InternalKernelGuiceModule(initContext));
             context = mainInjector.getInstance(Context.class);
 
             // 1) inject plugins via injector
@@ -197,7 +200,7 @@ public final class Kernel
             while (iterator.hasNext())
             {
                 plugin = iterator.next();
-                logger.info("checking Plugin {}." , plugin.name());
+                logger.info("checking Plugin {}.", plugin.name());
                 if (!Strings.isNullOrEmpty(plugin.name()))
                 {
                     Object ok = plugins.put(plugin.name(), plugin);
@@ -266,13 +269,13 @@ public final class Kernel
             // Configure properties prefixes
             if (!Strings.isNullOrEmpty(plugin.pluginPropertiesPrefix()))
             {
-                this.currentContext.addPropertiesPrefix(plugin.pluginPropertiesPrefix());
+                this.initContext.addPropertiesPrefix(plugin.pluginPropertiesPrefix());
             }
 
             // Configure package root
             if (!Strings.isNullOrEmpty(plugin.pluginPackageRoot()))
             {
-                this.currentContext.addPackageRoot(plugin.pluginPackageRoot());
+                this.initContext.addPackageRoot(plugin.pluginPackageRoot());
             }
 
             if (plugin.classpathScanRequests() != null && plugin.classpathScanRequests().size() > 0)
@@ -282,22 +285,22 @@ public final class Kernel
                     switch (request.requestType)
                     {
                         case ANNOTATION_TYPE:
-                            this.currentContext.addAnnotationTypesToScan((Class<? extends Annotation>) request.objectRequested);
+                            this.initContext.addAnnotationTypesToScan((Class<? extends Annotation>) request.objectRequested);
                             break;
                         case ANNOTATION_REGEX_MATCH:
-                            this.currentContext.addAnnotationRegexesToScan((String) request.objectRequested);
+                            this.initContext.addAnnotationRegexesToScan((String) request.objectRequested);
                             break;
                         case SUBTYPE_OF_BY_CLASS:
-                            this.currentContext.addParentTypeClassToScan((Class<?>) request.objectRequested);
+                            this.initContext.addParentTypeClassToScan((Class<?>) request.objectRequested);
                             break;
                         case SUBTYPE_OF_BY_REGEX_MATCH:
-                            this.currentContext.addParentTypeRegexesToScan((String) request.objectRequested);
+                            this.initContext.addParentTypeRegexesToScan((String) request.objectRequested);
                             break;
                         // case TYPE_OF_BY_CLASS:
                         // this.currentContext.addTypeClassToScan((Class<?>) request.objectRequested);
                         // break;
                         case TYPE_OF_BY_REGEX_MATCH:
-                            this.currentContext.addTypeRegexesToScan((String) request.objectRequested);
+                            this.initContext.addTypeRegexesToScan((String) request.objectRequested);
                             break;
                         default:
                             logger.warn("{} is not a ClasspathScanRequestType a o_O", request.requestType);
@@ -313,16 +316,16 @@ public final class Kernel
                     switch (request.requestType)
                     {
                         case ANNOTATION_TYPE:
-                            this.currentContext.addAnnotationTypesToBind((Class<? extends Annotation>) request.objectRequested);
+                            this.initContext.addAnnotationTypesToBind((Class<? extends Annotation>) request.requestedObject);
                             break;
                         case ANNOTATION_REGEX_MATCH:
-                            this.currentContext.addAnnotationRegexesToBind((String) request.objectRequested);
+                            this.initContext.addAnnotationRegexesToBind((String) request.requestedObject);
                             break;
                         case SUBTYPE_OF_BY_CLASS:
-                            this.currentContext.addParentTypeClassToBind((Class<?>) request.objectRequested);
+                            this.initContext.addParentTypeClassToBind((Class<?>) request.requestedObject);
                             break;
                         case SUBTYPE_OF_BY_REGEX_MATCH:
-                            this.currentContext.addTypeRegexesToBind((String) request.objectRequested);
+                            this.initContext.addTypeRegexesToBind((String) request.requestedObject);
                             break;
                         default:
                             logger.warn("{} is not a BindingRequestType a o_O", request.requestType);
@@ -332,21 +335,40 @@ public final class Kernel
             }
         }
 
-        // We also want to scan DependencyInjectionProvider before the classpath scan
-        currentContext.addParentTypeClassToScan(DependencyInjectionProvider.class);
-
-        // We launch classpath scan and store results of requests
-        this.currentContext.executeRequests();
-
-        // Check for dependencies
+//        initContext.setContainerContext(this.containerContext);
+        // INITIALISATION
+        // We pass the container context object for plugin
         for (Plugin plugin : plugins.values())
         {
-            logger.info("initializing Plugin {}." , plugin.name());
-            plugin.init(currentContext);
+            logger.info("Get additional classpath to scan from Plugin {}.", plugin.name());
+            Set<URL> computeAdditionalClasspathScan = plugin.computeAdditionalClasspathScan(containerContext);
+            if (computeAdditionalClasspathScan != null && computeAdditionalClasspathScan.size() > 0)
+            {
+                logger.info("Adding from Plugin {} start.", plugin.name());
+                for (URL url : computeAdditionalClasspathScan)
+                {
+                    logger.info(url.toExternalForm());
+                }
+                logger.info("Adding from Plugin {} end.", plugin.name());
+                initContext.addClasspathsToScan(computeAdditionalClasspathScan);
+            }
+        }
+
+        // We also want to scan DependencyInjectionProvider before the classpath scan
+        initContext.addParentTypeClassToScan(DependencyInjectionProvider.class);
+
+        // We launch classpath scan and store results of requests
+        this.initContext.executeRequests();
+
+        // INITIALISATION
+        for (Plugin plugin : plugins.values())
+        {
+            logger.info("initializing Plugin {}.", plugin.name());
+            plugin.init(initContext);
         }
 
         // Convert dependency manager classes to instances
-        Collection<Class<?>> dependencyInjectionProvidersClasses = currentContext.scannedSubTypesByParentClass().get(DependencyInjectionProvider.class);
+        Collection<Class<?>> dependencyInjectionProvidersClasses = initContext.scannedSubTypesByParentClass().get(DependencyInjectionProvider.class);
         createDependencyInjectionProvidersMap(dependencyInjectionProvidersClasses);
 
         for (Plugin plugin : plugins.values())
@@ -356,7 +378,7 @@ public final class Kernel
             {
                 if (plugin.dependencyInjectionDef() instanceof com.google.inject.Module)
                 {
-                    this.currentContext.addChildModule(com.google.inject.Module.class.cast(plugin.dependencyInjectionDef()));
+                    this.initContext.addChildModule(com.google.inject.Module.class.cast(plugin.dependencyInjectionDef()));
                 }
                 else
                 {
@@ -371,12 +393,13 @@ public final class Kernel
                     }
                     if (provider != null)
                     {
-                        this.currentContext.addChildModule(provider.convert(plugin.dependencyInjectionDef()));
+                        this.initContext.addChildModule(provider.convert(plugin.dependencyInjectionDef()));
                     }
                     else
                     {
                         logger.error("Kernel did not recognize module {} of plugin {}", plugin.dependencyInjectionDef(), plugin.name());
-                        throw new KernelException("Kernel did not recognize module %s of plugin %s. Please provide a DependencyInjectionProvider.", plugin.dependencyInjectionDef().toString(), plugin.name());
+                        throw new KernelException("Kernel did not recognize module %s of plugin %s. Please provide a DependencyInjectionProvider.", plugin
+                                .dependencyInjectionDef().toString(), plugin.name());
                     }
                 }
             }
@@ -386,7 +409,8 @@ public final class Kernel
 
     void createDependencyInjectionProvidersMap(Collection<Class<?>> dependencyInjectionProvidersClasses)
     {
-//        Map<Class<?>, DependencyInjectionProvider> map = new HashMap<Class<?>, DependencyInjectionProvider>();
+        // Map<Class<?>, DependencyInjectionProvider> map = new HashMap<Class<?>,
+        // DependencyInjectionProvider>();
 
         dependencyInjectionProviders = new HashSet<DependencyInjectionProvider>();
 
@@ -410,7 +434,7 @@ public final class Kernel
      * @param keyValues
      * @return
      */
-    public synchronized static KernelBuilderWithPlugin createKernel(String... keyValues)
+    public synchronized static KernelBuilderWithPluginAndContext createKernel(String... keyValues)
     {
         return new KernelBuilderImpl(keyValues);
     }
@@ -421,13 +445,23 @@ public final class Kernel
         Kernel build();
     }
 
+    public static interface KernelBuilderWithPluginAndContext extends KernelBuilderWithContainerContext, KernelBuilderWithPlugin
+    {
+    }
+
+    public static interface KernelBuilderWithContainerContext extends KernelBuilder
+    {
+
+        KernelBuilderWithPlugin withContainerContext(Object containerContext);
+    }
+
     public static interface KernelBuilderWithPlugin extends KernelBuilder
     {
 
-        KernelBuilder withPlugins(Class<? extends Plugin>... klass);
+        KernelBuilderWithContainerContext withPlugins(Class<? extends Plugin>... klass);
     }
 
-    private static class KernelBuilderImpl implements KernelBuilderWithPlugin
+    private static class KernelBuilderImpl implements KernelBuilderWithPluginAndContext
     {
 
         private final Kernel kernel;
@@ -456,10 +490,19 @@ public final class Kernel
 
         }
 
-        public KernelBuilder withPlugins(java.lang.Class<? extends Plugin>... klass)
+        @Override
+        public KernelBuilderWithPlugin withContainerContext(Object containerContext)
+        {
+
+            kernel.addContainerContext(containerContext);
+            return (KernelBuilderWithPlugin) this;
+
+        }
+
+        public KernelBuilderWithContainerContext withPlugins(java.lang.Class<? extends Plugin>... klass)
         {
             kernel.addPlugins(klass);
-            return (KernelBuilder) this;
+            return (KernelBuilderWithContainerContext) this;
         }
 
     }
@@ -483,6 +526,12 @@ public final class Kernel
         }
 
         return instance;
+    }
+
+    void addContainerContext(Object containerContext)
+    {
+        this.containerContext = containerContext;
+
     }
 
     /**

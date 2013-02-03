@@ -37,9 +37,6 @@ public enum RequestType
     
     
     
-    
-    
-    
 //    ,ANNOTATION_TYPE_DEEP , ANNOTATION_SUFFIX_NAME_MATCH_DEEP , 
 //     SUBTYPE_OF_BY_TYPE_DEEP ,    SUBTYPE_OF_SUFFIX_NAME_MATCH_DEEP 
     ;

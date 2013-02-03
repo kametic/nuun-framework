@@ -15,6 +15,7 @@ import org.nuunframework.kernel.scanner.sample.MarkerSample;
 import org.nuunframework.kernel.scanner.sample.MarkerSample2;
 import org.nuunframework.kernel.scanner.sample.MyModule1;
 import org.nuunframework.kernel.scanner.sample.MyModule4;
+import org.reflections.util.ClasspathHelper;
 
 
 
@@ -58,6 +59,7 @@ public class ClasspathScannerInternalTest
     @Test
     public void classpathscanner_should_retrieve_properties_tst ()
     {
+        underTest.setAdditionalClasspath( ClasspathHelper.forPackage("") );
         Collection<String> scanClasspathForAnnotation = underTest.scanClasspathForResource("tst-.*\\.properties");
         
         assertThat(scanClasspathForAnnotation).isNotNull();

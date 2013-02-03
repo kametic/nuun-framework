@@ -11,7 +11,7 @@ import java.util.HashSet;
 import java.util.Map;
 
 import org.nuunframework.kernel.context.Context;
-import org.nuunframework.kernel.context.RequestContext;
+import org.nuunframework.kernel.context.InitContext;
 import org.nuunframework.kernel.plugin.AbstractPlugin;
 import org.nuunframework.kernel.plugin.Plugin;
 import org.nuunframework.kernel.plugin.dummy23.DummyPlugin2;
@@ -101,32 +101,32 @@ public class DummyPlugin extends AbstractPlugin
      * @see org.nuunframework.kernel.plugin.Plugin#init()
      */
     @Override
-    public void init(RequestContext requestContext)
+    public void init(InitContext initContext)
     {
-        String param = requestContext.getKernelParam("dummy.plugin1");
+        String param = initContext.getKernelParam("dummy.plugin1");
         assertThat(param).isNotEmpty();
         assertThat(param).isEqualTo("WAZAAAA");
 
-        Map<Class<? extends Annotation>, Collection<Class<?>>> scannedClassesByAnnotationClass = requestContext.scannedClassesByAnnotationClass();
+        Map<Class<? extends Annotation>, Collection<Class<?>>> scannedClassesByAnnotationClass = initContext.scannedClassesByAnnotationClass();
         
         Collection<Class<?>> cAnnotations1 = scannedClassesByAnnotationClass.get(MarkerSample4.class);
         assertThat(cAnnotations1).hasSize(1);
 
-        Map<Class<?>, Collection<Class<?>>> scannedSubTypesByParentClass = requestContext.scannedSubTypesByParentClass();
+        Map<Class<?>, Collection<Class<?>>> scannedSubTypesByParentClass = initContext.scannedSubTypesByParentClass();
         Collection<Class<?>> cParent1 = scannedSubTypesByParentClass.get(DummyMarker.class);
         assertThat(cParent1).hasSize(1);
 
-        Map<String, Collection<Class<?>>> scannedClassesByAnnotationRegex = requestContext.scannedClassesByAnnotationRegex();
+        Map<String, Collection<Class<?>>> scannedClassesByAnnotationRegex = initContext.scannedClassesByAnnotationRegex();
         Collection<Class<?>> cAnnotations2 = scannedClassesByAnnotationRegex.get(".*MarkerSample3");
         assertThat(cAnnotations2).hasSize(1);
 
-        Map<String, Collection<Class<?>>> scannedSubTypesByParentRegex = requestContext.scannedSubTypesByParentRegex();
+        Map<String, Collection<Class<?>>> scannedSubTypesByParentRegex = initContext.scannedSubTypesByParentRegex();
         Collection<Class<?>> cParent2 = scannedSubTypesByParentRegex.get(".*WithCustomSuffix");
         
         logger.info("c2 : " +cParent2.toString());        
         assertThat(cParent2).hasSize(2);
         
-        Map<String, Collection<Class<?>>> scannedTypesByRegex = requestContext.scannedTypesByRegex();
+        Map<String, Collection<Class<?>>> scannedTypesByRegex = initContext.scannedTypesByRegex();
         Collection<Class<?>> cParent3 = scannedTypesByRegex.get(".*WithCustomSuffix");
 
         Collection<Class<?>> klasses = new HashSet<Class<?>>();

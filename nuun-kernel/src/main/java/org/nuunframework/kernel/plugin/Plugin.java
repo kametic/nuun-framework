@@ -1,9 +1,11 @@
 package org.nuunframework.kernel.plugin;
 
+import java.net.URL;
 import java.util.Collection;
+import java.util.Set;
 
 import org.nuunframework.kernel.context.Context;
-import org.nuunframework.kernel.context.RequestContext;
+import org.nuunframework.kernel.context.InitContext;
 import org.nuunframework.kernel.plugin.request.BindingRequest;
 import org.nuunframework.kernel.plugin.request.ClasspathScanRequest;
 import org.nuunframework.kernel.plugin.request.KernelParamsRequest;
@@ -22,7 +24,7 @@ public interface Plugin
      * Lifecycle method : init()
      * 
      */
-    void init(RequestContext requestContext);
+    void init(InitContext initContext);
     
     /**
      * Lifecycle method : start()
@@ -106,6 +108,9 @@ public interface Plugin
      * @return 
      */
     Object dependencyInjectionDef();
+    
+    
+    Set<URL> computeAdditionalClasspathScan(Object containerContext);
     
     
     

@@ -3,13 +3,15 @@
  */
 package org.nuunframework.kernel.plugin;
 
+import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 
 import org.nuunframework.kernel.context.Context;
-import org.nuunframework.kernel.context.RequestContext;
+import org.nuunframework.kernel.context.InitContext;
 import org.nuunframework.kernel.plugin.request.BindingRequest;
 import org.nuunframework.kernel.plugin.request.BindingRequestBuilder;
 import org.nuunframework.kernel.plugin.request.ClasspathScanRequest;
@@ -29,7 +31,7 @@ public abstract class AbstractPlugin implements Plugin
     @SuppressWarnings("unused")
     private Map<String, String>               kernelParams;
     @SuppressWarnings("unused")
-    private RequestContext                     requestContext;
+    private InitContext                     initContext;
     private final KernelParamsRequestBuilder  paramsBuilder;
     private final ClasspathScanRequestBuilder scanBuilder;
     private final BindingRequestBuilder       bindingBuilder;
@@ -50,9 +52,9 @@ public abstract class AbstractPlugin implements Plugin
      **/
 
     @Override
-    public void init(RequestContext requestContext)
+    public void init(InitContext initContext)
     {
-        this.requestContext = requestContext;
+        this.initContext = initContext;
     }
 
     @Override
@@ -148,6 +150,12 @@ public abstract class AbstractPlugin implements Plugin
     public Object dependencyInjectionDef()
     {
         return null;
+    }
+    
+    @Override
+    public Set<URL> computeAdditionalClasspathScan(Object containerContext)
+    {
+        return Collections.emptySet();
     }
 
     protected <T> Collection<T> collectionOf(T... items)

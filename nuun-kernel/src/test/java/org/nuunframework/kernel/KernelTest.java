@@ -185,13 +185,11 @@ public class KernelTest
     }
 
     @Test
-    public void interface_should_injected_without_instance_if_declared_nullable()
+    public void interface_can_be_injected_without_instance_if_declared_nullable()
     {
-
         Injector createChildInjector = injector.createChildInjector(new ModuleInterface());
         HolderForInterface holder = createChildInjector.getInstance(HolderForInterface.class);
         assertThat(holder.customBean).isNull();
-
     }
 
     @Test

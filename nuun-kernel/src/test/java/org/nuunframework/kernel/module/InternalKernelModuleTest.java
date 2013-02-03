@@ -5,7 +5,7 @@ import java.util.HashMap;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.nuunframework.kernel.context.RequestContextInternal;
+import org.nuunframework.kernel.context.InitContextInternal;
 import org.nuunframework.kernel.internal.InternalKernelGuiceModule;
 import org.nuunframework.kernel.sample.Holder;
 import org.nuunframework.kernel.sample.HolderForBeanWithParentType;
@@ -32,7 +32,7 @@ public class InternalKernelModuleTest
     public void init()
     {
 
-        final Module underTest = new InternalKernelGuiceModule(new RequestContextInternal("nuun-", new HashMap<String, String>()) );
+        final Module underTest = new InternalKernelGuiceModule(new InitContextInternal("nuun-", new HashMap<String, String>()) );
         Module aggregationModule = new AbstractModule()
         {
 

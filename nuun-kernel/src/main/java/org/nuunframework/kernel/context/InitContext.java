@@ -15,7 +15,7 @@ import com.google.inject.Module;
  * @author Epo Jemba
  *
  */
-public interface RequestContext
+public interface InitContext
 {
 
     public abstract Map<Class<?>, Collection<Class<?>>> scannedSubTypesByParentClass();
@@ -37,6 +37,8 @@ public interface RequestContext
     public abstract Collection<String> propertiesFiles();
 
     public abstract Map<String, Collection<Class<?>>> scannedTypesByRegex();
+    
+//    public Object containerContext ();
 
 //    public abstract Map<Class<?>, Collection<Class<?>>> scannedTypesByClass();
 

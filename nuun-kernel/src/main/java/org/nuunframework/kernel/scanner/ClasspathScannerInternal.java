@@ -1,5 +1,7 @@
 package org.nuunframework.kernel.scanner;
 
+import static org.reflections.util.FilterBuilder.prefix;
+
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Modifier;
 import java.net.URL;
@@ -21,6 +23,7 @@ import org.reflections.scanners.TypeAnnotationsScanner;
 import org.reflections.scanners.TypesScanner;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
+import org.reflections.util.FilterBuilder;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
@@ -30,23 +33,25 @@ class ClasspathScannerInternal implements ClasspathScanner
 {
 
     private final List<String> packageRoots;
-    private final boolean reachAbstractClass;
+    private final boolean      reachAbstractClass;
+    private Set<URL>           additionalClasspath;
+    private Set<URL>           urls;
 
     public ClasspathScannerInternal(String... packageRoots_)
     {
-        this(false , null , packageRoots_);
-        
+        this(false, null, packageRoots_);
+
     }
 
-    public ClasspathScannerInternal(boolean reachAbstractClass, String packageRoot ,String... packageRoots_ )
+    public ClasspathScannerInternal(boolean reachAbstractClass, String packageRoot, String... packageRoots_)
     {
         this.packageRoots = new LinkedList<String>();
-        
-        if(packageRoot != null)
+
+        if (packageRoot != null)
         {
             this.packageRoots.add(packageRoot);
         }
-        
+
         for (String packageRoot_ : packageRoots_)
         {
             this.packageRoots.add(packageRoot_);
@@ -55,12 +60,11 @@ class ClasspathScannerInternal implements ClasspathScanner
     }
 
     @SuppressWarnings({
-        "unchecked", "rawtypes"
+            "unchecked", "rawtypes"
     })
     public Collection<Class<?>> scanClasspathForAnnotation(Class<? extends Annotation> annotationType)
     {
-        Reflections reflections =
-            new Reflections(new ConfigurationBuilder().addUrls(computeUrls()).setScanners(new TypeAnnotationsScanner()));
+        Reflections reflections = new Reflections(configurationBuilder().addUrls(computeUrls()).setScanners(new TypeAnnotationsScanner()));
 
         Collection<Class<?>> typesAnnotatedWith = reflections.getTypesAnnotatedWith(annotationType);
 
@@ -86,16 +90,15 @@ class ClasspathScannerInternal implements ClasspathScanner
         public boolean apply(Class<?> clazz)
         {
             boolean toKeep = true;
-            
-            
-            if (( Modifier.isAbstract( clazz.getModifiers())  && ! reachAbstractClass )  && (! clazz.isInterface()) )
+
+            if ((Modifier.isAbstract(clazz.getModifiers()) && !reachAbstractClass) && (!clazz.isInterface()))
             {
                 toKeep = false;
             }
-                
+
             for (Annotation annotation : clazz.getAnnotations())
             {
-                if (annotation.annotationType().equals(Ignore.class) || annotation.annotationType().getName().endsWith(".Ignore") )
+                if (annotation.annotationType().equals(Ignore.class) || annotation.annotationType().getName().endsWith(".Ignore"))
                 {
                     toKeep = false;
                     break;
@@ -105,7 +108,7 @@ class ClasspathScannerInternal implements ClasspathScanner
         }
     }
 
-    private Collection<Class<?>> removeIgnore(Collection <Class<?>> set)
+    private Collection<Class<?>> removeIgnore(Collection<Class<?>> set)
     {
         Collection<Class<?>> filtered = Collections2.filter(set, new IgnorePredicate(reachAbstractClass));
 
@@ -114,12 +117,11 @@ class ClasspathScannerInternal implements ClasspathScanner
     }
 
     @SuppressWarnings({
-        "unchecked", "rawtypes"
+            "unchecked", "rawtypes"
     })
     public java.util.Collection<java.lang.Class<?>> scanClasspathForAnnotationRegex(String annotationTypeName)
     {
-        Reflections reflections =
-            new Reflections(new ConfigurationBuilder().addUrls(computeUrls()).setScanners(new NameAnnotationScanner(annotationTypeName)));
+        Reflections reflections = new Reflections(configurationBuilder().addUrls(computeUrls()).setScanners(new NameAnnotationScanner(annotationTypeName)));
 
         Store store = reflections.getStore();
 
@@ -146,35 +148,34 @@ class ClasspathScannerInternal implements ClasspathScanner
             typesAnnotatedWith = Collections.emptySet();
         }
 
-        return (Collection) removeIgnore((Collection)typesAnnotatedWith);
+        return (Collection) removeIgnore((Collection) typesAnnotatedWith);
     }
 
     @SuppressWarnings({
-        "unchecked", "rawtypes"
+            "unchecked", "rawtypes"
     })
     @Override
     public Collection<Class<?>> scanClasspathForTypeRegex(String typeName)
     {
-        Reflections reflections =
-        new Reflections(new ConfigurationBuilder().addUrls(computeUrls()).setScanners(new TypesScanner()));
-        
+        Reflections reflections = new Reflections(configurationBuilder().addUrls(computeUrls()).setScanners(new TypesScanner()));
+
         Store store = reflections.getStore();
 
         Multimap<String, String> multimap = store.get(TypesScanner.class);
 
         Collection<String> collectionOfString = new HashSet<String>();
-        
+
         for (String loopKey : multimap.keySet())
         {
-            
-            if (loopKey.matches(typeName) )
+
+            if (loopKey.matches(typeName))
             {
                 collectionOfString.add(loopKey);
             }
         }
 
         Collection<Class<?>> types = null;
-        
+
         if (collectionOfString.size() > 0)
         {
             types = toClasses(collectionOfString);
@@ -184,49 +185,46 @@ class ClasspathScannerInternal implements ClasspathScanner
             types = Collections.emptySet();
         }
 
-        return (Collection) removeIgnore((Collection)types);
-        
+        return (Collection) removeIgnore((Collection) types);
 
     }
-    @SuppressWarnings({
-    })
+
+    @SuppressWarnings({})
     @Override
     public Collection<Class<?>> scanClasspathForSubTypeRegex(String subTypeName)
     {
-        
-//        Reflections reflections =
-//                new Reflections(new ConfigurationBuilder().addUrls(computeUrls()).setScanners(new TypesScanner()));
-//
-//            Collection<Class<?>> typesAnnotatedWith = reflections.getSubTypesOf(type)
-//
-//            if (typesAnnotatedWith == null)
-//            {
-//                typesAnnotatedWith = Collections.emptySet();
-//            }
-//
-//            return (Collection) removeIgnore((Collection) typesAnnotatedWith);
-        
-        
-        Reflections reflections =
-        new Reflections(new ConfigurationBuilder().addUrls(computeUrls()).setScanners(new TypesScanner()));
-        
+
+        // Reflections reflections =
+        // new Reflections(configurationBuilder().addUrls(computeUrls()).setScanners(new TypesScanner()));
+        //
+        // Collection<Class<?>> typesAnnotatedWith = reflections.getSubTypesOf(type)
+        //
+        // if (typesAnnotatedWith == null)
+        // {
+        // typesAnnotatedWith = Collections.emptySet();
+        // }
+        //
+        // return (Collection) removeIgnore((Collection) typesAnnotatedWith);
+
+        Reflections reflections = new Reflections(configurationBuilder().addUrls(computeUrls()).setScanners(new TypesScanner()));
+
         Store store = reflections.getStore();
-        
+
         Multimap<String, String> multimap = store.get(TypesScanner.class);
-        
+
         Collection<String> collectionOfString = new HashSet<String>();
-        
+
         for (String loopKey : multimap.keySet())
         {
-            
-            if (loopKey.matches(subTypeName) )
+
+            if (loopKey.matches(subTypeName))
             {
                 collectionOfString.add(loopKey);
             }
         }
-        
+
         Collection<Class<?>> types = null;
-        
+
         if (collectionOfString.size() > 0)
         {
             types = toClasses(collectionOfString);
@@ -235,27 +233,22 @@ class ClasspathScannerInternal implements ClasspathScanner
         {
             types = Collections.emptySet();
         }
-        
-        
+
         // Then find subclasses of types
-        
-        
+
         Collection<Class<?>> finalClasses = new HashSet<Class<?>>();
         for (Class<?> class1 : types)
         {
             Collection<Class<?>> scanClasspathForSubTypeClass = scanClasspathForSubTypeClass(class1);
             finalClasses.addAll(scanClasspathForSubTypeClass);
         }
-        
-        
-        // removed ignored already done 
+
+        // removed ignored already done
         return finalClasses;
-//        return (Collection) removeIgnore((Collection)types);
-        
-        
+        // return (Collection) removeIgnore((Collection)types);
+
     }
-    
-    
+
     @Override
     public Collection<String> scanClasspathForResource(String pattern)
     {
@@ -266,13 +259,12 @@ class ClasspathScannerInternal implements ClasspathScanner
     }
 
     @SuppressWarnings({
-        "unchecked", "rawtypes"
+            "unchecked", "rawtypes"
     })
     @Override
     public Collection<Class<?>> scanClasspathForSubTypeClass(Class<?> subType)
     {
-        Reflections reflections =
-            new Reflections(new ConfigurationBuilder().addUrls(computeUrls()).setScanners(new SubTypesScanner()));
+        Reflections reflections = new Reflections(configurationBuilder().addUrls(computeUrls()).setScanners(new SubTypesScanner()));
 
         Collection<?> typesAnnotatedWith = (Collection<?>) reflections.getSubTypesOf(subType);
 
@@ -284,21 +276,42 @@ class ClasspathScannerInternal implements ClasspathScanner
         return (Collection) removeIgnore((Collection) typesAnnotatedWith);
     }
 
-    private Set<URL> computeUrls()
+    public void setAdditionalClasspath(Set<URL> additionalClasspath)
     {
-        Set<URL> urls = new HashSet<URL>();
+        this.additionalClasspath = additionalClasspath;
+
+    }
+
+    private ConfigurationBuilder configurationBuilder()
+    {
+        ConfigurationBuilder cb = new ConfigurationBuilder();
+        FilterBuilder fb = new FilterBuilder();
         
         for (String packageRoot : packageRoots)
         {
-            Set<URL> tmp = ClasspathHelper.forPackage(packageRoot ,  ClasspathHelper.classLoaders()  );
-            urls.addAll(tmp);
+            fb.include(prefix(packageRoot) );
         }
         
-        urls.addAll(ClasspathHelper.forJavaClassPath());
+        cb.filterInputsBy(fb);
         
-        urls.addAll(ClasspathHelper 
-                .forClassLoader(ClasspathHelper.classLoaders())); 
-        
+        return cb;
+    }
+    
+    private Set<URL> computeUrls()
+    {
+        if (urls == null)
+        {
+            urls = new HashSet<URL>();
+
+            if (this.additionalClasspath != null)
+            {
+                urls.addAll(this.additionalClasspath);
+            }
+
+            urls.addAll(ClasspathHelper.forJavaClassPath());
+//            urls.addAll(ClasspathHelper.forClassLoader(ClasspathHelper.classLoaders()));
+        }
+
         return urls;
     }
 

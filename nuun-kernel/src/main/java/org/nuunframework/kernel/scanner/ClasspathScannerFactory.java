@@ -1,8 +1,18 @@
 package org.nuunframework.kernel.scanner;
 
+import java.net.URL;
+import java.util.Set;
+
 
 public class ClasspathScannerFactory
 {
+    public ClasspathScanner create(Set<URL> additionalClasspath , String... packageRoot)
+    {
+        ClasspathScannerInternal classpathScannerInternal = new ClasspathScannerInternal(packageRoot);
+        classpathScannerInternal.setAdditionalClasspath(additionalClasspath);
+        return classpathScannerInternal;
+    }
+
     public ClasspathScanner create(String... packageRoot)
     {
         return new ClasspathScannerInternal(packageRoot);

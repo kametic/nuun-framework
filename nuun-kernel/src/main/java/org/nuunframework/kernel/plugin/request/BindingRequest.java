@@ -12,13 +12,19 @@ public class BindingRequest
 {
 
     public final RequestType requestType;
-    public final Object objectRequested;
+    public final Object requestedObject;
+    public final Object requestedScope;
 
     public BindingRequest(RequestType requestType , Object keyRequested)
     {
+        this( requestType , keyRequested , null );
+    }
+
+    public BindingRequest(RequestType requestType , Object keyRequested , Object requestedScope)
+    {
         this.requestType = requestType;
-        this.objectRequested = keyRequested;
-        
+        this.requestedObject = keyRequested;
+        this.requestedScope = requestedScope;
     }
     
 }

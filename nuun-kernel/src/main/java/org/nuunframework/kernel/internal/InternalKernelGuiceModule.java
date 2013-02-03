@@ -13,7 +13,7 @@ import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.nuunframework.kernel.context.Context;
 import org.nuunframework.kernel.context.ContextInternal;
-import org.nuunframework.kernel.context.RequestContextInternal;
+import org.nuunframework.kernel.context.InitContextInternal;
 import org.nuunframework.kernel.plugins.configuration.ConfigurationGuiceModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,9 +36,9 @@ public class InternalKernelGuiceModule extends AbstractModule
 
     private Logger        logger                = LoggerFactory.getLogger(InternalKernelGuiceModule.class);
 
-    private final RequestContextInternal currentContext;
+    private final InitContextInternal currentContext;
     
-    public InternalKernelGuiceModule( RequestContextInternal kernelContext )
+    public InternalKernelGuiceModule( InitContextInternal kernelContext )
     {
         this.currentContext = kernelContext ;
         

@@ -1,13 +1,26 @@
 package org.nuunframework.web;
 
+import java.io.IOException;
+import java.net.URL;
+import java.util.Enumeration;
+import java.util.Set;
+
+import javax.servlet.ServletContext;
+
 import org.nuunframework.kernel.plugin.AbstractPlugin;
+import org.reflections.util.ClasspathHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.inject.servlet.WorkAroundModule;
 
 public class NuunWebPlugin extends AbstractPlugin
 {
 
+    private Logger         logger = LoggerFactory.getLogger(NuunWebPlugin.class);
+    
     private WorkAroundModule module = null;
+    private Set<URL> additionalClasspath = null;
 
     @Override
     public String name()
@@ -16,9 +29,62 @@ public class NuunWebPlugin extends AbstractPlugin
     }
 
     @Override
+    public Set<URL> computeAdditionalClasspathScan(Object containerContext)
+    {
+        ServletContext servletContext = null;
+
+        if (containerContext != null && ServletContext.class.isAssignableFrom(containerContext.getClass()))
+        {
+
+            servletContext = (ServletContext) containerContext;
+            
+            Set<URL> webCPUrls = ClasspathHelper.forWebInfLib(servletContext);
+            URL forWebInfClasses = ClasspathHelper.forWebInfClasses(servletContext);
+            webCPUrls.add(forWebInfClasses);
+            
+            
+//            try
+//            {
+//                logger.debug( ">>> 2 " );
+//                Enumeration<URL> resources = servletContext.getClass().getClassLoader().getResources("/nuunweb");
+//                logger.debug( ">>> 3  " + resources );
+//                
+//                if (resources != null)
+//                {
+//                    logger.debug( ">>> 4  " );
+//                    for (; resources.hasMoreElements();)
+//                    {
+//                        logger.debug( ">>> " +  resources.nextElement());
+//                    }
+//                }
+//            }
+//            catch (IOException e)
+//            {
+//                e.printStackTrace();
+//            }
+//            
+//            
+//          Set<URL> webCPUrls = ClasspathHelper.forWebInfLib(servletContext);
+//          URL forWebInfClasses = ClasspathHelper.forWebInfClasses(servletContext);
+//          if (forWebInfClasses != null)
+//          {
+//              webCPUrls.add(forWebInfClasses);
+//          }  
+//          
+//          logger.debug("> "+webCPUrls + "<");
+//          
+
+          this.additionalClasspath = webCPUrls;
+            
+        }   
+        
+        
+        return  this.additionalClasspath != null ? this.additionalClasspath : super.computeAdditionalClasspathScan(containerContext) ;
+    }
+
+    @Override
     public Object dependencyInjectionDef()
     {
-
         if (module == null)
         {
             module = new WorkAroundModule();

@@ -52,35 +52,36 @@ public class NuunServletContextListener extends GuiceServletContextListener
             }
         }
 
-        Set<URL> webCPUrls = ClasspathHelper.forWebInfLib(servletContext);
-
-        URL forWebInfClasses = ClasspathHelper.forWebInfClasses(servletContext);
-        if (forWebInfClasses != null)
-        {
-            webCPUrls.add(forWebInfClasses);
-        }
-
-        logger.info("> "+webCPUrls + "<");
+        // 
         
-        int size = webCPUrls.size();
-        if (webCPUrls != null && size > 0)
-        {
-            params.add(Kernel.NUUN_NUM_CP_PATH);
-            params.add(Integer.toString(size));            
-            int i = 0;
-            for (URL url : webCPUrls)
-            {
-                params.add(Kernel.NUUN_CP_PATH_PREFIX + i);
-                params.add(url.toString());
-                logger.debug( Kernel.NUUN_CP_PATH_PREFIX + i + " = " +  url);
-                i++;
-            }
-        }
+//        Set<URL> webCPUrls = ClasspathHelper.forWebInfLib(servletContext);
+//        URL forWebInfClasses = ClasspathHelper.forWebInfClasses(servletContext);
+//        if (forWebInfClasses != null)
+//        {
+//            webCPUrls.add(forWebInfClasses);
+//        }
+//
+//        logger.info("> "+webCPUrls + "<");
+//        
+//        int size = webCPUrls.size();
+//        if (webCPUrls != null && size > 0)
+//        {
+//            params.add(Kernel.NUUN_NUM_CP_PATH);
+//            params.add(Integer.toString(size));            
+//            int i = 0;
+//            for (URL url : webCPUrls)
+//            {
+//                params.add(Kernel.NUUN_CP_PATH_PREFIX + i);
+//                params.add(url.toString());
+//                logger.debug( Kernel.NUUN_CP_PATH_PREFIX + i + " = " +  url);
+//                i++;
+//            }
+//        }
 
         String[] paramsArray = new String[params.size()];
         params.toArray(paramsArray);
 
-        kernel = Kernel.createKernel(paramsArray).build();
+        kernel = Kernel.createKernel(paramsArray).withContainerContext(servletContext). build();
         // "nuun.package.root" , packageRoot , //
         // "nuun.uri.base.pattern" , uriPattern).build();
 

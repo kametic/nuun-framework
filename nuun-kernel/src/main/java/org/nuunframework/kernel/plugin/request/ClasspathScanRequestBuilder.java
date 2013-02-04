@@ -67,6 +67,14 @@ public class ClasspathScanRequestBuilder implements Builder<Collection<Classpath
         return this;
     }
 
+    public ClasspathScanRequestBuilder resourcesRegex(String resourcesRegex)
+    {
+        
+        requests.add(new ClasspathScanRequest(RequestType.RESOURCES_REGEX_MATCH, resourcesRegex));
+        
+        return this;
+    }
+
     
     @Override
     public Collection<ClasspathScanRequest> build()

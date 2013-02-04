@@ -33,7 +33,12 @@ public enum RequestType
     /**
      * Request classes based on type of parent class
      */
-    SUBTYPE_OF_BY_REGEX_MATCH 
+    SUBTYPE_OF_BY_REGEX_MATCH, 
+    
+    /**
+     * return resources
+     */
+    RESOURCES_REGEX_MATCH
     
     
     

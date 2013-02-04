@@ -31,6 +31,7 @@ public class InitContextInternal implements InitContext
     private final List<Class<?>>                                         parentTypesClassesToScan;
     private final List<Class<?>>                                         typesClassesToScan;
     private final List<String>                                           typesRegexToScan;
+    private final List<String>                                           resourcesRegexToScan;
     private final List<String>                                           parentTypesRegexToScan;
     private final List<Class<? extends Annotation>>                      annotationTypesToScan;
     private final List<String>                                           annotationRegexToScan;
@@ -60,6 +61,7 @@ public class InitContextInternal implements InitContext
     private final Map<Class<? extends Annotation>, Collection<Class<?>>> mapAnnotationTypes;
     private final Map<String, Collection<Class<?>>>                      mapAnnotationTypesByName;
     private final Map<String, Collection<String>>                        mapPropertiesFiles;
+    private final Map<String, Collection<String>>                        mapResourcesByRegex;
 
     private Object                                                       containerContext;
 
@@ -76,11 +78,13 @@ public class InitContextInternal implements InitContext
         this.mapAnnotationTypes = new HashMap<Class<? extends Annotation>, Collection<Class<?>>>();
         this.mapAnnotationTypesByName = new HashMap<String, Collection<Class<?>>>();
         this.mapPropertiesFiles = new HashMap<String, Collection<String>>();
+        this.mapResourcesByRegex = new HashMap<String, Collection<String>>();
 
         this.annotationTypesToScan = new LinkedList<Class<? extends Annotation>>();
         this.parentTypesClassesToScan = new LinkedList<Class<?>>();
         this.typesClassesToScan = new LinkedList<Class<?>>();
         this.typesRegexToScan = new LinkedList<String>();
+        this.resourcesRegexToScan = new LinkedList<String>();
         this.parentTypesRegexToScan = new LinkedList<String>();
         this.annotationRegexToScan = new LinkedList<String>();
 
@@ -216,6 +220,14 @@ public class InitContextInternal implements InitContext
             classesToBind.addAll(scanClasspathForAnnotation);
         }
 
+        // Resources to scan
+        
+        for (String regex : this.resourcesRegexToScan)
+        {
+            Collection<String> resourcesScanned = this.classpathScanner.scanClasspathForResource(regex);
+            this.mapResourcesByRegex.put(regex, resourcesScanned);
+        }
+        
         // PROPERTIES TO FETCH
         propertiesFiles = new HashSet<String>();
         for (String prefix : this.propertiesPrefix)
@@ -275,6 +287,12 @@ public class InitContextInternal implements InitContext
     {
         return Collections.unmodifiableMap(this.mapPropertiesFiles);
     }
+    
+    @Override
+    public Map<String, Collection<String>> mapResourcesByRegex()
+    {
+        return Collections.unmodifiableMap(this.mapResourcesByRegex);
+    }
 
     public void addPropertiesPrefix(String prefix)
     {
@@ -289,6 +307,11 @@ public class InitContextInternal implements InitContext
     public void addParentTypeClassToScan(Class<?> type)
     {
         this.parentTypesClassesToScan.add(type);
+    }
+
+    public void addResourcesRegexToScan(String regex)
+    {
+        this.resourcesRegexToScan.add(regex);
     }
 
     public void addTypeClassToScan(Class<?> type)

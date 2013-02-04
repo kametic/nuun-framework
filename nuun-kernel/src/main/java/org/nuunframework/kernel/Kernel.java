@@ -296,9 +296,10 @@ public final class Kernel
                         case SUBTYPE_OF_BY_REGEX_MATCH:
                             this.initContext.addParentTypeRegexesToScan((String) request.objectRequested);
                             break;
-                        // case TYPE_OF_BY_CLASS:
-                        // this.currentContext.addTypeClassToScan((Class<?>) request.objectRequested);
-                        // break;
+                        case RESOURCES_REGEX_MATCH:
+                            this.initContext.addResourcesRegexToScan((String) request.objectRequested);
+//                            this.initContext.addTypeClassToScan((Class<?>) request.objectRequested);
+                            break;
                         case TYPE_OF_BY_REGEX_MATCH:
                             this.initContext.addTypeRegexesToScan((String) request.objectRequested);
                             break;

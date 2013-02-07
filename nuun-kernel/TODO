@@ -3,7 +3,6 @@ TODO
 - Production Mode , Developement Mode 
   - à rajouter dans le Context aussi pour les plugins
   - sert à configure l'injector
-- add resource scanners
 - add multiple binding 
 - Create PluginProvider avec SPIPluginProvider par defaut
   à utiliser dans Kernel
@@ -45,6 +44,7 @@ TODO
 
 DONE
 ====
+- add resource scanners
 - Plugin requirement
 - Plugin Handling
 - Multiple packageroot

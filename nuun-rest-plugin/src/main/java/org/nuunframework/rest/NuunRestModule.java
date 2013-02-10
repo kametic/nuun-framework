@@ -7,7 +7,7 @@ import com.sun.jersey.guice.JerseyServletModule;
 import com.sun.jersey.guice.spi.container.servlet.GuiceContainer;
 
 
-public class NuunRestModule extends JerseyServletModule
+class NuunRestModule extends JerseyServletModule
 {
     
     private final String uriPattern;

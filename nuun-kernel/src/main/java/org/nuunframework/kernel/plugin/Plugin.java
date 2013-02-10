@@ -6,9 +6,12 @@ import java.util.Set;
 
 import org.nuunframework.kernel.context.Context;
 import org.nuunframework.kernel.context.InitContext;
+import org.nuunframework.kernel.plugin.provider.DependencyInjectionProvider;
 import org.nuunframework.kernel.plugin.request.BindingRequest;
 import org.nuunframework.kernel.plugin.request.ClasspathScanRequest;
 import org.nuunframework.kernel.plugin.request.KernelParamsRequest;
+
+import com.google.inject.Module;
 
 
 /**
@@ -104,14 +107,32 @@ public interface Plugin
     String pluginPackageRoot();
     
     /**
+     *  Return an object that will contains the dependency injection definitions. 
+     *  Mostly a {@link Module} but it can be other dependency injection object
+     *  from other ioc frameworks : Spring, Tapestry, Jodd, Dagger. 
      *  
+     *  The kernel must have a {@link DependencyInjectionProvider} that handle it.
      * @return 
      */
     Object dependencyInjectionDef();
     
     
+    /**
+     * The kernel allow the plugin to compute additionnal classpath to scan.
+     * He passes a containerContext that may be a ServletContext for servlet environement, 
+     * BundleContext for osgi environnement or something else.  
+     * 
+     * @param containerContext
+     * @return
+     */
     Set<URL> computeAdditionalClasspathScan(Object containerContext);
     
+    /**
+     * return a dependency injection provider to the kernel. 
+     * 
+     * @return a DependencyInjectionProvider 
+     */
+    DependencyInjectionProvider dependencyInjectionProvider();
     
     
 }

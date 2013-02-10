@@ -22,11 +22,11 @@ import org.nuunframework.kernel.context.Context;
 import org.nuunframework.kernel.context.InitContextInternal;
 import org.nuunframework.kernel.internal.InternalKernelGuiceModule;
 import org.nuunframework.kernel.plugin.Plugin;
+import org.nuunframework.kernel.plugin.provider.DependencyInjectionProvider;
 import org.nuunframework.kernel.plugin.request.BindingRequest;
 import org.nuunframework.kernel.plugin.request.ClasspathScanRequest;
 import org.nuunframework.kernel.plugin.request.KernelParamsRequest;
 import org.nuunframework.kernel.plugin.request.KernelParamsRequestType;
-import org.nuunframework.kernel.spi.DependencyInjectionProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -337,6 +337,8 @@ public final class Kernel
         }
 
 //        initContext.setContainerContext(this.containerContext);
+        Collection<DependencyInjectionProvider> dependencyInjectionProviders = new HashSet<DependencyInjectionProvider>();
+        
         // INITIALISATION
         // We pass the container context object for plugin
         for (Plugin plugin : plugins.values())
@@ -353,10 +355,16 @@ public final class Kernel
                 logger.info("Adding from Plugin {} end.", plugin.name());
                 initContext.addClasspathsToScan(computeAdditionalClasspathScan);
             }
+            // Convert dependency manager classes to instances //
+            DependencyInjectionProvider iocProvider = plugin.dependencyInjectionProvider();
+            if (iocProvider != null) 
+            {
+                dependencyInjectionProviders.add(iocProvider);
+            }
         }
 
-        // We also want to scan DependencyInjectionProvider before the classpath scan
-        initContext.addParentTypeClassToScan(DependencyInjectionProvider.class);
+//        // We also want to scan DependencyInjectionProvider before the classpath scan
+//        initContext.addParentTypeClassToScan(DependencyInjectionProvider.class);
 
         // We launch classpath scan and store results of requests
         this.initContext.executeRequests();
@@ -368,25 +376,23 @@ public final class Kernel
             plugin.init(initContext);
         }
 
-        // Convert dependency manager classes to instances
-        Collection<Class<?>> dependencyInjectionProvidersClasses = initContext.scannedSubTypesByParentClass().get(DependencyInjectionProvider.class);
-        createDependencyInjectionProvidersMap(dependencyInjectionProvidersClasses);
 
         for (Plugin plugin : plugins.values())
         {
             // Configure module
-            if (plugin.dependencyInjectionDef() != null)
+            Object pluginDependencyInjectionDef = plugin.dependencyInjectionDef();
+            if (pluginDependencyInjectionDef != null)
             {
-                if (plugin.dependencyInjectionDef() instanceof com.google.inject.Module)
+                if (pluginDependencyInjectionDef instanceof com.google.inject.Module)
                 {
-                    this.initContext.addChildModule(com.google.inject.Module.class.cast(plugin.dependencyInjectionDef()));
+                    this.initContext.addChildModule(com.google.inject.Module.class.cast(pluginDependencyInjectionDef));
                 }
                 else
                 {
                     DependencyInjectionProvider provider = null;
                     providerLoop: for (DependencyInjectionProvider providerIt : dependencyInjectionProviders)
                     {
-                        if (providerIt.canHandle(plugin.dependencyInjectionDef().getClass()))
+                        if (providerIt.canHandle(pluginDependencyInjectionDef.getClass()))
                         {
                             provider = providerIt;
                             break providerLoop;
@@ -394,13 +400,12 @@ public final class Kernel
                     }
                     if (provider != null)
                     {
-                        this.initContext.addChildModule(provider.convert(plugin.dependencyInjectionDef()));
+                        this.initContext.addChildModule(provider.convert(pluginDependencyInjectionDef));
                     }
                     else
                     {
-                        logger.error("Kernel did not recognize module {} of plugin {}", plugin.dependencyInjectionDef(), plugin.name());
-                        throw new KernelException("Kernel did not recognize module %s of plugin %s. Please provide a DependencyInjectionProvider.", plugin
-                                .dependencyInjectionDef().toString(), plugin.name());
+                        logger.error("Kernel did not recognize module {} of plugin {}", pluginDependencyInjectionDef, plugin.name());
+                        throw new KernelException("Kernel did not recognize module %s of plugin %s. Please provide a DependencyInjectionProvider.", pluginDependencyInjectionDef.toString(), plugin.name());
                     }
                 }
             }

@@ -12,6 +12,7 @@ import java.util.Set;
 
 import org.nuunframework.kernel.context.Context;
 import org.nuunframework.kernel.context.InitContext;
+import org.nuunframework.kernel.plugin.provider.DependencyInjectionProvider;
 import org.nuunframework.kernel.plugin.request.BindingRequest;
 import org.nuunframework.kernel.plugin.request.BindingRequestBuilder;
 import org.nuunframework.kernel.plugin.request.ClasspathScanRequest;
@@ -156,6 +157,13 @@ public abstract class AbstractPlugin implements Plugin
     public Set<URL> computeAdditionalClasspathScan(Object containerContext)
     {
         return Collections.emptySet();
+    }
+    
+    
+    @Override
+    public DependencyInjectionProvider dependencyInjectionProvider()
+    {
+        return null;
     }
 
     protected <T> Collection<T> collectionOf(T... items)

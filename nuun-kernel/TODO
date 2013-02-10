@@ -4,11 +4,9 @@ TODO
   - à rajouter dans le Context aussi pour les plugins
   - sert à configure l'injector
 - add multiple binding 
-- Create PluginProvider avec SPIPluginProvider par defaut
-  à utiliser dans Kernel
 - Requests : 
-    - add meta annotations
     - Specification<Class<?>> apply
+    - add meta annotations
     - method with annotation
     - fiels with annotation
 - Request : add Request constraints : Unique, Maxi, Mini
@@ -18,7 +16,7 @@ TODO
 - add binding graph generation facilities through plugins: 
   - image plugin  
 - plugin dependencyInjection overriding via overideDependencyInjectionDef
-- Possibilité des RequestContext de ne délivrer que les context result demandés par le plugin seul
+- replace LogPlugin implementation by the apache onami one. 
 - Properties files  
   - Add mandatory properties (default true)
   - Add duplicate properties warning or error ( default error )
@@ -30,7 +28,8 @@ TODO
     qui créer un bundle osgi en faisant clean install  
 - JSR303 (validation)
 - JSR107 (cache)
-- Créer les org.nuunframework.kernel.spi.DependencyInjectionProvider 
+- Possibilité des RequestContext de ne délivrer que les context result demandés par le plugin seul
+- Créer les org.nuunframework.kernel.plugin.provider.DependencyInjectionProvider 
   - handle 
    - from Guice 
    - to Something else

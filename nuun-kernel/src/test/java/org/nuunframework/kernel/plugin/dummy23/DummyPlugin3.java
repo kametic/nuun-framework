@@ -8,7 +8,6 @@ import static org.fest.assertions.Assertions.assertThat;
 import java.util.Collection;
 import java.util.Map;
 
-import org.fest.assertions.Assertions;
 import org.nuunframework.kernel.context.InitContext;
 import org.nuunframework.kernel.plugin.AbstractPlugin;
 import org.nuunframework.kernel.plugin.request.ClasspathScanRequest;

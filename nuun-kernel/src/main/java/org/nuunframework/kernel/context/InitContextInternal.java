@@ -63,8 +63,6 @@ public class InitContextInternal implements InitContext
     private final Map<String, Collection<String>>                        mapPropertiesFiles;
     private final Map<String, Collection<String>>                        mapResourcesByRegex;
 
-    private Object                                                       containerContext;
-
     /**
      * @param inPackageRoots
      */

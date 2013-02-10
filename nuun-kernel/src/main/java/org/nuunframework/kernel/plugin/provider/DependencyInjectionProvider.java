@@ -1,4 +1,4 @@
-package org.nuunframework.kernel.spi;
+package org.nuunframework.kernel.plugin.provider;
 
 import com.google.inject.Module;
 
@@ -18,6 +18,7 @@ public interface DependencyInjectionProvider
 
     /**
      * This method will return a bridge from kernel to module with this DI.
+     * For example a FactoryBean in the Spring world.
      *
      * @return an object able to deal with all kernel dependencies
      */

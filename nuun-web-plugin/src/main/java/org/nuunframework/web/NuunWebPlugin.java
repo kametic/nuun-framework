@@ -1,8 +1,6 @@
 package org.nuunframework.web;
 
-import java.io.IOException;
 import java.net.URL;
-import java.util.Enumeration;
 import java.util.Set;
 
 import javax.servlet.ServletContext;
@@ -42,42 +40,9 @@ public class NuunWebPlugin extends AbstractPlugin
             URL forWebInfClasses = ClasspathHelper.forWebInfClasses(servletContext);
             webCPUrls.add(forWebInfClasses);
             
-            
-//            try
-//            {
-//                logger.debug( ">>> 2 " );
-//                Enumeration<URL> resources = servletContext.getClass().getClassLoader().getResources("/nuunweb");
-//                logger.debug( ">>> 3  " + resources );
-//                
-//                if (resources != null)
-//                {
-//                    logger.debug( ">>> 4  " );
-//                    for (; resources.hasMoreElements();)
-//                    {
-//                        logger.debug( ">>> " +  resources.nextElement());
-//                    }
-//                }
-//            }
-//            catch (IOException e)
-//            {
-//                e.printStackTrace();
-//            }
-//            
-//            
-//          Set<URL> webCPUrls = ClasspathHelper.forWebInfLib(servletContext);
-//          URL forWebInfClasses = ClasspathHelper.forWebInfClasses(servletContext);
-//          if (forWebInfClasses != null)
-//          {
-//              webCPUrls.add(forWebInfClasses);
-//          }  
-//          
-//          logger.debug("> "+webCPUrls + "<");
-//          
-
           this.additionalClasspath = webCPUrls;
             
         }   
-        
         
         return  this.additionalClasspath != null ? this.additionalClasspath : super.computeAdditionalClasspathScan(containerContext) ;
     }

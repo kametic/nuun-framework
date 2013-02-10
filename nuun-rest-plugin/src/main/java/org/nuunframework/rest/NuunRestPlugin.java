@@ -3,6 +3,7 @@ package org.nuunframework.rest;
 import java.util.Collection;
 
 import javax.ws.rs.Path;
+import javax.ws.rs.ext.Provider;
 
 import org.nuunframework.kernel.context.InitContext;
 import org.nuunframework.kernel.plugin.AbstractPlugin;
@@ -21,7 +22,7 @@ public class NuunRestPlugin extends AbstractPlugin
     public static String NUUN_REST_PACKAGE_ROOT                 = "nuun.rest.package.root";
     public static String NUUN_REST_POJO_MAPPING_FEATURE_ENABLED = "nuun.rest.pojo.mapping.feature.enabled";
 
-    private boolean      enablePojoMappingFeature              = true;
+    private boolean      enablePojoMappingFeature               = true;
 
     private String       urlPattern;
 
@@ -57,11 +58,14 @@ public class NuunRestPlugin extends AbstractPlugin
             this.enablePojoMappingFeature = Boolean.valueOf(tmp);
         }
     }
-    
+
     @Override
     public Collection<BindingRequest> bindingRequests()
     {
-        return bindingRequestsBuilder().annotationType(Path.class).build();
+        return bindingRequestsBuilder() // 
+                .annotationType(Path.class) // 
+                .annotationType(Provider.class) // 
+                .build(); // 
     }
 
     /*
@@ -72,12 +76,8 @@ public class NuunRestPlugin extends AbstractPlugin
     @Override
     public Collection<KernelParamsRequest> kernelParamsRequests()
     {
-        return kernelParamsRequestBuilder()
-                .mandatory(NUUN_REST_URL_PATTERN)
-                .optional(NUUN_REST_POJO_MAPPING_FEATURE_ENABLED)
-                .build();
+        return kernelParamsRequestBuilder().mandatory(NUUN_REST_URL_PATTERN).optional(NUUN_REST_POJO_MAPPING_FEATURE_ENABLED).build();
     }
-
 
     /*
      * (non-Javadoc)

@@ -6,8 +6,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
-public @interface Property {
+@Target( { ElementType.FIELD ,  ElementType.ANNOTATION_TYPE })
+public @interface NuunProperty {
     String value();
     boolean mandatory() default true;
     String defaultValue() default "";

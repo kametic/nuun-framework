@@ -1,5 +1,7 @@
 package org.nuunframework.kernel.commons;
 
+import java.lang.annotation.Annotation;
+
 
 public class AssertUtils
 {
@@ -15,7 +17,7 @@ public class AssertUtils
         assertionIllegalArgument(isInterface(klazz), "Type " + klazz + " must be an interface.");
     }
     
-    // CLASS
+    // CLASS //
     public static boolean isClass(Class<? extends Object> klazz)
     {
         return !isInterface(klazz);
@@ -24,6 +26,40 @@ public class AssertUtils
     public static void assertIsClass(Class<? extends Object> klazz)
     {
         assertionIllegalArgument(isClass(klazz), "Type " + klazz + " must not be an interface.");
+    }
+    
+    // ANNOTATION //
+    
+    
+    
+    
+//    public static boolean hasAnnotationDeep(Field field , Class<? extends Annotation> klass)
+//    {
+//        if (field.isAnnotationPresent(klass)) 
+//            return true;
+//        else
+//            return hasAnnotationDeep(field., klass)
+//        
+//    }
+    public static boolean hasAnnotationDeep(Class<?> memberDeclaringClass , Class<? extends Annotation> klass) 
+    {
+        
+        if (memberDeclaringClass.equals(klass) )
+        {
+            return true;
+        }
+        
+        for ( Annotation anno :memberDeclaringClass.getAnnotations() )
+        {
+            Class<? extends Annotation> annoClass = anno.annotationType();
+            if (! annoClass.getPackage().getName().startsWith("java.lang") && hasAnnotationDeep(annoClass, klass))
+            {
+                return true;
+            }
+        }
+            
+        
+        return false;
     }
 
     public static void assertionIllegalArgument(boolean asserted, String message)

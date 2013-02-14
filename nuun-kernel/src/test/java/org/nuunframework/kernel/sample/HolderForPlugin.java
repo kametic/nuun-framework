@@ -5,13 +5,13 @@ import javax.inject.Inject;
 import org.nuunframework.kernel.plugin.dummy1.Bean6;
 import org.nuunframework.kernel.plugin.dummy1.Bean9;
 import org.nuunframework.kernel.plugin.dummy1.DummyService;
-import org.nuunframework.kernel.plugins.configuration.Property;
+import org.nuunframework.kernel.plugins.configuration.NuunProperty;
 
 
 public class HolderForPlugin
 {
 
-    @Property("value1")
+    @NuunProperty("value1")
     public String       value;
 
     @Inject

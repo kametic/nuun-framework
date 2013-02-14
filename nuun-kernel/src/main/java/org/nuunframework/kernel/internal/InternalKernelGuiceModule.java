@@ -2,19 +2,13 @@ package org.nuunframework.kernel.internal;
 
 import static org.reflections.ReflectionUtils.withAnnotation;
 
-import java.util.Collection;
 import java.util.List;
 
 import javax.annotation.Nullable;
 
-import org.apache.commons.configuration.CompositeConfiguration;
-import org.apache.commons.configuration.Configuration;
-import org.apache.commons.configuration.ConfigurationException;
-import org.apache.commons.configuration.PropertiesConfiguration;
 import org.nuunframework.kernel.context.Context;
 import org.nuunframework.kernel.context.ContextInternal;
 import org.nuunframework.kernel.context.InitContextInternal;
-import org.nuunframework.kernel.plugins.configuration.ConfigurationGuiceModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,8 +50,7 @@ public class InternalKernelGuiceModule extends AbstractModule
         // Bind Types, Subtypes from classpath
         // ===================================
         bindFromClasspath();
-        // TODO remove from here 
-        configureProperties();
+        
         // Start Plugins
     }
 
@@ -111,41 +104,23 @@ public class InternalKernelGuiceModule extends AbstractModule
         }
     }
 
-    private void configureProperties()
-    {
+//    private void configureProperties()
+//    {
+//
+//        // find all properties classes in the classpath
+//        Collection<String> propertiesFiles = this.currentContext.propertiesFiles();        
+//
+//        // add properties from plugins
+//        CompositeConfiguration configuration = new CompositeConfiguration();
+//        for (String propertiesFile : propertiesFiles)
+//        {
+//            logger.info("adding {} to module", propertiesFile);
+//            configuration.addConfiguration(configuration(propertiesFile));
+//        }
+//        install(new ConfigurationGuiceModule(configuration));
+//    }
 
-        // find all properties classes in the classpath
-        Collection<String> propertiesFiles = this.currentContext.propertiesFiles();        
 
-        // add properties from plugins
-        CompositeConfiguration configuration = new CompositeConfiguration();
-        for (String propertiesFile : propertiesFiles)
-        {
-            logger.info("adding {} to module", propertiesFile);
-            configuration.addConfiguration(configuration(propertiesFile));
-        }
-        install(new ConfigurationGuiceModule(configuration));
-    }
-
-    /**
-     * reach properties file from classpath.
-     * 
-     * @param filePathInClasspath
-     * @return return an Apache Configuration interface
-     */
-    private Configuration configuration(String filePathInClasspath)
-    {
-        try
-        {
-            return new PropertiesConfiguration(filePathInClasspath);
-        }
-        catch (ConfigurationException e)
-        {
-            e.printStackTrace();
-            throw new IllegalStateException("Error in module initialization : Properties can not be initialized");
-        }
-
-    }
 
 //    protected void bindSubTypesOf(Class<?> cläss)
 //    {

@@ -1,1 +1,2 @@
-org.nuunframework.kernel.plugins.logs.LogPlugin
+org.nuunframework.kernel.plugins.logs.NuunLogPlugin
+org.nuunframework.kernel.plugins.configuration.NuunConfigurationPlugin

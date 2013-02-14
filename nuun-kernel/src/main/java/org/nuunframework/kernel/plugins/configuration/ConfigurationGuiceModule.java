@@ -8,7 +8,7 @@ import org.apache.commons.configuration.Configuration;
  * 
  * @author 
  */
-public class ConfigurationGuiceModule extends AbstractModule
+class ConfigurationGuiceModule extends AbstractModule
 {
 
     private final Configuration configuration;

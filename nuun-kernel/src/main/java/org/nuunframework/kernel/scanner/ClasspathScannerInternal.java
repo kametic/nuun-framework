@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import org.apache.commons.collections.CollectionUtils;
+import org.nuunframework.kernel.KernelException;
 import org.nuunframework.kernel.annotations.Ignore;
 import org.reflections.ReflectionUtils;
 import org.reflections.Reflections;
@@ -64,8 +66,13 @@ class ClasspathScannerInternal implements ClasspathScanner
     })
     public Collection<Class<?>> scanClasspathForAnnotation(Class<? extends Annotation> annotationType)
     {
-        Reflections reflections = new Reflections(configurationBuilder().addUrls(computeUrls()).setScanners(new TypeAnnotationsScanner()));
+        ConfigurationBuilder configurationBuilder = configurationBuilder();
+        Set<URL> computeUrls = computeUrls();
+        Reflections reflections = new Reflections(configurationBuilder.addUrls(computeUrls).setScanners(new TypeAnnotationsScanner()));
 
+//        Multimap<String, String> multimap = reflections.getStore().get(TypeAnnotationsScanner.class);
+//        Collection<String> names = multimap.get(annotationType.getName());
+//        Collection<Class<?>> typesAnnotatedWith = toClasses2(names);
         Collection<Class<?>> typesAnnotatedWith = reflections.getTypesAnnotatedWith(annotationType);
 
         if (typesAnnotatedWith == null)
@@ -73,7 +80,7 @@ class ClasspathScannerInternal implements ClasspathScanner
             typesAnnotatedWith = Collections.emptySet();
         }
 
-        return (Collection) removeIgnore((Collection) typesAnnotatedWith);
+        return (Collection) postTreatment((Collection) typesAnnotatedWith);
     }
 
     static class IgnorePredicate implements Predicate<Class<?>>
@@ -108,8 +115,18 @@ class ClasspathScannerInternal implements ClasspathScanner
         }
     }
 
-    private Collection<Class<?>> removeIgnore(Collection<Class<?>> set)
+    private Collection<Class<?>> postTreatment(Collection<Class<?>> set)
     {
+        
+        // Sanity Check : throw a KernelException if one of the returned classes are null
+        for (Class<?> class1 : set)
+        {
+            if (null == class1)
+            {
+                throw new KernelException("Scanned classes results can not be null. Please check Integrity of the classes.");
+            }
+        }
+        
         Collection<Class<?>> filtered = Collections2.filter(set, new IgnorePredicate(reachAbstractClass));
 
         return filtered;
@@ -148,7 +165,7 @@ class ClasspathScannerInternal implements ClasspathScanner
             typesAnnotatedWith = Collections.emptySet();
         }
 
-        return (Collection) removeIgnore((Collection) typesAnnotatedWith);
+        return (Collection) postTreatment((Collection) typesAnnotatedWith);
     }
 
     @SuppressWarnings({
@@ -185,7 +202,7 @@ class ClasspathScannerInternal implements ClasspathScanner
             types = Collections.emptySet();
         }
 
-        return (Collection) removeIgnore((Collection) types);
+        return (Collection) postTreatment((Collection) types);
 
     }
 
@@ -273,7 +290,7 @@ class ClasspathScannerInternal implements ClasspathScanner
             typesAnnotatedWith = Collections.emptySet();
         }
 
-        return (Collection) removeIgnore((Collection) typesAnnotatedWith);
+        return (Collection) postTreatment((Collection) typesAnnotatedWith);
     }
 
     public void setAdditionalClasspath(Set<URL> additionalClasspath)
@@ -315,6 +332,24 @@ class ClasspathScannerInternal implements ClasspathScanner
         return urls;
     }
 
+    private <T> Collection<Class<? extends T>> toClasses2(Collection<String> names)
+    {
+        Collection classes = new HashSet();
+        
+        for (String name : names)
+        {
+            try
+            {
+                classes.add(Class.forName(name));
+            }
+            catch (ClassNotFoundException e)
+            {
+                e.printStackTrace();
+            }
+        }
+        
+        return classes;
+    }
     private <T> Collection<Class<? extends T>> toClasses(Collection<String> names)
     {
         return ReflectionUtils.<T> forNames(names, this.getClass().getClassLoader());

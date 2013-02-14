@@ -12,7 +12,7 @@ import com.google.inject.Module;
  * @author Epo Jemba
  *
  */
-public class LogPlugin extends AbstractPlugin
+public class NuunLogPlugin extends AbstractPlugin
 {
     
     private Module logModule = null;
@@ -21,7 +21,7 @@ public class LogPlugin extends AbstractPlugin
     @Override
     public String name()
     {
-        return "LogPlugin";
+        return "nuun-log-plugin";
     }
     
     @Override
@@ -29,7 +29,7 @@ public class LogPlugin extends AbstractPlugin
     {
         if (logModule == null )
         {
-            logModule = new LogModule();
+            logModule = new NuunLogModule();
         }
         return logModule;
     }

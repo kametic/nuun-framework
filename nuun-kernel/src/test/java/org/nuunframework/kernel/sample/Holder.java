@@ -1,96 +1,105 @@
 package org.nuunframework.kernel.sample;
 
-import org.nuunframework.kernel.plugins.configuration.Property;
-import org.nuunframework.kernel.plugins.logs.Log;
+import org.nuunframework.kernel.plugins.configuration.NuunProperty;
+import org.nuunframework.kernel.plugins.logs.NuunLog;
 import org.slf4j.Logger;
 
 
 public class Holder
 {
 
-    @Log
+    @NuunLog
     private Logger myLogger;
+
+    @AnnoCustomLog
+    private Logger myLogger2;
 
     public Holder()
     {
     }
 
-    @Property("user.name")
+    @NuunProperty("user.name")
+//    @AnnoCustomProperty("user.name")
     public String   user = null;
 
-    @Property("user.id")
+    @NuunProperty("user.id")
     public Long      id;
 
-    @Property("user.password")
+    @NuunProperty("user.password")
     public String    password;
 
-    @Property("test.int")
+    @NuunProperty("test.int")
     public int       _int;
-    @Property("test.int")
+    @NuunProperty("test.int")
     public Integer   _Integer;
-    @Property("test.int")
+    @NuunProperty("test.int")
     public String    __Integer;
 
-    @Property("test.long")
+    @NuunProperty("test.long")
     public long      _long;
-    @Property("test.long")
+    @NuunProperty("test.long")
     public Long      _Long;
-    @Property("test.long")
+    @NuunProperty("test.long")
     public String    __Long;
 
-    @Property("test.boolean.true")
+    @NuunProperty("test.boolean.true")
     public boolean   _booleanTrue;
-    @Property("test.boolean.true")
+    @NuunProperty("test.boolean.true")
     public Boolean   _BooleanTrue;
-    @Property("test.boolean.true")
+    @NuunProperty("test.boolean.true")
     public String    __BooleanTrue;
 
-    @Property("test.boolean.false")
+    @NuunProperty("test.boolean.false")
     public boolean   _booleanFalse;
-    @Property("test.boolean.false")
+    @NuunProperty("test.boolean.false")
     public Boolean   _BooleanFalse;
-    @Property("test.boolean.false")
+    @NuunProperty("test.boolean.false")
     public String    __BooleanFalse;
 
-    @Property("test.short")
+    @NuunProperty("test.short")
     public short     _short;
-    @Property("test.short")
+    @NuunProperty("test.short")
     public Short     _Short;
-    @Property("test.short")
+    @NuunProperty("test.short")
     public String    __Short;
 
-    @Property("test.byte")
+    @NuunProperty("test.byte")
     public byte      _byte;
-    @Property("test.byte")
+    @NuunProperty("test.byte")
     public Byte      _Byte;
-    @Property("test.byte")
+    @NuunProperty("test.byte")
     public String    __Byte;
 
-    @Property("test.float")
+    @NuunProperty("test.float")
     public float     _float;
-    @Property("test.float")
+    @NuunProperty("test.float")
     public Float     _Float;
-    @Property("test.float")
+    @NuunProperty("test.float")
     public String    __Float;
 
-    @Property("test.double")
+    @NuunProperty("test.double")
     public double    _double;
-    @Property("test.double")
+    @NuunProperty("test.double")
     public Double    _Double;
-    @Property("test.double")
+    @NuunProperty("test.double")
     public String    __Double;
 
-    @Property("test.char")
+    @NuunProperty("test.char")
     public char      _char;
-    @Property("test.char")
+    @NuunProperty("test.char")
     public Character _Character;
-    @Property("test.char")
+    @NuunProperty("test.char")
     public String    __Character;
-    @Property("test.no")
+    @NuunProperty("test.no")
     public String    __nothing;
 
     public Logger getLogger()
     {
         return myLogger;
+    }
+
+    public Logger getLogger2()
+    {
+        return myLogger2;
     }
 }

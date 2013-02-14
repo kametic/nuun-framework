@@ -8,27 +8,28 @@ TODO
     - Specification<Class<?>> apply
     - add meta annotations
     - method with annotation
-    - fiels with annotation
-- Request : add Request constraints : Unique, Maxi, Mini
+    - fields with annotation
+- Plugin dependencies : give to plugin the required plugin singleton instances it asks for. @ the init time.
+- Request : add Request constraints : Unique, Maxi, Mini 
 - KernelModule => dependencyInjectionDef + provider pour autre di que guice
 - add clear reporting in the log
 - add clear run fix fix fix behaviour
+  - Exception system rewrite (http://northconcepts.com/blog/2013/01/18/6-tips-to-improve-your-exception-handling/) 
 - add binding graph generation facilities through plugins: 
   - image plugin  
 - plugin dependencyInjection overriding via overideDependencyInjectionDef
-- replace LogPlugin implementation by the apache onami one. 
+~ replace LogPlugin implementation by the apache onami one. 
 - Properties files  
   - Add mandatory properties (default true)
   - Add duplicate properties warning or error ( default error )
-  - transform into a real plugin
+  - (DONE)transform into a real plugin 
 - plugin exclusion by name (regex) 
-- JNDI avec JSR250 (@Resource, @PreDestroy, @PostConstruct) avec MycilaGuice (ou pas)
+- JNDI avec JSR250 (@Resource, @PreDestroy, @PostConstruct) avec MycilaGuice
 - Osgi avec Peaberry
   - creer un type maven "nuun" (component.xml) cachant veritablement le plugin maven-felix-plugin 
     qui créer un bundle osgi en faisant clean install  
 - JSR303 (validation)
 - JSR107 (cache)
-- Possibilité des RequestContext de ne délivrer que les context result demandés par le plugin seul
 - Créer les org.nuunframework.kernel.plugin.provider.DependencyInjectionProvider 
   - handle 
    - from Guice 

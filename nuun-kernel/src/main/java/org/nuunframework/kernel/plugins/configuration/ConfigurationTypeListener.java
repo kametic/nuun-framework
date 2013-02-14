@@ -1,11 +1,15 @@
 package org.nuunframework.kernel.plugins.configuration;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
+
+import org.apache.commons.configuration.Configuration;
+import org.nuunframework.kernel.commons.AssertUtils;
+
 import com.google.inject.Inject;
 import com.google.inject.TypeLiteral;
 import com.google.inject.spi.TypeEncounter;
 import com.google.inject.spi.TypeListener;
-import java.lang.reflect.Field;
-import org.apache.commons.configuration.Configuration;
 
 /**
  * Type listener for objects prepared for injection. Assigns injection policy
@@ -30,12 +34,28 @@ public class ConfigurationTypeListener implements TypeListener
         {
             for (Field field : c.getDeclaredFields())
             {
-                if (field.isAnnotationPresent(Property.class))
+
+//                if (   field.isAnnotationPresent(NuunProperty.class)  )
+                if (   annotationPresent(field , NuunProperty.class)  )
                 {
                     encounter.register(new ConfigurationMembersInjector<T>(field, configuration));
                 }
             }
         }
+    }
+    
+    private boolean annotationPresent(Field field , Class<? extends Annotation> annoClass)
+    {
+        for (Annotation anno : field.getAnnotations() )
+        {
+            if ( AssertUtils.hasAnnotationDeep(anno.annotationType(), annoClass) )
+            {
+                System.err.println(">> " + anno.annotationType());
+                return true;
+            }
+        }
+        
+        return false;
     }
 
     // public <T> void hear_(TypeLiteral<T> typeLiteral, TypeEncounter<T>

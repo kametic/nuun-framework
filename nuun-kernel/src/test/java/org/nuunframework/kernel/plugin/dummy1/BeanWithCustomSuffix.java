@@ -3,7 +3,7 @@
  */
 package org.nuunframework.kernel.plugin.dummy1;
 
-import org.nuunframework.kernel.plugins.configuration.Property;
+import org.nuunframework.kernel.plugins.configuration.NuunProperty;
 
 
 /**
@@ -12,7 +12,7 @@ import org.nuunframework.kernel.plugins.configuration.Property;
  */
 public class BeanWithCustomSuffix
 {
-    @Property("custom.name")
+    @NuunProperty("custom.name")
     String name;
     
     public String name()

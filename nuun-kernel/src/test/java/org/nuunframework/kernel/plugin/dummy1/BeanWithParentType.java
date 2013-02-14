@@ -3,7 +3,7 @@
  */
 package org.nuunframework.kernel.plugin.dummy1;
 
-import org.nuunframework.kernel.plugins.configuration.Property;
+import org.nuunframework.kernel.plugins.configuration.NuunProperty;
 
 
 /**
@@ -12,7 +12,7 @@ import org.nuunframework.kernel.plugins.configuration.Property;
  */
 public class BeanWithParentType implements DummyMarker
 {
-    @Property("custom.name2")
+    @NuunProperty("custom.name2")
     String name;
     
     public String name()

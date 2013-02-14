@@ -102,7 +102,15 @@ public class KernelTest
     {
         Holder holder = injector.getInstance(Holder.class);
         assertThat(holder.getLogger()).isNotNull();
-        holder.getLogger().error("zerzerzerze");
+        holder.getLogger().error("MESSAGE FROM LOGGER.");
+    }
+    
+    @Test
+    public void logger_should_be_injected_with_metaannotation()
+    {
+        Holder holder = injector.getInstance(Holder.class);
+        assertThat(holder.getLogger2()).isNotNull();
+        holder.getLogger().error("MESSAGE FROM LOGGER2.");
     }
 
     @Test

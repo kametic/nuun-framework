@@ -3,7 +3,7 @@ package org.nuunframework.kernel.plugins.logs;
 import com.google.inject.AbstractModule;
 import com.google.inject.matcher.Matchers;
 
-public class LogModule extends AbstractModule
+class NuunLogModule extends AbstractModule
 {
 
     @Override

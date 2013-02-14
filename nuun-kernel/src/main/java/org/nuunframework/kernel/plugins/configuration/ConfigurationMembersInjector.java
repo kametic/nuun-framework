@@ -32,7 +32,7 @@ public class ConfigurationMembersInjector<T> implements MembersInjector<T>
     @Override
     public void injectMembers(T instance)
     {
-        Property injectConfigAnnotation = field.getAnnotation(Property.class);
+        NuunProperty injectConfigAnnotation = field.getAnnotation(NuunProperty.class);
         String configurationParameterName = injectConfigAnnotation.value();
         try
         {
@@ -239,9 +239,13 @@ public class ConfigurationMembersInjector<T> implements MembersInjector<T>
         {
             log.error("Impossible to instantiate value converter", ex);
         }
+        finally
+        {
+            this.field.setAccessible(false);
+        }
     }
 
-    private Object getProperty(String configurationParameterName, Property injectConfigAnnotation) throws InstantiationException,
+    private Object getProperty(String configurationParameterName, NuunProperty injectConfigAnnotation) throws InstantiationException,
     IllegalAccessException
     {
         String property;

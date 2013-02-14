@@ -3,7 +3,7 @@
  */
 package org.nuunframework.kernel.plugin.dummy1;
 
-import org.nuunframework.kernel.plugins.configuration.Property;
+import org.nuunframework.kernel.plugins.configuration.NuunProperty;
 import org.nuunframework.kernel.scanner.sample.Ignore;
 
 
@@ -16,6 +16,6 @@ import org.nuunframework.kernel.scanner.sample.Ignore;
 @Ignore
 public class Bean8
 {
-    @Property("value1")
+    @NuunProperty("value1")
     public String value;
 }

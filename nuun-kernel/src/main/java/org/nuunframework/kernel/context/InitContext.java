@@ -38,7 +38,7 @@ public interface InitContext
 
     public abstract Map<String, Collection<Class<?>>> scannedTypesByRegex();
 
-    public abstract Map<String, Collection<String>> mapResourcesByRegex();
+    public abstract Map<String, Collection<String>> mapResourcesByRegex();    
     
 //    public Object containerContext ();
 

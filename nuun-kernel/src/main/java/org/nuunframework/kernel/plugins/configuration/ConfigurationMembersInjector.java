@@ -1,8 +1,13 @@
 package org.nuunframework.kernel.plugins.configuration;
 
 import com.google.inject.MembersInjector;
+
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang.StringUtils;
+import org.nuunframework.kernel.commons.AssertUtils;
+import org.nuunframework.kernel.plugin.PluginException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,18 +27,44 @@ public class ConfigurationMembersInjector<T> implements MembersInjector<T>
 
     private final Configuration configuration;
 
-    public ConfigurationMembersInjector(Field field, Configuration configuration)
+    private Annotation clonedAnno;
+
+    public ConfigurationMembersInjector(Field field, Configuration configuration, Annotation clonedAnno)
     {
         this.field = field;
         this.configuration = configuration;
+        this.clonedAnno = clonedAnno;
         this.field.setAccessible(true);
     }
 
     @Override
     public void injectMembers(T instance)
     {
-        NuunProperty injectConfigAnnotation = field.getAnnotation(NuunProperty.class);
+        NuunProperty injectConfigAnnotation = null;
+        // The annotation is actual NuunProperty.class
+        if (clonedAnno.annotationType() == NuunProperty.class)
+        {
+            injectConfigAnnotation = field.getAnnotation(NuunProperty.class);
+        } 
+        else
+        { // The annotation has the NuunProperty annotation on it we proxy it
+            injectConfigAnnotation = AssertUtils.annotationProxyOf(NuunProperty.class, clonedAnno);
+        }
+        
         String configurationParameterName = injectConfigAnnotation.value();
+        
+        // Pre verification //
+        if (StringUtils.isEmpty(configurationParameterName)) 
+        {
+            log.error("Value for annotation {} on field {} can not be null or empty.", clonedAnno.annotationType() , field.toGenericString());
+            throw new PluginException("Value for annotation %s on field %s can not be null or empty.", clonedAnno.annotationType() , field.toGenericString());
+        }
+        
+        if (! configuration.containsKey(configurationParameterName)  && injectConfigAnnotation.mandatory())
+        {
+            throw new PluginException( "\"%s\" must be in one properties file for field %s.", configurationParameterName , field.toGenericString());
+        }
+        
         try
         {
             Class<?> type = field.getType();
@@ -257,7 +288,7 @@ public class ConfigurationMembersInjector<T> implements MembersInjector<T>
         {
             property = injectConfigAnnotation.defaultValue();
         }
-        ConfigurationConverter<?> converter = injectConfigAnnotation.converter().newInstance();
+        NuunConfigurationConverter<?> converter = injectConfigAnnotation.converter().newInstance();
         Object value = converter.convert(property);
         return value;
     }

@@ -274,7 +274,11 @@ public class KernelTest
         assertThat(holder._BooleanFalse).isEqualTo(false);
         assertThat(holder._BooleanFalse).isNotNull();
         assertThat(holder.__BooleanFalse).isEqualTo("false");
-
+        // use of converter
+        assertThat(holder.__special).isNotNull();
+        assertThat(holder.__special.content ).hasSize(7);
+        assertThat(holder.__special.content ).containsOnly("epo" , "jemba", "the" , "master" , "of" , "the" , "universe");
+        
         assertThat(holder.__nothing).isNotNull();
         assertThat(holder.__nothing).isEqualTo("");
 

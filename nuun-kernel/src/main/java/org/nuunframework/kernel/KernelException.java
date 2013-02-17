@@ -11,9 +11,6 @@ package org.nuunframework.kernel;
 public class KernelException extends RuntimeException
 {
 
-    
-    private static final long serialVersionUID = -5031708737156896850L;
-
     public KernelException()
     {
     }
@@ -35,4 +32,5 @@ public class KernelException extends RuntimeException
     
     
     
+    private static final long serialVersionUID = -5031708737156896850L;
 }

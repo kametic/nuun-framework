@@ -1,7 +1,7 @@
 package org.nuunframework.kernel.plugins.configuration;
 
 
-public class DummyConverter implements ConfigurationConverter<String>
+public class NuunDummyConverter implements NuunConfigurationConverter<String>
 {
 
     @Override

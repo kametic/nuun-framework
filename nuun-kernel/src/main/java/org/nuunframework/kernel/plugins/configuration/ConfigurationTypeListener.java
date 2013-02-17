@@ -5,6 +5,7 @@ import java.lang.reflect.Field;
 
 import org.apache.commons.configuration.Configuration;
 import org.nuunframework.kernel.commons.AssertUtils;
+import org.nuunframework.kernel.plugin.PluginException;
 
 import com.google.inject.Inject;
 import com.google.inject.TypeLiteral;
@@ -35,27 +36,39 @@ public class ConfigurationTypeListener implements TypeListener
             for (Field field : c.getDeclaredFields())
             {
 
-//                if (   field.isAnnotationPresent(NuunProperty.class)  )
-                if (   annotationPresent(field , NuunProperty.class)  )
+                Holder h = new Holder();
+                if (   annotationPresent(field , NuunProperty.class , h)  )
                 {
-                    encounter.register(new ConfigurationMembersInjector<T>(field, configuration));
+                    if ( AssertUtils.isEquivalent(NuunProperty.class, h.annotation.annotationType()) )
+                    {
+                        encounter.register(new ConfigurationMembersInjector<T>(field, configuration , h.annotation));
+                    }
+                    else
+                    {
+                        throw new PluginException("Annotation class %s is not compatible with %s. Please check it.", h.annotation.annotationType().getCanonicalName() , NuunProperty.class.getCanonicalName());
+                    }
                 }
             }
         }
     }
     
-    private boolean annotationPresent(Field field , Class<? extends Annotation> annoClass)
+    private boolean annotationPresent(Field field , Class<? extends Annotation> annoClass, Holder h)
     {
+
         for (Annotation anno : field.getAnnotations() )
         {
             if ( AssertUtils.hasAnnotationDeep(anno.annotationType(), annoClass) )
             {
-                System.err.println(">> " + anno.annotationType());
+                h.annotation = anno;
                 return true;
             }
         }
         
         return false;
+    }
+    
+    static class Holder {
+        public Annotation annotation;
     }
 
     // public <T> void hear_(TypeLiteral<T> typeLiteral, TypeEncounter<T>

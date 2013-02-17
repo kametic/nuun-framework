@@ -18,9 +18,7 @@ public class NuunConfigurationPlugin extends AbstractPlugin
 
     Logger logger = LoggerFactory.getLogger(NuunConfigurationPlugin.class);
     
-    
     private Module module = null;
-
 
     private CompositeConfiguration configuration;
     

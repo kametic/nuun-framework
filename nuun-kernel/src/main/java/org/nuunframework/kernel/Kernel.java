@@ -224,8 +224,8 @@ public final class Kernel
                         }
                         else
                         {
-                            logger.error("plugin {} miss parameter/s : {}", plugin.name(), plugin.kernelParamsRequests().toString());
-                            throw new KernelException("plugin " + plugin.name() + " miss parameter/s : " + plugin.kernelParamsRequests().toString());
+                            logger.error("plugin {} miss parameter/s : {}", plugin.name(), kernelParamsRequests.toString());
+                            throw new KernelException("plugin " + plugin.name() + " miss parameter/s : " + kernelParamsRequests.toString());
                         }
 
                     }
@@ -247,10 +247,12 @@ public final class Kernel
         // Check for dependencies
         for (Plugin plugin : plugins.values())
         {
-            if (!plugin.pluginDependenciesRequired().isEmpty() && !pluginClasses.containsAll(plugin.pluginDependenciesRequired()))
+            Collection<Class<? extends Plugin>> pluginDependenciesRequired = plugin.pluginDependenciesRequired();
+            
+            if ( pluginDependenciesRequired != null &&  !pluginDependenciesRequired.isEmpty() && !pluginClasses.containsAll(pluginDependenciesRequired))
             {
-                logger.error("plugin {} misses the following plugin/s as dependency/ies {}", plugin.name(), plugin.pluginDependenciesRequired().toString());
-                throw new KernelException("plugin %s misses the following plugin/s as dependency/ies %s", plugin.name(), plugin.pluginDependenciesRequired()
+                logger.error("plugin {} misses the following plugin/s as dependency/ies {}", plugin.name(), pluginDependenciesRequired.toString());
+                throw new KernelException("plugin %s misses the following plugin/s as dependency/ies %s", plugin.name(), pluginDependenciesRequired
                         .toString());
 
             }
@@ -329,7 +331,7 @@ public final class Kernel
                             this.initContext.addTypeRegexesToBind((String) request.requestedObject);
                             break;
                         default:
-                            logger.warn("{} is not a BindingRequestType a o_O", request.requestType);
+                            logger.warn("{} is not a BindingRequestType o_O !", request.requestType);
                             break;
                     }
                 }

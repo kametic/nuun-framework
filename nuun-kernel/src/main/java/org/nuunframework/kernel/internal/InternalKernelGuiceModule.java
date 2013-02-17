@@ -42,7 +42,7 @@ public class InternalKernelGuiceModule extends AbstractModule
     protected final void configure()
     {
         // All bindings will be needed explicitely.
-        // this simple line make the framework bullet prrof
+        // this simple line makes the framework bullet-proof !
         binder().requireExplicitBindings();
         // We ContextInternal as implemetation of Context
         bind(Context.class).to(ContextInternal.class);

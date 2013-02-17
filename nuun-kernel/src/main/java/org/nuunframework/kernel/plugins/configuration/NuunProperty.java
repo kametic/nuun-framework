@@ -18,5 +18,5 @@ public @interface NuunProperty {
     float defaultFloatValue() default 0;
     double defaultDoubleValue() default 0.0;
     boolean defaultBooleanValue() default false; 
-    Class<? extends ConfigurationConverter<?>> converter() default DummyConverter.class;
+    Class<? extends NuunConfigurationConverter<?>> converter() default NuunDummyConverter.class;
 }

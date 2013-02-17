@@ -10,7 +10,10 @@ TODO
     - method with annotation
     - fields with annotation
 - Plugin dependencies : give to plugin the required plugin singleton instances it asks for. @ the init time.
-- Request : add Request constraints : Unique, Maxi, Mini 
+- Request : add Request constraints : Unique, Maxi, Mini
+- Parameter kernel for Plugin Strict Mode (all plugins or zero) or Degraded Mode (Not all can start , beware of dependencies)  
+- ajouter lifecycle autour des listener
+  comme dans https://bitbucket.org/peachjean/peachguice/src/660df406811cde318658821b8fae3548b62247b3/peachguice-base/src/main/java/net/peachjean/guice/PeachGuiceServletContextListener.java?at=default
 - KernelModule => dependencyInjectionDef + provider pour autre di que guice
 - add clear reporting in the log
 - add clear run fix fix fix behaviour

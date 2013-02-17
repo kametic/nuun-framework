@@ -1,5 +1,6 @@
 package org.nuunframework.kernel.sample;
 
+import org.nuunframework.kernel.plugins.configuration.NuunConfigurationConverter;
 import org.nuunframework.kernel.plugins.configuration.NuunProperty;
 import org.nuunframework.kernel.plugins.logs.NuunLog;
 import org.slf4j.Logger;
@@ -18,8 +19,8 @@ public class Holder
     {
     }
 
-    @NuunProperty("user.name")
-//    @AnnoCustomProperty("user.name")
+
+    @AnnoCustomProperty("user.name")
     public String   user = null;
 
     @NuunProperty("user.id")
@@ -30,8 +31,10 @@ public class Holder
 
     @NuunProperty("test.int")
     public int       _int;
-    @NuunProperty("test.int")
+    
+    @AnnoCustomProperty("test.int")
     public Integer   _Integer;
+    
     @NuunProperty("test.int")
     public String    __Integer;
 
@@ -90,7 +93,34 @@ public class Holder
     public Character _Character;
     @NuunProperty("test.char")
     public String    __Character;
-    @NuunProperty("test.no")
+    
+    @NuunProperty(value = "test.convert" , converter = MySpecialConverter.class)
+    public MySpecialObject __special;
+    
+    public static class MySpecialObject 
+    {
+        public final String[] content;
+
+        public MySpecialObject(String[] content)
+        {
+            this.content = content;
+        }
+    }
+    
+    public static class MySpecialConverter implements NuunConfigurationConverter<MySpecialObject>
+    {
+        @Override
+        public MySpecialObject convert(String property)
+        {
+            
+            String[] split = property.split(" ");
+            
+            return new MySpecialObject(split);
+        }
+    }
+    
+    // Here the key test.no did not exist and must be flagged as madatory = false;
+    @NuunProperty(value = "test.no" , mandatory = false)
     public String    __nothing;
 
     public Logger getLogger()

@@ -1,5 +1,5 @@
 package org.nuunframework.kernel.plugins.configuration;
-public interface ConfigurationConverter<T> {
+public interface NuunConfigurationConverter<T> {
      
     /**
      * Converts string value provided by configuration to type expected by

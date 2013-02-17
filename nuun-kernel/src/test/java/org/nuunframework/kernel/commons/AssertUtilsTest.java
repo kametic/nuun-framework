@@ -6,6 +6,8 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 import org.junit.Test;
 
@@ -47,8 +49,68 @@ public class AssertUtilsTest
         assertThat(AssertUtils.hasAnnotationDeep(Class2.class, Anno2.class)).isTrue()  ;
         assertThat(AssertUtils.hasAnnotationDeep(Class2.class, MetaAnno2.class)).isTrue()  ;
         
+    }
+    
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target({ ElementType.TYPE})    
+    static @interface AnnoFrom {
+        String value ();
+        String v1();
+        long v2();
+    }
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target({ ElementType.TYPE})
+    
+    static @interface AnnoFromClone {
+        String value ();
+        String v1();
+        long v2();
+    }
 
+    static @interface AnnoFromClone2 {
+        String value ();
+        String v1();
+        short v2();
+    }
+
+    static @interface AnnoFromClone3 {
+        String value ();
+        String v1();
+        long v2();
+        short v3();
+        String v4();
+    }
+    
+    static @interface AnnoFromClone4 {
+        String value ();        
+        long v2();
+    }
+
+    @AnnoFromClone(value="clone" , v1 = "clone2",v2 = 3l)
+    static class Annoted  {  }
+    
+    @Test
+    public void testAnno2 () throws SecurityException, NoSuchMethodException, IllegalArgumentException, IllegalAccessException, InvocationTargetException
+    {
+        AnnoFromClone annoFromClone = Annoted.class.getAnnotation(AnnoFromClone.class);
+        
+        assertThat(annoFromClone.v1()).isEqualTo("clone2");
+        
+        Method v1 = annoFromClone.getClass().getMethod("v1");
+        Object invoke = v1.invoke(annoFromClone);
+        assertThat(invoke).isEqualTo("clone2");
+        assertThat( annoFromClone.getClass().getDeclaredMethods() ).hasSize(7);
+        
+        AnnoFrom annoFrom = AssertUtils.annotationProxyOf(AnnoFrom.class, annoFromClone);
+        assertThat(annoFrom.v1()).isEqualTo("clone2");
+    
+        assertThat(AssertUtils.isEquivalent(AnnoFrom.class, AnnoFromClone.class)).isTrue();
+        assertThat(AssertUtils.isEquivalent(AnnoFrom.class, AnnoFromClone2.class)).isFalse();
+        assertThat(AssertUtils.isEquivalent(AnnoFrom.class, AnnoFromClone3.class)).isTrue();
+        assertThat(AssertUtils.isEquivalent(AnnoFrom.class, AnnoFromClone4.class)).isFalse();
         
     }
+    
+    
 
 }

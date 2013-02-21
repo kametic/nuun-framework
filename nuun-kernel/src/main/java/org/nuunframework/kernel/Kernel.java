@@ -183,15 +183,24 @@ public final class Kernel
     {
         logger.info("Plugins initialisation");
         plugins.clear();
-        pluginLoader = ServiceLoader.load(Plugin.class, Thread.currentThread().getContextClassLoader());
-
-        // plugin from service loader
-        Iterator<Plugin> iterator1 = pluginLoader.iterator();
-
         // plugin from kernel call api
-        Iterator<Plugin> iterator2 = pluginsToAdd.values().iterator();
+        Iterator<Plugin> iterator1 = pluginsToAdd.values().iterator();
 
-        List<Iterator<Plugin>> iterators = Arrays.asList(iterator1, iterator2);
+        List<Iterator<Plugin>> iterators;
+
+        // TODO add unit test integration test
+        if (spiPluginEnabled)
+        {
+            pluginLoader = ServiceLoader.load(Plugin.class, Thread.currentThread().getContextClassLoader());
+            
+            // plugin from service loader
+            Iterator<Plugin> iterator2 = pluginLoader.iterator();
+            iterators = Arrays.asList(iterator2, iterator1);            
+        }
+        else
+        {
+            iterators = Arrays.asList(iterator1);            
+        }
 
         List<Class<? extends Plugin>> pluginClasses = new ArrayList<Class<? extends Plugin>>();
         // we initialize plugins

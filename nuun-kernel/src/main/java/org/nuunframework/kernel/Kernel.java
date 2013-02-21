@@ -453,20 +453,20 @@ public final class Kernel
         Kernel build();
     }
 
-    public static interface KernelBuilderWithPluginAndContext extends KernelBuilderWithContainerContext, KernelBuilderWithPlugin
+    public static interface KernelBuilderWithPluginAndContext extends KernelBuilderWithContainerContext, KernelBuilderWithPlugins
     {
     }
 
     public static interface KernelBuilderWithContainerContext extends KernelBuilder
     {
 
-        KernelBuilderWithPlugin withContainerContext(Object containerContext);
+        KernelBuilderWithPlugins withContainerContext(Object containerContext);
     }
 
-    public static interface KernelBuilderWithPlugin extends KernelBuilder
+    public static interface KernelBuilderWithPlugins extends KernelBuilder
     {
-
         KernelBuilderWithContainerContext withPlugins(Class<? extends Plugin>... klass);
+        KernelBuilderWithContainerContext withPlugins(Plugin... plugins);
     }
 
     private static class KernelBuilderImpl implements KernelBuilderWithPluginAndContext
@@ -499,17 +499,23 @@ public final class Kernel
         }
 
         @Override
-        public KernelBuilderWithPlugin withContainerContext(Object containerContext)
+        public KernelBuilderWithPlugins withContainerContext(Object containerContext)
         {
 
             kernel.addContainerContext(containerContext);
-            return (KernelBuilderWithPlugin) this;
+            return (KernelBuilderWithPlugins) this;
 
         }
 
         public KernelBuilderWithContainerContext withPlugins(java.lang.Class<? extends Plugin>... klass)
         {
             kernel.addPlugins(klass);
+            return (KernelBuilderWithContainerContext) this;
+        }
+
+        public KernelBuilderWithContainerContext withPlugins(Plugin... plugin)
+        {
+            kernel.addPlugins(plugin);
             return (KernelBuilderWithContainerContext) this;
         }
 
@@ -543,7 +549,6 @@ public final class Kernel
     }
 
     /**
-     * TODO : can not add plugin if started
      * 
      * @param klass
      */
@@ -559,9 +564,31 @@ public final class Kernel
             }
             else
             {
-                pluginsToAdd.put(plugin.name(), plugin);
+                addPlugin(plugin);
             }
         }
     }
+
+    void addPlugins(Plugin... plugins)
+    {
+        for (Plugin plugin : plugins)
+        {
+             addPlugin(plugin);
+        }
+    }
+    
+    void addPlugin(Plugin plugin)
+    {
+        if (!this.started)
+        {
+            pluginsToAdd.put(plugin.name(), plugin);
+        }
+        else 
+        {
+            throw new KernelException("Plugin %s can not be added. Kernel already is started", plugin.name());
+        }
+    }
+    
+    
 
 }

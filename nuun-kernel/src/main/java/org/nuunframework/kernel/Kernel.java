@@ -49,6 +49,7 @@ public final class Kernel
     private final String                            NUUN_PROPERTIES_PREFIX = "nuun-";
 
     private ServiceLoader<Plugin>                   pluginLoader;
+    private boolean                                 spiPluginEnabled       = true;                
     private Map<String, Plugin>                     plugins                = Collections.synchronizedMap(new HashMap<String, Plugin>()); //
     private Map<String, Plugin>                     pluginsToAdd           = Collections.synchronizedMap(new HashMap<String, Plugin>()); //
 
@@ -467,6 +468,8 @@ public final class Kernel
     {
         KernelBuilderWithContainerContext withPlugins(Class<? extends Plugin>... klass);
         KernelBuilderWithContainerContext withPlugins(Plugin... plugins);
+        KernelBuilderWithContainerContext withoutPluginsLoader();
+        
     }
 
     private static class KernelBuilderImpl implements KernelBuilderWithPluginAndContext
@@ -518,6 +521,13 @@ public final class Kernel
             kernel.addPlugins(plugin);
             return (KernelBuilderWithContainerContext) this;
         }
+        
+        @Override
+        public KernelBuilderWithContainerContext withoutPluginsLoader()
+        {
+            kernel.spiPluginDisabled();
+            return (KernelBuilderWithContainerContext) this;
+        }
 
     }
 
@@ -547,6 +557,17 @@ public final class Kernel
         this.containerContext = containerContext;
 
     }
+    
+    void spiPluginEnabled ()
+    {
+        this.spiPluginEnabled = true;
+    }
+
+    void spiPluginDisabled ()
+    {
+        this.spiPluginEnabled = false;
+    }
+    
 
     /**
      * 

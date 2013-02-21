@@ -1,6 +1,5 @@
 nuun-framework
 ==============
 
-Snapshots Maven repo
+Snapshots Maven repo.
 https://oss.sonatype.org/content/repositories/snapshots
-

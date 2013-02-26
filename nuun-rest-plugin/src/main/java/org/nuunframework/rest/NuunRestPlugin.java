@@ -2,18 +2,24 @@ package org.nuunframework.rest;
 
 import java.util.Collection;
 
+import javax.inject.Scope;
 import javax.ws.rs.Path;
+import javax.ws.rs.ext.ContextResolver;
+import javax.ws.rs.ext.ExceptionMapper;
+import javax.ws.rs.ext.MessageBodyReader;
+import javax.ws.rs.ext.MessageBodyWriter;
 import javax.ws.rs.ext.Provider;
 
+import org.nuunframework.kernel.commons.specification.Specification;
 import org.nuunframework.kernel.context.InitContext;
 import org.nuunframework.kernel.plugin.AbstractPlugin;
 import org.nuunframework.kernel.plugin.Plugin;
 import org.nuunframework.kernel.plugin.request.BindingRequest;
-import org.nuunframework.kernel.plugin.request.ClasspathScanRequest;
 import org.nuunframework.kernel.plugin.request.KernelParamsRequest;
 import org.nuunframework.web.NuunWebPlugin;
 
 import com.google.inject.Module;
+import com.google.inject.Scopes;
 
 public class NuunRestPlugin extends AbstractPlugin
 {
@@ -59,13 +65,29 @@ public class NuunRestPlugin extends AbstractPlugin
         }
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public Collection<BindingRequest> bindingRequests()
     {
-        return bindingRequestsBuilder() // 
-                .annotationType(Path.class) // 
-                .annotationType(Provider.class) // 
-                .build(); // 
+        
+        Specification<Class<?>> specificationForNoScope = 
+                     annotatedWith(Path.class) ;
+        Specification<Class<?>> specificationForSingletonScop =  or(                             
+                and( annotatedWith(Provider.class) , isImplementing(MessageBodyWriter.class)) , 
+                and( annotatedWith(Provider.class) , isImplementing(ContextResolver.class)) ,
+                and( annotatedWith(Provider.class) , isImplementing(MessageBodyReader.class)) ,
+                and( annotatedWith(Provider.class) , isImplementing(ExceptionMapper.class))
+               ) ;
+                
+        return bindingRequestsBuilder()
+                .specification(specificationForNoScope)
+                .specification(specificationForSingletonScop,Scopes.SINGLETON)
+                .build();
+        
+//        return bindingRequestsBuilder() // 
+//                .annotationType(Path.class) // 
+//                .annotationType(Provider.class) // 
+//                .build(); // 
     }
 
     /*

@@ -58,6 +58,17 @@
 			<groupId>com.sun.jersey.contribs</groupId>
 			<artifactId>jersey-guice</artifactId>
 			<version>1.16</version>
+			<!-- we take the sisu core and servlet extension one -->
+			<exclusions>
+				<exclusion>
+					<artifactId>guice-servlet</artifactId>
+					<groupId>com.google.inject.extensions</groupId>
+				</exclusion>
+				<exclusion>
+					<artifactId>guice</artifactId>
+					<groupId>com.google.inject</groupId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 	</dependencies>
 

@@ -43,30 +43,30 @@ public class DummyPlugin4 extends AbstractPlugin
         return bindingRequestsBuilder().specification(specification , Scopes.SINGLETON).build();
     }
     
-//    @SuppressWarnings("unchecked")
-//    @Override
-//    public Collection<ClasspathScanRequest> classpathScanRequests()
-//    {
-//        specification = and( annotatedWith(MarkerSample.class) , isImplementing(Interface1.class));
-//
-//        assertThat( specification.isSatisfiedBy(Pojo1.class) ).isTrue();
-//        assertThat( specification.isSatisfiedBy(Pojo2.class) ).isFalse();
-//        
-//        return classpathScanRequestBuilder().specification(specification).build();
-//    }
-//    
-//    
-//    @Override
-//    public void init(InitContext initContext)
-//    {
-//        Map<Specification, Collection<Class<?>>> scannedTypesBySpecification = initContext.scannedTypesBySpecification();
-//        
-//        collection = scannedTypesBySpecification.get(specification);
-//        
-//        assertThat(collection).isNotEmpty();
-//        assertThat(collection).hasSize(1);
-//        assertThat(collection).containsOnly(Pojo1.class);
-//    }
+    @SuppressWarnings("unchecked")
+    @Override
+    public Collection<ClasspathScanRequest> classpathScanRequests()
+    {
+        specification = and( annotatedWith(MarkerSample.class) , isImplementing(Interface1.class));
+
+        assertThat( specification.isSatisfiedBy(Pojo1.class) ).isTrue();
+        assertThat( specification.isSatisfiedBy(Pojo2.class) ).isFalse();
+        
+        return classpathScanRequestBuilder().specification(specification).build();
+    }
+    
+    
+    @Override
+    public void init(InitContext initContext)
+    {
+        Map<Specification, Collection<Class<?>>> scannedTypesBySpecification = initContext.scannedTypesBySpecification();
+        
+        collection = scannedTypesBySpecification.get(specification);
+        
+        assertThat(collection).isNotEmpty();
+        assertThat(collection).hasSize(1);
+        assertThat(collection).containsOnly(Pojo1.class);
+    }
     
     
     @Override

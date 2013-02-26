@@ -179,14 +179,14 @@ public class KernelTest
 
     }
 
-//    @Test
-//    public void classpath_scan_by_specification_should_work()
-//    {
-//        assertThat(plugin4.collection).isNotNull();
-//        assertThat(plugin4.collection).isNotEmpty();
-//        assertThat(plugin4.collection).hasSize(1);
-//        assertThat(plugin4.collection).containsOnly(Pojo1.class);
-//    }
+    @Test
+    public void classpath_scan_by_specification_should_work()
+    {
+        assertThat(plugin4.collection).isNotNull();
+        assertThat(plugin4.collection).isNotEmpty();
+        assertThat(plugin4.collection).hasSize(1);
+        assertThat(plugin4.collection).containsOnly(Pojo1.class);
+    }
     
     @Test
     public void binding_by_specification_should_work ()

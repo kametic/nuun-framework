@@ -8,6 +8,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 
+import org.nuunframework.kernel.commons.specification.Specification;
+
 
 /**
  * @author Epo Jemba
@@ -27,6 +29,14 @@ public class ClasspathScanRequestBuilder implements Builder<Collection<Classpath
     }
     
     
+    public ClasspathScanRequestBuilder specification(Specification<Class<?>> specification)
+    {
+        
+        requests.add(new ClasspathScanRequest(specification));
+        
+        return this;
+    }
+
     public ClasspathScanRequestBuilder annotationType(Class<? extends Annotation> annotationTypeRequested)
     {
         

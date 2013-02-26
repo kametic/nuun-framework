@@ -6,8 +6,8 @@ public class OrSpecification<T> extends CompositeSpecification<T> {
      * @param lhs
      * @param rhs
      */
-    public OrSpecification(Specification<? super T> lhs, Specification<? super T> rhs) {
-        super(lhs, rhs);
+    public OrSpecification(Specification<? super T>... specificationParticipants) {
+        super(specificationParticipants);
     }
 
     /**
@@ -15,7 +15,14 @@ public class OrSpecification<T> extends CompositeSpecification<T> {
      */
     @Override
     public boolean isSatisfiedBy(T candidate) {
-        return getLhs().isSatisfiedBy(candidate) || getRhs().isSatisfiedBy(candidate);
+        boolean result = false;
+        
+        for(Specification<? super T> participant : this.childSpecifications)
+        {
+            result |= participant.isSatisfiedBy(candidate);
+        }
+        
+        return result;
     }
 
 }

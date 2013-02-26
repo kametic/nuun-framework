@@ -188,7 +188,7 @@ public final class Kernel
 
         List<Iterator<Plugin>> iterators;
 
-        // TODO add unit test integration test
+        // TODO add unit and test integration test for this
         if (spiPluginEnabled)
         {
             pluginLoader = ServiceLoader.load(Plugin.class, Thread.currentThread().getContextClassLoader());
@@ -315,6 +315,9 @@ public final class Kernel
                         case TYPE_OF_BY_REGEX_MATCH:
                             this.initContext.addTypeRegexesToScan((String) request.objectRequested);
                             break;
+                        case VIA_SPECIFICATION: // pas encore pluggé
+                            this.initContext.addSpecificationToScan( request.specification);
+                            break;
                         default:
                             logger.warn("{} is not a ClasspathScanRequestType a o_O", request.requestType);
                             break;
@@ -340,6 +343,9 @@ public final class Kernel
                         case SUBTYPE_OF_BY_REGEX_MATCH:
                             this.initContext.addTypeRegexesToBind((String) request.requestedObject);
                             break;
+                        case VIA_SPECIFICATION:
+                            this.initContext.addSpecificationToBind(request.specification , request.requestedScope);
+                            break;
                         default:
                             logger.warn("{} is not a BindingRequestType o_O !", request.requestType);
                             break;
@@ -362,9 +368,9 @@ public final class Kernel
                 logger.info("Adding from Plugin {} start.", plugin.name());
                 for (URL url : computeAdditionalClasspathScan)
                 {
-                    logger.info(url.toExternalForm());
+                    logger.debug(url.toExternalForm());
                 }
-                logger.info("Adding from Plugin {} end.", plugin.name());
+                logger.info("Adding from Plugin {} end. {} elements.", plugin.name() , "" + computeAdditionalClasspathScan.size());
                 initContext.addClasspathsToScan(computeAdditionalClasspathScan);
             }
             // Convert dependency manager classes to instances //

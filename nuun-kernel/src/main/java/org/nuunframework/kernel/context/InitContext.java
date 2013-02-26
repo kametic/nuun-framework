@@ -8,6 +8,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import org.nuunframework.kernel.commons.specification.Specification;
+
 import com.google.inject.Module;
 
 /**
@@ -38,10 +40,9 @@ public interface InitContext
 
     public abstract Map<String, Collection<Class<?>>> scannedTypesByRegex();
 
-    public abstract Map<String, Collection<String>> mapResourcesByRegex();    
-    
-//    public Object containerContext ();
+    public abstract Map<String, Collection<String>> mapResourcesByRegex();
 
-//    public abstract Map<Class<?>, Collection<Class<?>>> scannedTypesByClass();
+    public abstract Map<Specification, Collection<Class<?>>> scannedTypesBySpecification();    
+    
 
 }

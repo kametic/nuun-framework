@@ -4,13 +4,13 @@
 package org.nuunframework.kernel;
 
 import static org.fest.assertions.Assertions.assertThat;
+import static org.fest.assertions.Fail.fail;
 
+import org.fest.assertions.Fail;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.nuunframework.kernel.Kernel;
-import org.nuunframework.kernel.KernelException;
 import org.nuunframework.kernel.context.ContextInternal;
 import org.nuunframework.kernel.plugin.dummy1.Bean6;
 import org.nuunframework.kernel.plugin.dummy1.Bean9;
@@ -22,6 +22,9 @@ import org.nuunframework.kernel.plugin.dummy1.ParentClassWithCustomSuffix;
 import org.nuunframework.kernel.plugin.dummy1.ParentInterfaceWithCustomSuffix;
 import org.nuunframework.kernel.plugin.dummy23.DummyPlugin2;
 import org.nuunframework.kernel.plugin.dummy23.DummyPlugin3;
+import org.nuunframework.kernel.plugin.dummy4.DummyPlugin4;
+import org.nuunframework.kernel.plugin.dummy4.Pojo1;
+import org.nuunframework.kernel.plugin.dummy4.Pojo2;
 import org.nuunframework.kernel.sample.Holder;
 import org.nuunframework.kernel.sample.HolderForBeanWithParentType;
 import org.nuunframework.kernel.sample.HolderForContext;
@@ -30,8 +33,10 @@ import org.nuunframework.kernel.sample.HolderForPlugin;
 import org.nuunframework.kernel.sample.HolderForPrefixWithName;
 import org.nuunframework.kernel.sample.ModuleInError;
 import org.nuunframework.kernel.sample.ModuleInterface;
+import org.nuunframework.kernel.scanner.sample.Ignore;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.ConfigurationException;
 import com.google.inject.CreationException;
 import com.google.inject.Injector;
 import com.google.inject.Module;
@@ -46,6 +51,7 @@ public class KernelTest
     Injector      injector;
 
     static Kernel underTest;
+    static DummyPlugin4 plugin4 = new DummyPlugin4();
 
     @SuppressWarnings("unchecked")
     @BeforeClass
@@ -69,6 +75,7 @@ public class KernelTest
             {
                 assertThat(ke2.getMessage()).isEqualTo("plugin dummyPlugin2 misses the following plugin/s as dependency/ies [class org.nuunframework.kernel.plugin.dummy23.DummyPlugin3]");
                 underTest.addPlugins( DummyPlugin3.class);
+                underTest.addPlugins( plugin4);
                 underTest.init();
             }
         }
@@ -172,6 +179,39 @@ public class KernelTest
 
     }
 
+//    @Test
+//    public void classpath_scan_by_specification_should_work()
+//    {
+//        assertThat(plugin4.collection).isNotNull();
+//        assertThat(plugin4.collection).isNotEmpty();
+//        assertThat(plugin4.collection).hasSize(1);
+//        assertThat(plugin4.collection).containsOnly(Pojo1.class);
+//    }
+    
+    @Test
+    public void binding_by_specification_should_work ()
+    {
+        assertThat( injector.getInstance(Pojo2.class) ).isNotNull();
+        // we check for the scope
+        assertThat(injector.getInstance(Pojo2.class)).isEqualTo(injector.getInstance(Pojo2.class));
+        
+        try 
+        {
+            assertThat( injector.getInstance(Pojo1.class) ).isNull();
+            fail("Pojo1 should not be injector");
+        } catch (ConfigurationException ce)
+        {
+            assertThat(ce.getMessage()).isEqualTo("Guice configuration errors:\n"
+                +"\n"
+                +"1) Explicit bindings are required and org.nuunframework.kernel.plugin.dummy4.Pojo1 is not explicitly bound.\n"
+                + "  while locating org.nuunframework.kernel.plugin.dummy4.Pojo1\n"
+                +"\n"
+                +"1 error"
+             );
+        }
+        
+    }
+    
     @Test
     public void bean_should_be_bind_by_name()
     {

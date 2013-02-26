@@ -13,9 +13,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import org.apache.commons.collections.CollectionUtils;
 import org.nuunframework.kernel.KernelException;
 import org.nuunframework.kernel.annotations.Ignore;
+import org.nuunframework.kernel.commons.specification.Specification;
 import org.reflections.ReflectionUtils;
 import org.reflections.Reflections;
 import org.reflections.Store;
@@ -26,6 +26,8 @@ import org.reflections.scanners.TypesScanner;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 import org.reflections.util.FilterBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
@@ -33,6 +35,8 @@ import com.google.common.collect.Multimap;
 
 class ClasspathScannerInternal implements ClasspathScanner
 {
+
+    Logger                     logger = LoggerFactory.getLogger(ClasspathScannerInternal.class);
 
     private final List<String> packageRoots;
     private final boolean      reachAbstractClass;
@@ -70,9 +74,9 @@ class ClasspathScannerInternal implements ClasspathScanner
         Set<URL> computeUrls = computeUrls();
         Reflections reflections = new Reflections(configurationBuilder.addUrls(computeUrls).setScanners(new TypeAnnotationsScanner()));
 
-//        Multimap<String, String> multimap = reflections.getStore().get(TypeAnnotationsScanner.class);
-//        Collection<String> names = multimap.get(annotationType.getName());
-//        Collection<Class<?>> typesAnnotatedWith = toClasses2(names);
+        // Multimap<String, String> multimap = reflections.getStore().get(TypeAnnotationsScanner.class);
+        // Collection<String> names = multimap.get(annotationType.getName());
+        // Collection<Class<?>> typesAnnotatedWith = toClasses2(names);
         Collection<Class<?>> typesAnnotatedWith = reflections.getTypesAnnotatedWith(annotationType);
 
         if (typesAnnotatedWith == null)
@@ -86,6 +90,8 @@ class ClasspathScannerInternal implements ClasspathScanner
     static class IgnorePredicate implements Predicate<Class<?>>
     {
 
+        Logger                logger = LoggerFactory.getLogger(ClasspathScannerInternal.IgnorePredicate.class);
+
         private final boolean reachAbstractClass;
 
         public IgnorePredicate(boolean reachAbstractClass)
@@ -96,6 +102,9 @@ class ClasspathScannerInternal implements ClasspathScanner
         @Override
         public boolean apply(Class<?> clazz)
         {
+
+            logger.trace("Checking {} for Ignore", clazz.getName());
+
             boolean toKeep = true;
 
             if ((Modifier.isAbstract(clazz.getModifiers()) && !reachAbstractClass) && (!clazz.isInterface()))
@@ -105,9 +114,14 @@ class ClasspathScannerInternal implements ClasspathScanner
 
             for (Annotation annotation : clazz.getAnnotations())
             {
-                if (annotation.annotationType().equals(Ignore.class) || annotation.annotationType().getName().endsWith(".Ignore"))
+                logger.trace("Checking annotation {} for Ignore", annotation.annotationType().getName());
+                if (annotation.annotationType().equals(Ignore.class) || annotation.annotationType().getName().endsWith("Ignore"))
                 {
                     toKeep = false;
+                }
+                logger.trace("Result tokeep = {}.", toKeep);
+                if (!toKeep)
+                {
                     break;
                 }
             }
@@ -117,7 +131,7 @@ class ClasspathScannerInternal implements ClasspathScanner
 
     private Collection<Class<?>> postTreatment(Collection<Class<?>> set)
     {
-        
+
         // Sanity Check : throw a KernelException if one of the returned classes are null
         for (Class<?> class1 : set)
         {
@@ -126,7 +140,7 @@ class ClasspathScannerInternal implements ClasspathScanner
                 throw new KernelException("Scanned classes results can not be null. Please check Integrity of the classes.");
             }
         }
-        
+
         Collection<Class<?>> filtered = Collections2.filter(set, new IgnorePredicate(reachAbstractClass));
 
         return filtered;
@@ -203,6 +217,46 @@ class ClasspathScannerInternal implements ClasspathScanner
         }
 
         return (Collection) postTreatment((Collection) types);
+
+    }
+
+    @SuppressWarnings({
+            "unchecked", "rawtypes"
+    })
+    @Override
+    public Collection<Class<?>> scanClasspathForSpecification(Specification<Class<?>> specification)
+    {
+        Reflections reflections = new Reflections(configurationBuilder().addUrls(computeUrls()).setScanners(new TypesScanner()));
+
+        Store store = reflections.getStore();
+
+        Multimap<String, String> multimap = store.get(TypesScanner.class);
+
+        Collection<String> collectionOfString = multimap.keySet();
+
+        Collection<Class<?>> types = null;
+        Collection<Class<?>> filteredTypes = new HashSet<Class<?>>();
+
+        // Convert String to classes
+        if (collectionOfString.size() > 0)
+        {
+            types = toClasses(collectionOfString);
+        }
+        else
+        {
+            types = Collections.emptySet();
+        }
+
+        // Filter via specification
+        for (Class<?> candidate : types)
+        {
+            if (specification.isSatisfiedBy(candidate))
+            {
+                filteredTypes.add(candidate);
+            }
+        }
+
+        return (Collection) postTreatment((Collection) filteredTypes);
 
     }
 
@@ -303,17 +357,17 @@ class ClasspathScannerInternal implements ClasspathScanner
     {
         ConfigurationBuilder cb = new ConfigurationBuilder();
         FilterBuilder fb = new FilterBuilder();
-        
+
         for (String packageRoot : packageRoots)
         {
-            fb.include(prefix(packageRoot) );
+            fb.include(prefix(packageRoot));
         }
-        
+
         cb.filterInputsBy(fb);
-        
+
         return cb;
     }
-    
+
     private Set<URL> computeUrls()
     {
         if (urls == null)
@@ -326,7 +380,7 @@ class ClasspathScannerInternal implements ClasspathScanner
             }
 
             urls.addAll(ClasspathHelper.forJavaClassPath());
-//            urls.addAll(ClasspathHelper.forClassLoader(ClasspathHelper.classLoaders()));
+            // urls.addAll(ClasspathHelper.forClassLoader(ClasspathHelper.classLoaders()));
         }
 
         return urls;
@@ -335,7 +389,7 @@ class ClasspathScannerInternal implements ClasspathScanner
     private <T> Collection<Class<? extends T>> toClasses2(Collection<String> names)
     {
         Collection classes = new HashSet();
-        
+
         for (String name : names)
         {
             try
@@ -347,9 +401,10 @@ class ClasspathScannerInternal implements ClasspathScanner
                 e.printStackTrace();
             }
         }
-        
+
         return classes;
     }
+
     private <T> Collection<Class<? extends T>> toClasses(Collection<String> names)
     {
         return ReflectionUtils.<T> forNames(names, this.getClass().getClassLoader());

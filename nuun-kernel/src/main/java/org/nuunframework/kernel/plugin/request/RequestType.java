@@ -34,6 +34,10 @@ public enum RequestType
      * Request classes based on type of parent class
      */
     SUBTYPE_OF_BY_REGEX_MATCH, 
+    /**
+     * Selection of the class is made via the Specification<Class> given.
+     */
+    VIA_SPECIFICATION, 
     
     /**
      * return resources

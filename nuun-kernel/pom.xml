@@ -1,6 +1,7 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	
+
 	<parent>
 		<groupId>org.sonatype.oss</groupId>
 		<artifactId>oss-parent</artifactId>
@@ -13,7 +14,7 @@
 	<packaging>jar</packaging>
 
 	<name>nuun-kernel</name>
-	
+
 	<description>
 		Nuun Kernel is a software kernel for framework creation. It brings a powerful plugin design plus 
 		a JSR 330 compliant injection mechanism backed by Guice.
@@ -27,9 +28,9 @@
 		  - Log plugin : a Log handler that inject the good Log implementation 
 		 
 	</description>
-	
+
 	<inceptionYear>2012</inceptionYear>
-	
+
 	<licenses>
 		<license>
 			<name>LGPL 3.0</name>
@@ -51,12 +52,16 @@
 		<!-- ============== TODO UP TO CORE ======================= -->
 		<!-- ========================================================== -->
 
-		<dependency>
+<!-- 		<dependency>
 			<groupId>com.google.inject</groupId>
 			<artifactId>guice</artifactId>
 			<version>3.0</version>
+		</dependency> -->
+		<dependency>
+			<groupId>org.sonatype.sisu</groupId>
+			<artifactId>sisu-guice</artifactId>
+			<version>3.1.3</version>
 		</dependency>
-
 		<dependency>
 			<groupId>javax.inject</groupId>
 			<artifactId>javax.inject</artifactId>
@@ -142,6 +147,7 @@
 		</dependency>
 		<!-- <dependency> <groupId>com.google.inject.extensions</groupId> <artifactId>guice-multibindings</artifactId> 
 			<version>3.0</version> </dependency> -->
+
 	</dependencies>
 
 	<build>
@@ -159,23 +165,23 @@
 				</includes>
 			</resource>
 		</resources>
-                <plugins>
-		  <plugin>
-		    <groupId>org.apache.maven.plugins</groupId>
-		    <artifactId>maven-release-plugin</artifactId>
-		    <version>2.2.1</version>
-		    <executions>
-		      <execution>
-			<id>default</id>
-			<goals>
-			  <goal>perform</goal>
-			</goals>
-			<configuration>
-			  <pomFileName>nuun-kernel/pom.xml</pomFileName>
-			</configuration>
-		      </execution>
-		    </executions>
-		  </plugin>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-release-plugin</artifactId>
+				<version>2.2.1</version>
+				<executions>
+					<execution>
+						<id>default</id>
+						<goals>
+							<goal>perform</goal>
+						</goals>
+						<configuration>
+							<pomFileName>nuun-kernel/pom.xml</pomFileName>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
 	</build>
 
@@ -195,6 +201,7 @@
 			<organizationUrl>www.kametic.com</organizationUrl>
 			<roles>
 				<role>Project Owner</role>
+				<role>Architect</role>
 				<role>Developer</role>
 			</roles>
 		</developer>

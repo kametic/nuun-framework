@@ -7,8 +7,9 @@ public class AndSpecification<T> extends CompositeSpecification<T> {
      * @param lhs
      * @param rhs
      */
-    public AndSpecification(Specification<? super T> lhs, Specification<? super T> rhs) {
-        super(lhs, rhs);
+    @SuppressWarnings("unchecked")
+    public AndSpecification(Specification<? super T>... specificationParticipants) {
+        super(specificationParticipants);
     }
 
     /**
@@ -16,7 +17,14 @@ public class AndSpecification<T> extends CompositeSpecification<T> {
      */
     @Override
     public boolean isSatisfiedBy(T candidate) {
-        return getLhs().isSatisfiedBy(candidate) && getRhs().isSatisfiedBy(candidate);
+        boolean result = true;
+        
+        for(Specification<? super T> participant : this.childSpecifications)
+        {
+            result &= participant.isSatisfiedBy(candidate);
+        }
+        
+        return result;
     }
 
 }

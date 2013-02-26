@@ -49,10 +49,16 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
+			<groupId>org.sonatype.sisu.inject</groupId>
+			<artifactId>guice-servlet</artifactId>
+			<version>3.1.3</version>
+		</dependency>
+<!-- 		<dependency>
 			<groupId>com.google.inject.extensions</groupId>
 			<artifactId>guice-servlet</artifactId>
 			<version>3.0</version>
-		</dependency>
+		</dependency> -->
+
 		<dependency>
 			<groupId>javax.servlet</groupId>
 			<artifactId>servlet-api</artifactId>
@@ -94,6 +100,7 @@
 			<organizationUrl>www.kametic.com</organizationUrl>
 			<roles>
 				<role>Project Owner</role>
+				<role>Architect</role>
 				<role>Developer</role>
 			</roles>
 		</developer>

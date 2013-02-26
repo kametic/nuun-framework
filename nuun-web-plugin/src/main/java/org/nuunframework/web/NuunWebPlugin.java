@@ -47,15 +47,15 @@ public class NuunWebPlugin extends AbstractPlugin
         return  this.additionalClasspath != null ? this.additionalClasspath : super.computeAdditionalClasspathScan(containerContext) ;
     }
 
-    @Override
-    public Object dependencyInjectionDef()
-    {
-        if (module == null)
-        {
-            module = new WorkAroundModule();
-        }
-
-        return module;
-    }
+//    @Override
+//    public Object dependencyInjectionDef()
+//    {
+//        if (module == null)
+//        {
+//            module = new WorkAroundModule();
+//        }
+//
+//        return module;
+//    }
 
 }

@@ -18,10 +18,12 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.ServiceLoader;
 import java.util.Set;
 
 import org.apache.commons.collections.iterators.ArrayIterator;
+import org.nuunframework.kernel.commons.graph.Graph;
 import org.nuunframework.kernel.context.Context;
 import org.nuunframework.kernel.context.InitContext;
 import org.nuunframework.kernel.context.InitContextInternal;
@@ -67,6 +69,7 @@ public final class Kernel
     private Context                                 context;
     private Collection<DependencyInjectionProvider> dependencyInjectionProviders;
     private Object                                  containerContext;
+	private ArrayList<Plugin>                       orderedPlugins;
 
     private Kernel(String... keyValues)
     {
@@ -141,12 +144,12 @@ public final class Kernel
             // All bindings will be computed
             mainInjector = Guice.createInjector(new InternalKernelGuiceModule(initContext));
             context = mainInjector.getInstance(Context.class);
-
+            
             // 1) inject plugins via injector
-            // 2) inject context via injecto
+            // 2) inject context via injector
             // 2) start them
 
-            for (Plugin plugin : plugins.values())
+            for (Plugin plugin : orderedPlugins)
             {
                 mainInjector.injectMembers(plugin);
 
@@ -393,11 +396,11 @@ public final class Kernel
 
         // INITIALISATION
 //        ArrayList<Plugin> orderedPlugins = sortPlugins (plugins.values());
-        ArrayList<Plugin> orderedPlugins = new ArrayList<Plugin> (plugins.values());
+        ArrayList<Plugin> unOrderedPlugins = new ArrayList<Plugin> (plugins.values());
         
         
-        logger.debug("unordered plugins: " + orderedPlugins);
-        Collections.sort(orderedPlugins, new PluginComparator());
+        logger.debug("unordered plugins: " + unOrderedPlugins);
+        orderedPlugins = sortPlugins(unOrderedPlugins); 
         logger.debug("ordered plugins: " + orderedPlugins);
         for (Plugin plugin : orderedPlugins)
         {
@@ -413,7 +416,7 @@ public final class Kernel
         }
 
 
-        for (Plugin plugin : plugins.values())
+        for (Plugin plugin : orderedPlugins)
         {
             // Configure module
             Object pluginDependencyInjectionDef = plugin.dependencyInjectionDef();
@@ -448,57 +451,52 @@ public final class Kernel
         }
     }
     
-    private ArrayList<Plugin> sortPlugins(Collection<Plugin> values)
+    private ArrayList<Plugin> sortPlugins(ArrayList<Plugin> unsortedPlugins)
     {
-        PluginComparator comparator = new PluginComparator();
+        Graph graph = new Graph(unsortedPlugins.size());  	
         ArrayList<Plugin> sorted = new ArrayList<Plugin>();
+        Map<Integer, Plugin> idxPlug = new HashMap<Integer, Plugin>();
+        Map<Character, Plugin> charPlug = new HashMap<Character, Plugin>();
+        Map<Plugin, Integer> plugIdx = new HashMap<Plugin, Integer>();
+        Map<Class<? extends Plugin >, Integer> classPlugIdx = new HashMap<Class<? extends Plugin >, Integer>();
         
-        for (Plugin unsortedPlugin : values)
+    	// Add vertices
+        for (int i = 0 ; i< unsortedPlugins.size() ; i ++)
         {
-            for (int i = 0 ; i< sorted.size() ; i ++)
-            {
-                Plugin sortedPlugin = sorted.get(i);
-                if ( comparator.compare( sortedPlugin , unsortedPlugin )  < 0 )
-                {
-                    
-                }
-            }
+        	char c = ("" + i).charAt(0);
+        	Plugin unsortedPlugin = unsortedPlugins.get(i);
+        	Integer pluginIndex = graph.addVertex( c  );
+        	
+        	charPlug.put(c, unsortedPlugin);
+        	idxPlug.put(pluginIndex, unsortedPlugin);
+        	plugIdx.put(unsortedPlugin, pluginIndex);
+        	classPlugIdx.put(unsortedPlugin.getClass(), pluginIndex);
         }
         
+        // add edges
+        for ( Entry<Integer, Plugin> entry : idxPlug.entrySet())
+        {
+        	Plugin source = entry.getValue();
+        	
+        	for (  Class<? extends Plugin > dependencyClass  : source.pluginDependenciesRequired())
+        	{
+        		int start = classPlugIdx.get(dependencyClass);
+				int end = plugIdx.get(source);
+				graph.addEdge(start, end );
+        	}
+        }
+        
+        // launch the algo
+        char[] topologicalSort = graph.topologicalSort();
+        
+        for ( Character c : topologicalSort) 
+        {
+			sorted.add(charPlug.get(c));
+		}
         
         return sorted;
     }
 
-    static class PluginComparator implements Comparator<Plugin>
-    {
-        @Override
-        public int compare(Plugin plugin0, Plugin plugin1)
-        {
-            
-            Collection<Class<? extends Plugin>> plugins0 = plugin0.pluginDependenciesRequired();
-            Collection<Class<? extends Plugin>> plugins1 = plugin1.pluginDependenciesRequired();
-            
-            if ( plugins0 != null && plugins1 != null &&  plugins0.isEmpty() &&  plugins1.isEmpty() )
-            {
-                return 0;
-            }
-            else if (plugins0 != null  && plugins0.contains(plugin1.getClass())  &&  plugins1 != null  && plugins1.contains(plugin0.getClass()) )
-            {
-                throw new KernelException("Direct cyclic dependency between plugins : {} and {}.", plugin0.name() , plugin1.name());
-            }
-            else if (plugins0 != null  && plugins0.contains(plugin1.getClass())  )
-            {
-                return 1;
-            }
-            else if (plugins1 != null  && plugins1.contains(plugin0.getClass())  )
-            {
-                return -1;
-            }
-//            throw new KernelException("Direct cyclic dependency between plugins : {} and {}.", plugin0.name() , plugin1.name());
-            return 0;
-            
-        }
-    }
 
     private Collection<Plugin> filterPlugins(Collection<Plugin> collection, Collection<Class<? extends Plugin>> pluginDependenciesRequired)
     {

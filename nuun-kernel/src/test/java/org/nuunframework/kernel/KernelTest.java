@@ -201,11 +201,12 @@ public class KernelTest
             fail("Pojo1 should not be injector");
         } catch (ConfigurationException ce)
         {
-            assertThat(ce.getMessage()).isEqualTo("Guice configuration errors:\n"
-                +"\n"
-                +"1) Explicit bindings are required and org.nuunframework.kernel.plugin.dummy4.Pojo1 is not explicitly bound.\n"
-                + "  while locating org.nuunframework.kernel.plugin.dummy4.Pojo1\n"
-                +"\n"
+        	String nl = System.getProperty("line.separator");
+        	assertThat(ce.getMessage()).isEqualTo("Guice configuration errors:"+nl
+                +nl
+                +"1) Explicit bindings are required and org.nuunframework.kernel.plugin.dummy4.Pojo1 is not explicitly bound."+nl
+                + "  while locating org.nuunframework.kernel.plugin.dummy4.Pojo1"+nl
+                +nl
                 +"1 error"
              );
         }

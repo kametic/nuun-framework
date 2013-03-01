@@ -137,6 +137,11 @@ public class DummyPlugin extends AbstractPlugin
         klasses.addAll(cAnnotations1);
 
         module = new DummyModule(klasses);
+        
+        assertThat( initContext.pluginsRequired() ).isNotNull();
+        assertThat( initContext.pluginsRequired() ).hasSize(1);
+        assertThat( initContext.pluginsRequired().iterator().next().getClass() ).isEqualTo(DummyPlugin2.class);
+        
 
     }
     

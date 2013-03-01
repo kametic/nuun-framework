@@ -125,7 +125,7 @@ public abstract class AbstractPlugin implements Plugin
             @Override
             public boolean isSatisfiedBy(Class<?> candidate)
             {
-                return candidate.getAnnotation(klass) != null;
+                return candidate != null && candidate.getAnnotation(klass) != null;
             }
         };
     }
@@ -137,7 +137,7 @@ public abstract class AbstractPlugin implements Plugin
             @Override
             public boolean isSatisfiedBy(Class<?> candidate)
             {
-                if (klass.isInterface())
+                if (candidate != null && klass.isInterface())
                 {
                     for (Class<?> i : candidate.getInterfaces())
                     {

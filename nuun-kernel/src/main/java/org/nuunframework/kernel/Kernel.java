@@ -4,11 +4,15 @@
 package org.nuunframework.kernel;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -19,6 +23,7 @@ import java.util.Set;
 
 import org.apache.commons.collections.iterators.ArrayIterator;
 import org.nuunframework.kernel.context.Context;
+import org.nuunframework.kernel.context.InitContext;
 import org.nuunframework.kernel.context.InitContextInternal;
 import org.nuunframework.kernel.internal.InternalKernelGuiceModule;
 import org.nuunframework.kernel.plugin.Plugin;
@@ -49,7 +54,7 @@ public final class Kernel
     private final String                            NUUN_PROPERTIES_PREFIX = "nuun-";
 
     private ServiceLoader<Plugin>                   pluginLoader;
-    private boolean                                 spiPluginEnabled       = true;                
+    private boolean                                 spiPluginEnabled       = true;
     private Map<String, Plugin>                     plugins                = Collections.synchronizedMap(new HashMap<String, Plugin>()); //
     private Map<String, Plugin>                     pluginsToAdd           = Collections.synchronizedMap(new HashMap<String, Plugin>()); //
 
@@ -192,14 +197,14 @@ public final class Kernel
         if (spiPluginEnabled)
         {
             pluginLoader = ServiceLoader.load(Plugin.class, Thread.currentThread().getContextClassLoader());
-            
+
             // plugin from service loader
             Iterator<Plugin> iterator2 = pluginLoader.iterator();
-            iterators = Arrays.asList(iterator2, iterator1);            
+            iterators = Arrays.asList(iterator2, iterator1);
         }
         else
         {
-            iterators = Arrays.asList(iterator1);            
+            iterators = Arrays.asList(iterator1);
         }
 
         List<Class<? extends Plugin>> pluginClasses = new ArrayList<Class<? extends Plugin>>();
@@ -258,12 +263,11 @@ public final class Kernel
         for (Plugin plugin : plugins.values())
         {
             Collection<Class<? extends Plugin>> pluginDependenciesRequired = plugin.pluginDependenciesRequired();
-            
-            if ( pluginDependenciesRequired != null &&  !pluginDependenciesRequired.isEmpty() && !pluginClasses.containsAll(pluginDependenciesRequired))
+
+            if (pluginDependenciesRequired != null && !pluginDependenciesRequired.isEmpty() && !pluginClasses.containsAll(pluginDependenciesRequired))
             {
                 logger.error("plugin {} misses the following plugin/s as dependency/ies {}", plugin.name(), pluginDependenciesRequired.toString());
-                throw new KernelException("plugin %s misses the following plugin/s as dependency/ies %s", plugin.name(), pluginDependenciesRequired
-                        .toString());
+                throw new KernelException("plugin %s misses the following plugin/s as dependency/ies %s", plugin.name(), pluginDependenciesRequired.toString());
 
             }
         }
@@ -388,10 +392,24 @@ public final class Kernel
         this.initContext.executeRequests();
 
         // INITIALISATION
-        for (Plugin plugin : plugins.values())
+//        ArrayList<Plugin> orderedPlugins = sortPlugins (plugins.values());
+        ArrayList<Plugin> orderedPlugins = new ArrayList<Plugin> (plugins.values());
+        
+        
+        logger.debug("unordered plugins: " + orderedPlugins);
+        Collections.sort(orderedPlugins, new PluginComparator());
+        logger.debug("ordered plugins: " + orderedPlugins);
+        for (Plugin plugin : orderedPlugins)
         {
+            InitContext actualInitContext = this.initContext;
+            if ( plugin.pluginDependenciesRequired() != null && !plugin.pluginDependenciesRequired().isEmpty() )
+            {
+                Collection<Plugin> selectedPlugins = filterPlugins(plugins.values() , plugin.pluginDependenciesRequired() );
+                actualInitContext = proxyfy(initContext, selectedPlugins);
+            }
+            
             logger.info("initializing Plugin {}.", plugin.name());
-            plugin.init(initContext);
+            plugin.init(actualInitContext);
         }
 
 
@@ -428,7 +446,99 @@ public final class Kernel
                 }
             }
         }
+    }
+    
+    private ArrayList<Plugin> sortPlugins(Collection<Plugin> values)
+    {
+        PluginComparator comparator = new PluginComparator();
+        ArrayList<Plugin> sorted = new ArrayList<Plugin>();
+        
+        for (Plugin unsortedPlugin : values)
+        {
+            for (int i = 0 ; i< sorted.size() ; i ++)
+            {
+                Plugin sortedPlugin = sorted.get(i);
+                if ( comparator.compare( sortedPlugin , unsortedPlugin )  < 0 )
+                {
+                    
+                }
+            }
+        }
+        
+        
+        return sorted;
+    }
 
+    static class PluginComparator implements Comparator<Plugin>
+    {
+        @Override
+        public int compare(Plugin plugin0, Plugin plugin1)
+        {
+            
+            Collection<Class<? extends Plugin>> plugins0 = plugin0.pluginDependenciesRequired();
+            Collection<Class<? extends Plugin>> plugins1 = plugin1.pluginDependenciesRequired();
+            
+            if ( plugins0 != null && plugins1 != null &&  plugins0.isEmpty() &&  plugins1.isEmpty() )
+            {
+                return 0;
+            }
+            else if (plugins0 != null  && plugins0.contains(plugin1.getClass())  &&  plugins1 != null  && plugins1.contains(plugin0.getClass()) )
+            {
+                throw new KernelException("Direct cyclic dependency between plugins : {} and {}.", plugin0.name() , plugin1.name());
+            }
+            else if (plugins0 != null  && plugins0.contains(plugin1.getClass())  )
+            {
+                return 1;
+            }
+            else if (plugins1 != null  && plugins1.contains(plugin0.getClass())  )
+            {
+                return -1;
+            }
+//            throw new KernelException("Direct cyclic dependency between plugins : {} and {}.", plugin0.name() , plugin1.name());
+            return 0;
+            
+        }
+    }
+
+    private Collection<Plugin> filterPlugins(Collection<Plugin> collection, Collection<Class<? extends Plugin>> pluginDependenciesRequired)
+    {
+        Set<Plugin> filteredSet = new HashSet<Plugin>();
+        
+        for (Plugin plugin : collection)
+        {
+            if (pluginDependenciesRequired.contains(plugin.getClass()))
+            {
+                filteredSet.add(plugin);
+            }
+        }
+        
+        return filteredSet;
+    }
+
+    private InitContext proxyfy(final InitContext initContext, final Collection<Plugin> plugins)
+    {
+        return (InitContext) Proxy.newProxyInstance( //
+                initContext.getClass().getClassLoader(), //
+                new Class[] {
+                    InitContext.class
+                }, //
+                new InvocationHandler()
+                {
+
+                    @Override
+                    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable
+                    {
+                        if (!method.getName().equals("pluginsRequired"))
+                        {
+                            return method.invoke(initContext, args);
+                        }
+                        else
+                        {
+                            return plugins;
+                        }
+
+                    }
+                });
     }
 
     void createDependencyInjectionProvidersMap(Collection<Class<?>> dependencyInjectionProvidersClasses)
@@ -482,9 +592,11 @@ public final class Kernel
     public static interface KernelBuilderWithPlugins extends KernelBuilder
     {
         KernelBuilderWithContainerContext withPlugins(Class<? extends Plugin>... klass);
+
         KernelBuilderWithContainerContext withPlugins(Plugin... plugins);
+
         KernelBuilderWithContainerContext withoutPluginsLoader();
-        
+
     }
 
     private static class KernelBuilderImpl implements KernelBuilderWithPluginAndContext
@@ -536,7 +648,7 @@ public final class Kernel
             kernel.addPlugins(plugin);
             return (KernelBuilderWithContainerContext) this;
         }
-        
+
         @Override
         public KernelBuilderWithContainerContext withoutPluginsLoader()
         {
@@ -572,20 +684,18 @@ public final class Kernel
         this.containerContext = containerContext;
 
     }
-    
-    void spiPluginEnabled ()
+
+    void spiPluginEnabled()
     {
         this.spiPluginEnabled = true;
     }
 
-    void spiPluginDisabled ()
+    void spiPluginDisabled()
     {
         this.spiPluginEnabled = false;
     }
-    
 
     /**
-     * 
      * @param klass
      */
     void addPlugins(Class<? extends Plugin>... klass)
@@ -609,22 +719,20 @@ public final class Kernel
     {
         for (Plugin plugin : plugins)
         {
-             addPlugin(plugin);
+            addPlugin(plugin);
         }
     }
-    
+
     void addPlugin(Plugin plugin)
     {
         if (!this.started)
         {
             pluginsToAdd.put(plugin.name(), plugin);
         }
-        else 
+        else
         {
             throw new KernelException("Plugin %s can not be added. Kernel already is started", plugin.name());
         }
     }
-    
-    
 
 }

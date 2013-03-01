@@ -13,6 +13,7 @@ import java.util.Set;
 
 import org.nuunframework.kernel.annotations.KernelModule;
 import org.nuunframework.kernel.commons.specification.Specification;
+import org.nuunframework.kernel.plugin.Plugin;
 import org.nuunframework.kernel.scanner.ClasspathScanner;
 import org.nuunframework.kernel.scanner.ClasspathScannerFactory;
 import org.slf4j.Logger;
@@ -467,6 +468,12 @@ public class InitContextInternal implements InitContext
     public Collection<String> propertiesFiles()
     {
         return (Collection) Collections.unmodifiableCollection(this.propertiesFiles);
+    }
+    
+    @Override
+    public Collection<? extends Plugin> pluginsRequired()
+    {
+        return Collections.emptySet();
     }
 
 }

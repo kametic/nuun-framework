@@ -10,7 +10,9 @@ import java.util.Map;
 
 import org.nuunframework.kernel.context.InitContext;
 import org.nuunframework.kernel.plugin.AbstractPlugin;
+import org.nuunframework.kernel.plugin.Plugin;
 import org.nuunframework.kernel.plugin.request.ClasspathScanRequest;
+import org.nuunframework.kernel.plugins.configuration.NuunConfigurationPlugin;
 
 /**
  * @author Epo Jemba
@@ -54,13 +56,14 @@ public class DummyPlugin3 extends AbstractPlugin
         
     }
 
-    // /* (non-Javadoc)
-    // * @see org.nuunframework.kernel.plugin.AbstractPlugin#pluginsRequired()
-    // */
-    // @Override
-    // public Collection<Class<? extends Plugin>> requiredPlugins()
-    // {
-    // return (Collection) convertToCollection(DummyPlugin.class);
-    // }
+     /* (non-Javadoc)
+     * @see org.nuunframework.kernel.plugin.AbstractPlugin#pluginsRequired()
+     */
+     @SuppressWarnings("unchecked")
+    @Override
+     public Collection<Class<? extends Plugin>> pluginDependenciesRequired()
+     {
+         return (Collection) collectionOf(NuunConfigurationPlugin.class);
+     }
 
 }

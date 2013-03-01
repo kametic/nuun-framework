@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.nuunframework.kernel.commons.specification.Specification;
+import org.nuunframework.kernel.plugin.Plugin;
 
 import com.google.inject.Module;
 
@@ -43,6 +44,13 @@ public interface InitContext
     public abstract Map<String, Collection<String>> mapResourcesByRegex();
 
     public abstract Map<Specification, Collection<Class<?>>> scannedTypesBySpecification();    
+    
+    /**
+     * Return instances of the Plugin asked by the plugin
+     * 
+     * @return the instances of the plugin declared required by the method Plugin.pluginDependenciesRequired()
+     */
+    public abstract Collection<? extends Plugin> pluginsRequired ();
     
 
 }

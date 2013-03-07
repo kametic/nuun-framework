@@ -415,10 +415,11 @@ public final class Kernel
             plugin.init(actualInitContext);
         }
 
-
+        // After been initialized plugin can give they module
+        // Configure module //
+        
         for (Plugin plugin : orderedPlugins)
         {
-            // Configure module
             Object pluginDependencyInjectionDef = plugin.dependencyInjectionDef();
             if (pluginDependencyInjectionDef != null)
             {
@@ -589,11 +590,11 @@ public final class Kernel
 
     public static interface KernelBuilderWithPlugins extends KernelBuilder
     {
-        KernelBuilderWithContainerContext withPlugins(Class<? extends Plugin>... klass);
+        KernelBuilderWithPluginAndContext withPlugins(Class<? extends Plugin>... klass);
 
-        KernelBuilderWithContainerContext withPlugins(Plugin... plugins);
+        KernelBuilderWithPluginAndContext withPlugins(Plugin... plugins);
 
-        KernelBuilderWithContainerContext withoutPluginsLoader();
+        KernelBuilderWithPluginAndContext withoutSpiPluginsLoader();
 
     }
 
@@ -635,23 +636,23 @@ public final class Kernel
 
         }
 
-        public KernelBuilderWithContainerContext withPlugins(java.lang.Class<? extends Plugin>... klass)
+        public KernelBuilderWithPluginAndContext withPlugins(java.lang.Class<? extends Plugin>... klass)
         {
             kernel.addPlugins(klass);
-            return (KernelBuilderWithContainerContext) this;
+            return  this;
         }
 
-        public KernelBuilderWithContainerContext withPlugins(Plugin... plugin)
+        public KernelBuilderWithPluginAndContext withPlugins(Plugin... plugin)
         {
             kernel.addPlugins(plugin);
-            return (KernelBuilderWithContainerContext) this;
+            return this;
         }
 
         @Override
-        public KernelBuilderWithContainerContext withoutPluginsLoader()
+        public KernelBuilderWithPluginAndContext withoutSpiPluginsLoader()
         {
             kernel.spiPluginDisabled();
-            return (KernelBuilderWithContainerContext) this;
+            return  this;
         }
 
     }

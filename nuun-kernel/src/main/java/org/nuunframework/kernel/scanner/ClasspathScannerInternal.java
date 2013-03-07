@@ -150,9 +150,9 @@ class ClasspathScannerInternal implements ClasspathScanner
     @SuppressWarnings({
             "unchecked", "rawtypes"
     })
-    public java.util.Collection<java.lang.Class<?>> scanClasspathForAnnotationRegex(String annotationTypeName)
+    public java.util.Collection<java.lang.Class<?>> scanClasspathForAnnotationRegex(String annotationTypeRegex)
     {
-        Reflections reflections = new Reflections(configurationBuilder().addUrls(computeUrls()).setScanners(new NameAnnotationScanner(annotationTypeName)));
+        Reflections reflections = new Reflections(configurationBuilder().addUrls(computeUrls()).setScanners(new NameAnnotationScanner(annotationTypeRegex)));
 
         Store store = reflections.getStore();
 
@@ -161,7 +161,7 @@ class ClasspathScannerInternal implements ClasspathScanner
         String key = null;
         for (String loopKey : multimap.keySet())
         {
-            if (loopKey.matches(annotationTypeName))
+            if (loopKey.matches(annotationTypeRegex))
             {
                 key = loopKey;
             }

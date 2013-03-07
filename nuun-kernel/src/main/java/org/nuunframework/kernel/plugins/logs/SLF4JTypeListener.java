@@ -35,7 +35,6 @@ public class SLF4JTypeListener implements TypeListener
         {
             if ( AssertUtils.hasAnnotationDeep(anno.annotationType(), annoClass) )
             {
-                System.err.println(">> " + anno.annotationType());
                 return true;
             }
         }

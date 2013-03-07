@@ -54,6 +54,11 @@ public class DummyPlugin3 extends AbstractPlugin
         assertThat( mapResourcesByRegex.get(resourcesRegex2) ).contains("internal/sample1-applicationContext-business.xml");
         assertThat( mapResourcesByRegex.get(resourcesRegex2) ).contains("internal/sample2-applicationContext-persistence.xml");
         
+        NuunConfigurationPlugin confPlugin = (NuunConfigurationPlugin) initContext.pluginsRequired().iterator().next();
+        
+        assertThat(confPlugin.getConfiguration().getString("value1")).isEqualTo("lorem ipsum");
+        
+        
     }
 
      /* (non-Javadoc)

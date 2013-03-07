@@ -7,11 +7,11 @@ import org.reflections.scanners.AbstractScanner;
 class NameAnnotationScanner extends AbstractScanner
 {
     
-    private final String annotationName;
+    private final String annotationRegexName;
 
-    public NameAnnotationScanner(String annotationName)
+    public NameAnnotationScanner(String annotationRegexName)
     {
-        this.annotationName = annotationName;
+        this.annotationRegexName = annotationRegexName;
     }
 
     @SuppressWarnings("unchecked")
@@ -19,10 +19,10 @@ class NameAnnotationScanner extends AbstractScanner
     public void scan(Object cls)
     {
         final String className = getMetadataAdapter().getClassName(cls);
-
+        
         for (String annotationType : (List<String>) getMetadataAdapter().getClassAnnotationNames(cls))
         {
-            if (acceptResult(annotationType) ||   annotationType.endsWith(annotationName)  )
+            if (  annotationType.matches(annotationRegexName) )
             { 
                 getStore().put(annotationType, className);
             }

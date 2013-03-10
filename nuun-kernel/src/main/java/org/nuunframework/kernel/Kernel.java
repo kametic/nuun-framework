@@ -69,7 +69,9 @@ public final class Kernel
     private Context                                 context;
     private Collection<DependencyInjectionProvider> dependencyInjectionProviders;
     private Object                                  containerContext;
-	private ArrayList<Plugin>                       orderedPlugins;
+    private ArrayList<Plugin>                       orderedPlugins;
+    
+    private Collection<DependencyInjectionProvider> globalDependencyInjectionProviders;
 
     private Kernel(String... keyValues)
     {
@@ -143,8 +145,13 @@ public final class Kernel
         {
             // All bindings will be computed
             mainInjector = Guice.createInjector(new InternalKernelGuiceModule(initContext));
-            context = mainInjector.getInstance(Context.class);
+
+            // Here we can pass the mainInjector to the non guice modules
             
+            
+
+            context = mainInjector.getInstance(Context.class);
+
             // 1) inject plugins via injector
             // 2) inject context via injector
             // 2) start them
@@ -317,13 +324,13 @@ public final class Kernel
                             break;
                         case RESOURCES_REGEX_MATCH:
                             this.initContext.addResourcesRegexToScan((String) request.objectRequested);
-//                            this.initContext.addTypeClassToScan((Class<?>) request.objectRequested);
+                            // this.initContext.addTypeClassToScan((Class<?>) request.objectRequested);
                             break;
                         case TYPE_OF_BY_REGEX_MATCH:
                             this.initContext.addTypeRegexesToScan((String) request.objectRequested);
                             break;
                         case VIA_SPECIFICATION: // pas encore pluggé
-                            this.initContext.addSpecificationToScan( request.specification);
+                            this.initContext.addSpecificationToScan(request.specification);
                             break;
                         default:
                             logger.warn("{} is not a ClasspathScanRequestType a o_O", request.requestType);
@@ -351,7 +358,7 @@ public final class Kernel
                             this.initContext.addTypeRegexesToBind((String) request.requestedObject);
                             break;
                         case VIA_SPECIFICATION:
-                            this.initContext.addSpecificationToBind(request.specification , request.requestedScope);
+                            this.initContext.addSpecificationToBind(request.specification, request.requestedScope);
                             break;
                         default:
                             logger.warn("{} is not a BindingRequestType o_O !", request.requestType);
@@ -361,9 +368,8 @@ public final class Kernel
             }
         }
 
-//        initContext.setContainerContext(this.containerContext);
-        Collection<DependencyInjectionProvider> dependencyInjectionProviders = new HashSet<DependencyInjectionProvider>();
-        
+        globalDependencyInjectionProviders = new HashSet<DependencyInjectionProvider>();
+
         // INITIALISATION
         // We pass the container context object for plugin
         for (Plugin plugin : plugins.values())
@@ -377,47 +383,46 @@ public final class Kernel
                 {
                     logger.debug(url.toExternalForm());
                 }
-                logger.info("Adding from Plugin {} end. {} elements.", plugin.name() , "" + computeAdditionalClasspathScan.size());
+                logger.info("Adding from Plugin {} end. {} elements.", plugin.name(), "" + computeAdditionalClasspathScan.size());
                 initContext.addClasspathsToScan(computeAdditionalClasspathScan);
             }
             // Convert dependency manager classes to instances //
             DependencyInjectionProvider iocProvider = plugin.dependencyInjectionProvider();
-            if (iocProvider != null) 
+            if (iocProvider != null)
             {
-                dependencyInjectionProviders.add(iocProvider);
+                globalDependencyInjectionProviders.add(iocProvider);
             }
         }
 
-//        // We also want to scan DependencyInjectionProvider before the classpath scan
-//        initContext.addParentTypeClassToScan(DependencyInjectionProvider.class);
+        // // We also want to scan DependencyInjectionProvider before the classpath scan
+        // initContext.addParentTypeClassToScan(DependencyInjectionProvider.class);
 
         // We launch classpath scan and store results of requests
         this.initContext.executeRequests();
 
         // INITIALISATION
-//        ArrayList<Plugin> orderedPlugins = sortPlugins (plugins.values());
-        ArrayList<Plugin> unOrderedPlugins = new ArrayList<Plugin> (plugins.values());
-        
-        
-        logger.debug("unordered plugins: " + unOrderedPlugins);
-        orderedPlugins = sortPlugins(unOrderedPlugins); 
-        logger.debug("ordered plugins: " + orderedPlugins);
+        // ArrayList<Plugin> orderedPlugins = sortPlugins (plugins.values());
+        ArrayList<Plugin> unOrderedPlugins = new ArrayList<Plugin>(plugins.values());
+
+        logger.trace("unordered plugins: " + unOrderedPlugins);
+        orderedPlugins = sortPlugins(unOrderedPlugins);
+        logger.trace("ordered plugins: " + orderedPlugins);
         for (Plugin plugin : orderedPlugins)
         {
             InitContext actualInitContext = this.initContext;
-            if ( plugin.pluginDependenciesRequired() != null && !plugin.pluginDependenciesRequired().isEmpty() )
+            if (plugin.pluginDependenciesRequired() != null && !plugin.pluginDependenciesRequired().isEmpty())
             {
-                Collection<Plugin> selectedPlugins = filterPlugins(plugins.values() , plugin.pluginDependenciesRequired() );
+                Collection<Plugin> selectedPlugins = filterPlugins(plugins.values(), plugin.pluginDependenciesRequired());
                 actualInitContext = proxyfy(initContext, selectedPlugins);
             }
-            
+
             logger.info("initializing Plugin {}.", plugin.name());
             plugin.init(actualInitContext);
         }
 
         // After been initialized plugin can give they module
         // Configure module //
-        
+
         for (Plugin plugin : orderedPlugins)
         {
             Object pluginDependencyInjectionDef = plugin.dependencyInjectionDef();
@@ -430,7 +435,7 @@ public final class Kernel
                 else
                 {
                     DependencyInjectionProvider provider = null;
-                    providerLoop: for (DependencyInjectionProvider providerIt : dependencyInjectionProviders)
+                    providerLoop: for (DependencyInjectionProvider providerIt : globalDependencyInjectionProviders)
                     {
                         if (providerIt.canHandle(pluginDependencyInjectionDef.getClass()))
                         {
@@ -445,64 +450,65 @@ public final class Kernel
                     else
                     {
                         logger.error("Kernel did not recognize module {} of plugin {}", pluginDependencyInjectionDef, plugin.name());
-                        throw new KernelException("Kernel did not recognize module %s of plugin %s. Please provide a DependencyInjectionProvider.", pluginDependencyInjectionDef.toString(), plugin.name());
+                        throw new KernelException(
+                                "Kernel did not recognize module %s of plugin %s. Please provide a DependencyInjectionProvider.",
+                                pluginDependencyInjectionDef.toString(), plugin.name());
                     }
                 }
             }
         }
     }
-    
+
     private ArrayList<Plugin> sortPlugins(ArrayList<Plugin> unsortedPlugins)
     {
-        Graph graph = new Graph(unsortedPlugins.size());  	
+        Graph graph = new Graph(unsortedPlugins.size());
         ArrayList<Plugin> sorted = new ArrayList<Plugin>();
         Map<Integer, Plugin> idxPlug = new HashMap<Integer, Plugin>();
         Map<Character, Plugin> charPlug = new HashMap<Character, Plugin>();
         Map<Plugin, Integer> plugIdx = new HashMap<Plugin, Integer>();
-        Map<Class<? extends Plugin >, Integer> classPlugIdx = new HashMap<Class<? extends Plugin >, Integer>();
-        
-    	// Add vertices
-        for (int i = 0 ; i< unsortedPlugins.size() ; i ++)
+        Map<Class<? extends Plugin>, Integer> classPlugIdx = new HashMap<Class<? extends Plugin>, Integer>();
+
+        // Add vertices
+        for (int i = 0; i < unsortedPlugins.size(); i++)
         {
-        	char c = ("" + i).charAt(0);
-        	Plugin unsortedPlugin = unsortedPlugins.get(i);
-        	Integer pluginIndex = graph.addVertex( c  );
-        	
-        	charPlug.put(c, unsortedPlugin);
-        	idxPlug.put(pluginIndex, unsortedPlugin);
-        	plugIdx.put(unsortedPlugin, pluginIndex);
-        	classPlugIdx.put(unsortedPlugin.getClass(), pluginIndex);
+            char c = ("" + i).charAt(0);
+            Plugin unsortedPlugin = unsortedPlugins.get(i);
+            Integer pluginIndex = graph.addVertex(c);
+
+            charPlug.put(c, unsortedPlugin);
+            idxPlug.put(pluginIndex, unsortedPlugin);
+            plugIdx.put(unsortedPlugin, pluginIndex);
+            classPlugIdx.put(unsortedPlugin.getClass(), pluginIndex);
         }
-        
+
         // add edges
-        for ( Entry<Integer, Plugin> entry : idxPlug.entrySet())
+        for (Entry<Integer, Plugin> entry : idxPlug.entrySet())
         {
-        	Plugin source = entry.getValue();
-        	
-        	for (  Class<? extends Plugin > dependencyClass  : source.pluginDependenciesRequired())
-        	{
-        		int start = classPlugIdx.get(dependencyClass);
-				int end = plugIdx.get(source);
-				graph.addEdge(start, end );
-        	}
+            Plugin source = entry.getValue();
+
+            for (Class<? extends Plugin> dependencyClass : source.pluginDependenciesRequired())
+            {
+                int start = classPlugIdx.get(dependencyClass);
+                int end = plugIdx.get(source);
+                graph.addEdge(start, end);
+            }
         }
-        
+
         // launch the algo
         char[] topologicalSort = graph.topologicalSort();
-        
-        for ( Character c : topologicalSort) 
+
+        for (Character c : topologicalSort)
         {
-			sorted.add(charPlug.get(c));
-		}
-        
+            sorted.add(charPlug.get(c));
+        }
+
         return sorted;
     }
-
 
     private Collection<Plugin> filterPlugins(Collection<Plugin> collection, Collection<Class<? extends Plugin>> pluginDependenciesRequired)
     {
         Set<Plugin> filteredSet = new HashSet<Plugin>();
-        
+
         for (Plugin plugin : collection)
         {
             if (pluginDependenciesRequired.contains(plugin.getClass()))
@@ -510,7 +516,7 @@ public final class Kernel
                 filteredSet.add(plugin);
             }
         }
-        
+
         return filteredSet;
     }
 
@@ -639,7 +645,7 @@ public final class Kernel
         public KernelBuilderWithPluginAndContext withPlugins(java.lang.Class<? extends Plugin>... klass)
         {
             kernel.addPlugins(klass);
-            return  this;
+            return this;
         }
 
         public KernelBuilderWithPluginAndContext withPlugins(Plugin... plugin)
@@ -652,7 +658,7 @@ public final class Kernel
         public KernelBuilderWithPluginAndContext withoutSpiPluginsLoader()
         {
             kernel.spiPluginDisabled();
-            return  this;
+            return this;
         }
 
     }

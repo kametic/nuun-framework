@@ -1,8 +1,10 @@
 package org.nuunframework.spring;
 
 import org.nuunframework.kernel.plugin.AbstractPlugin;
-import org.springframework.context.ApplicationContext;
+import org.nuunframework.spring.sample.Service3Internal;
+import org.springframework.beans.factory.support.GenericBeanDefinition;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
+import org.springframework.context.support.StaticApplicationContext;
 
 public class UsingSpringAsDIPlugin extends AbstractPlugin
 {
@@ -17,9 +19,20 @@ public class UsingSpringAsDIPlugin extends AbstractPlugin
     @Override
     public Object dependencyInjectionDef()
     {
-        ClassPathXmlApplicationContext ctx = new ClassPathXmlApplicationContext("context.xml");
+        ClassPathXmlApplicationContext parentCtx = new  ClassPathXmlApplicationContext("context.xml");
         
-        return ctx;
-    }
+        StaticApplicationContext dynCtx = new StaticApplicationContext();        
+        GenericBeanDefinition beanDef = new GenericBeanDefinition();
+        beanDef.setBeanClass(Service3Internal.class);
+        beanDef.setScope("prototype");
+        dynCtx.registerBeanDefinition("service3", beanDef );
+        
+        dynCtx.setParent(parentCtx);        
+        dynCtx.refresh();
+        
+        
 
+        return dynCtx;
+    }
+    
 }

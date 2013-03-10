@@ -2,9 +2,9 @@ package org.nuunframework.spring;
 
 import static org.fest.assertions.Assertions.assertThat;
 
-import org.fest.assertions.Assertions;
+import javax.inject.Inject;
+
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.nuunframework.kernel.Kernel;
@@ -12,6 +12,8 @@ import org.nuunframework.spring.sample.AbstractService2;
 import org.nuunframework.spring.sample.Service1;
 import org.nuunframework.spring.sample.Service1Internal;
 import org.nuunframework.spring.sample.Service2Internal;
+import org.nuunframework.spring.sample.Service3;
+import org.nuunframework.spring.sample.Service3Internal;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.StaticApplicationContext;
 
@@ -35,11 +37,21 @@ public class SpringPluginTest
         
     }
     
+    static class Holder 
+    {
+        @Inject
+        Service1 s1;
+        
+        @Inject
+        AbstractService2 s2;
+    }
+    
     @Test
     public void bean_declared_in_spring_should_be_accessible_from_kernel ()
     {
-        Service1 service1 = kernel.getMainInjector().getInstance(Service1.class);
         Service1 service1_by_name  = kernel.getMainInjector().getInstance( Key.get(Service1Internal.class, Names.named("service1")) );
+        Service1 service1 = kernel.getMainInjector().getInstance(Service1.class);
+        assertThat ( service1).isNotNull();
         assertThat ( service1).isNotNull();
         assertThat ( service1.serve()).isEqualTo(Service1Internal.class.getName());
         // by default spring 
@@ -52,6 +64,12 @@ public class SpringPluginTest
         assertThat ( service2.serve2()).isNotNull();
         assertThat ( service2.serve2()).isEqualTo(Service2Internal.class.getName());
         assertThat ( service2).isEqualTo(kernel.getMainInjector().getInstance(AbstractService2.class));
+        
+        Service3 service3 = kernel.getMainInjector().getInstance(Service3.class);
+        assertThat ( service3).isNotNull();
+        assertThat ( service3.serve()).isEqualTo(Service3Internal.class.getName());
+        
+//        kernel.getMainInjector().injectMembers(instance);
     }
     
     @Test

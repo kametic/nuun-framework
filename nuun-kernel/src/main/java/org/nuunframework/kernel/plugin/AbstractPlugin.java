@@ -4,6 +4,7 @@
 package org.nuunframework.kernel.plugin;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
@@ -25,8 +26,6 @@ import org.nuunframework.kernel.plugin.request.ClasspathScanRequest;
 import org.nuunframework.kernel.plugin.request.ClasspathScanRequestBuilder;
 import org.nuunframework.kernel.plugin.request.KernelParamsRequest;
 import org.nuunframework.kernel.plugin.request.KernelParamsRequestBuilder;
-
-import com.google.inject.matcher.Matchers;
 
 /**
  * @author Epo Jemba
@@ -116,6 +115,26 @@ public abstract class AbstractPlugin implements Plugin
     protected Specification<Class<?>> not(Specification<Class<?>> participant)
     {
         return new NotSpecification<Class<?>>(participant);
+    }
+    
+    protected Specification<Class<?>> fieldAnnotatedWith (final Class<? extends Annotation> annotationClass)
+    {
+    	return new AbstractSpecification<Class<?>> ()
+    	{
+    		@Override
+    		public boolean isSatisfiedBy(Class<?> candidate) {
+    			
+    			for (Field field : candidate.getDeclaredFields())
+    			{
+    				if (   field.isAnnotationPresent(annotationClass)   ) 
+    				{
+    					return true;
+    				}
+    			}
+    			
+    			return false;
+    		}
+    	};
     }
 
     protected Specification<Class<?>> annotatedWith(final Class<? extends Annotation> klass)

@@ -70,8 +70,10 @@ public class NuunRestPlugin extends AbstractPlugin
     public Collection<BindingRequest> bindingRequests()
     {
         
-        Specification<Class<?>> specificationForNoScope = 
-                     annotatedWith(Path.class) ;
+        Specification<Class<?>> specificationForNoScope = or ( 
+                annotatedWith(Path.class) ,
+                fieldAnnotatedWith(Path.class) 
+   		);
         Specification<Class<?>> specificationForSingletonScop =  or(                             
                 and( annotatedWith(Provider.class) , isImplementing(MessageBodyWriter.class)) , 
                 and( annotatedWith(Provider.class) , isImplementing(ContextResolver.class)) ,

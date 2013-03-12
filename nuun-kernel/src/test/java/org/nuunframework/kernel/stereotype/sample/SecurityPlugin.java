@@ -26,12 +26,19 @@ public class SecurityPlugin extends AbstractPlugin
     }
     
     @SecurityConcern
-    class Module extends AbstractModule
+    public static class Module extends AbstractModule
     {
+    	private List<String> list;
+		private String name;
+    	
+		public Module(String name , List<String> list) {
+			this.name = name;
+			this.list = list;
+		}
         @Override
         protected void configure()
         {
-            MethodInterceptor interceptor = new ConcernInterceptor( list , name());
+            MethodInterceptor interceptor = new ConcernInterceptor( list , name);
             bindInterceptor(Matchers.any(), Matchers.any(), interceptor );
         }
     }
@@ -39,7 +46,7 @@ public class SecurityPlugin extends AbstractPlugin
     @Override
     public Object dependencyInjectionDef()
     {
-        return new Module();
+        return new Module(name() , list);
     }
 
 }

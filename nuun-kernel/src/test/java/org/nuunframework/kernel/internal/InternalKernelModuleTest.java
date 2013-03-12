@@ -1,25 +1,20 @@
-package org.nuunframework.kernel.module;
+package org.nuunframework.kernel.internal;
 
 import java.util.HashMap;
 
+import org.fest.assertions.Assertions;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.nuunframework.kernel.context.InitContextInternal;
-import org.nuunframework.kernel.internal.InternalKernelGuiceModule;
-import org.nuunframework.kernel.sample.Holder;
-import org.nuunframework.kernel.sample.HolderForBeanWithParentType;
-import org.nuunframework.kernel.sample.HolderForContext;
-import org.nuunframework.kernel.sample.HolderForPlugin;
-import org.nuunframework.kernel.sample.HolderForPrefixWithName;
+import org.nuunframework.kernel.stereotype.ConcernTest;
+import org.nuunframework.kernel.stereotype.sample.CachePlugin;
+import org.nuunframework.kernel.stereotype.sample.LogPlugin;
+import org.nuunframework.kernel.stereotype.sample.SecurityPlugin;
 
-import com.google.inject.AbstractModule;
 import com.google.inject.Binding;
-import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
-import com.google.inject.Module;
-import com.google.inject.Stage;
 import com.google.inject.spi.DefaultElementVisitor;
 import com.google.inject.spi.StaticInjectionRequest;
 
@@ -27,28 +22,29 @@ public class InternalKernelModuleTest
 {
 
     Injector injector;
+	private InternalKernelGuiceModule underTest;
 
     @Before
     public void init()
     {
 
-        final Module underTest = new InternalKernelGuiceModule(new InitContextInternal("nuun-", new HashMap<String, String>()) );
-        Module aggregationModule = new AbstractModule()
-        {
-
-            @Override
-            protected void configure()
-            {
-                bind(Holder.class);
-                bind(HolderForPlugin.class);
-                bind(HolderForContext.class);
-                bind(HolderForPrefixWithName.class);
-                bind(HolderForBeanWithParentType.class);
-                install(underTest);
-            }
-        };
-
-        injector = Guice.createInjector(Stage.PRODUCTION, aggregationModule);
+        underTest = new InternalKernelGuiceModule(new InitContextInternal("nuun-", new HashMap<String, String>()) );
+//        Module aggregationModule = new AbstractModule()
+//        {
+//
+//            @Override
+//            protected void configure()
+//            {
+//                bind(Holder.class);
+//                bind(HolderForPlugin.class);
+//                bind(HolderForContext.class);
+//                bind(HolderForPrefixWithName.class);
+//                bind(HolderForBeanWithParentType.class);
+//                install(underTest);
+//            }
+//        };
+//
+//        injector = Guice.createInjector(Stage.PRODUCTION, aggregationModule);
     }
 
     // @Test
@@ -59,6 +55,16 @@ public class InternalKernelModuleTest
     // }
     //
 
+    
+    @Test
+    public void computeOrder_should_works ()
+    {
+    	Assertions.assertThat( underTest.computeOrder(SecurityPlugin.Module.class)).isEqualTo(2000);
+    	Assertions.assertThat( underTest.computeOrder(LogPlugin.Module.class)).isEqualTo(-20);
+    	Assertions.assertThat( underTest.computeOrder(CachePlugin.Module.class)).isEqualTo(1998);
+    	Assertions.assertThat( underTest.computeOrder(ConcernTest.Module.class)).isEqualTo(Integer.MIN_VALUE);
+    }
+    
     @Test
     @Ignore
     public void injectorCheck()

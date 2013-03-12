@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.fest.assertions.Assertions;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.nuunframework.kernel.Kernel;
@@ -39,28 +40,31 @@ public class ConcernTest
         }
     }
     
-    static class Plugin extends AbstractPlugin
+    public static class Plugin extends AbstractPlugin
     {
-        @Override
-        public String name()
-        {
-            return "nominal module";
-        }
         
-        @Override
+    	@Override
+    	public String name ()
+    	{
+    		return "nominal plugin";
+    	}
+
+    	@Override
         public Object dependencyInjectionDef()
         {
-            return new AbstractModule()
-            {
-                
-                @Override
-                protected void configure()
-                {
-                    bind(MyObj.class);
-                }
-            };
+            return new Module();
         }
     }
+    
+    public static class Module extends AbstractModule
+    {
+        
+        @Override
+        protected void configure()
+        {
+            bind(MyObj.class);
+        }
+    } 
     
     @Test
     public void test()
@@ -70,6 +74,12 @@ public class ConcernTest
         obj.triggerMethod(list);
         Assertions.assertThat(list).hasSize(7);
         Assertions.assertThat(list).containsExactly("pre security" , "pre cache" , "pre log", "fire" , "post log",  "post cache"  ,  "post security");
+    }
+    
+    @AfterClass
+    public static void clear()
+    {
+        underTest.stop();
     }
 
 }

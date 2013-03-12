@@ -3,14 +3,15 @@ package org.nuunframework.kernel.internal;
 import static org.reflections.ReflectionUtils.withAnnotation;
 
 import java.lang.annotation.Annotation;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.SortedSet;
-import java.util.TreeSet;
 
 import javax.annotation.Nullable;
 
-import org.nuunframework.kernel.commons.AssertUtils;
 import org.nuunframework.kernel.context.Context;
 import org.nuunframework.kernel.context.ContextInternal;
 import org.nuunframework.kernel.context.InitContextInternal;
@@ -67,57 +68,60 @@ public class InternalKernelGuiceModule extends AbstractModule
         List<Class<?>> classes = this.currentContext.classesToBind();
         Map<Class<?>, Object> classesWithScopes = this.currentContext.classesWithScopes();
         
-        SortedSet<Object> sortedSet = new TreeSet<Object>();
+        List<Installable> installableList = new ArrayList<Installable>();
         for (Object o : classes)
         {
-            sortedSet.add(new Installable(o));
+            installableList.add(new Installable(o));
         }
         for (Object o : currentContext.moduleResults())
         {
-            sortedSet.add(new Installable(o));
-        }
-        for (Object object : sortedSet)
-        {
-            logger.error( "  >>> " + object );
+            installableList.add(new Installable(o));
         }
         
-        // Install from
-        // ============
-        for (Module moduleInstance : currentContext.moduleResults())
-        {
-            logger.info("installing module 1 {}", moduleInstance);
-            install(moduleInstance);
-        }
-
+        Collections.sort(installableList , Collections.reverseOrder());
+        
         Provider nullProvider = Providers.of(null);
-
-        for (Class<?> classpathClass : classes)
+        
+		// We install modules and bind class in the right orders
+        for (Installable installable : installableList)
         {
-            Object scope = classesWithScopes.get(classpathClass);
-            
-            if (!(classpathClass.isInterface() && withAnnotation(Nullable.class).apply(classpathClass)))
-            {
-                if (scope == null)
-                {
-                    logger.info("binding {} with no scope.", classpathClass.getName());
-                    bind(classpathClass);
-                }
-                else
-                {
-                    logger.info("binding {} in scope {}.", classpathClass.getName() , scope.toString());
-                    bind(classpathClass).in((Scope) scope); 
-                    
-                }
-            }
-            else
-            {
-                bind(classpathClass).toProvider(nullProvider);
-            }
-            // }
+        	logger.error( "  >>> " + installable );
+        	if (Module.class.isAssignableFrom(installable.inner.getClass()))
+        	{ // install module
+        		logger.info("installing module {}", (installable.inner));
+        		install(Module.class.cast(installable.inner));
+        		
+        	}
+        	if (installable.inner instanceof Class)
+        	{ // bind object
+        		
+        		Class<?> classpathClass = Class.class.cast(installable.inner);
+        		
+        		Object scope = classesWithScopes.get(classpathClass);
+        		
+        		if (!(classpathClass.isInterface() && withAnnotation(Nullable.class).apply(classpathClass)))
+        		{
+        			if (scope == null)
+        			{
+        				logger.info("binding {} with no scope.", classpathClass.getName());
+        				bind(classpathClass);
+        			}
+        			else
+        			{
+        				logger.info("binding {} in scope {}.", classpathClass.getName() , scope.toString());
+        				bind(classpathClass).in((Scope) scope); 
+        			}
+        		}
+        		else
+        		{
+        			bind(classpathClass).toProvider(nullProvider);
+        		}
+        		
+        	}
         }
     }
     
-    class Installable implements Comparable<Object>
+    class Installable implements Comparable<Installable>
     {
         
         Object inner;
@@ -129,19 +133,43 @@ public class InternalKernelGuiceModule extends AbstractModule
         }
         
         @Override
-        public int compareTo(Object o)
+        public int compareTo(Installable anInstallable)
         {
             Class<?> toCompare;
-            if (o instanceof Class)
+            Class<?> innerClass;
+            
+            
+            // to compare inner is a class to bind
+            if (anInstallable.inner instanceof Class)
             {
-                toCompare = (Class<?>) o;
+                toCompare = (Class<?>) anInstallable.inner;
+            }
+            else if (Module.class.isAssignableFrom(anInstallable.inner.getClass()))
+            // inner is a module annotated
+            {
+                toCompare = anInstallable.inner.getClass();
             }
             else 
             {
-                toCompare = o.getClass();
+            	throw new IllegalStateException("Object to compare is not a class nor a Module " + anInstallable);
+            }
+
+            // inner is a class to bind
+            if (this.inner instanceof Class)
+            {
+            	innerClass = (Class<?>) anInstallable.inner;
+            }
+            else if (Module.class.isAssignableFrom(this.inner.getClass()))
+            	// inner is a module annotated
+            {
+            	innerClass = this.inner.getClass();
+            }
+            else 
+            {
+            	throw new IllegalStateException("Object to compare is not a class nor a Module " + this);
             }
             
-            return   computeOrder(inner.getClass())   -     computeOrder(toCompare)  ;
+            return  computeOrder(innerClass).compareTo( computeOrder(toCompare) )  ;
         }
         
         @Override
@@ -151,14 +179,17 @@ public class InternalKernelGuiceModule extends AbstractModule
         }
     }
     
-    private Integer computeOrder (Class<?> moduleCläss)    {
+    Integer computeOrder (Class<?> moduleCläss)    {
         
-        for(Annotation annotation : moduleCläss.getAnnotations())
+    	Integer finalOrder = 0;    	
+    	boolean reachAtLeastOnce = false;
+    	
+        outer: for(Annotation annotation : moduleCläss.getAnnotations())
         {
             if ( Matchers.annotatedWith(Concern.class).matches(annotation.annotationType()) )
             {
-                Concern concern = annotation.annotationType().getAnnotation(Concern.class);
-                Integer finalOrder = 0;
+                reachAtLeastOnce = true;
+            	Concern concern = annotation.annotationType().getAnnotation(Concern.class);
                 switch (concern.priority()) 
                 {
                     case HIGH:
@@ -184,13 +215,17 @@ public class InternalKernelGuiceModule extends AbstractModule
                         break;
                     default:
                         break;
-                    
                 }
-                return finalOrder;
+                
+                break outer;
             }
         }
         
-        return Integer.MIN_VALUE;
+    	if (! reachAtLeastOnce) finalOrder = Integer.MIN_VALUE;
+    	
+    	logger.error(moduleCläss.getName() + " : " + finalOrder);
+        
+        return finalOrder;
     }
 
     public static boolean hasAnnotationDeep(Class<?> memberDeclaringClass, Class<? extends Annotation> klass)

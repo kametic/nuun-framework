@@ -26,12 +26,19 @@ public class CachePlugin extends AbstractPlugin
     }
     
     @CacheConcern
-    class Module extends AbstractModule
+    public static class Module extends AbstractModule
     {
+    	
+    	private String name;
+		private List<String> list2;
+		public Module(String name , List<String> list) {
+			this.name = name;
+			list2 = list;
+		}
         @Override
         protected void configure()
         {
-            MethodInterceptor interceptor = new ConcernInterceptor(list,  "cache");
+            MethodInterceptor interceptor = new ConcernInterceptor(list2,  name);
             bindInterceptor(Matchers.any(), Matchers.any(), interceptor );
         }
     }
@@ -39,7 +46,7 @@ public class CachePlugin extends AbstractPlugin
     @Override
     public Object dependencyInjectionDef()
     {
-        return new Module();
+        return new Module ( name() , list );
     }
 
 }

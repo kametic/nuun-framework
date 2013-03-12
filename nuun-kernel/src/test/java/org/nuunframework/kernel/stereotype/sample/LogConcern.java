@@ -10,10 +10,10 @@ import javax.inject.Qualifier;
 
 import org.nuunframework.kernel.stereotype.Concern;
 
-@Concern(name="security" , priority=Concern.Priority.HIGHEST)
+@Concern(name="security" , priority=Concern.Priority.LOW)
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ ElementType.TYPE})
-public @interface Security
+public @interface LogConcern
 {
 }

@@ -17,6 +17,7 @@ import org.nuunframework.kernel.commons.specification.AndSpecification;
 import org.nuunframework.kernel.commons.specification.NotSpecification;
 import org.nuunframework.kernel.commons.specification.OrSpecification;
 import org.nuunframework.kernel.commons.specification.Specification;
+import org.nuunframework.kernel.commons.specification.reflect.DescendantOfSpecification;
 import org.nuunframework.kernel.context.Context;
 import org.nuunframework.kernel.context.InitContext;
 import org.nuunframework.kernel.plugin.provider.DependencyInjectionProvider;
@@ -115,6 +116,11 @@ public abstract class AbstractPlugin implements Plugin
     protected Specification<Class<?>> not(Specification<Class<?>> participant)
     {
         return new NotSpecification<Class<?>>(participant);
+    }
+
+    protected Specification<Class<?>> descendantOf(Class<?> ancestor)
+    {
+        return new DescendantOfSpecification(ancestor);
     }
     
     protected Specification<Class<?>> fieldAnnotatedWith (final Class<? extends Annotation> annotationClass)

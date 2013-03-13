@@ -61,6 +61,14 @@ public class ClasspathScanRequestBuilder implements Builder<Collection<Classpath
         return this;
     }
     
+
+    public ClasspathScanRequestBuilder descendentTypeOf(Class<?> parentTypeRequested)
+    {
+
+        requests.add(new ClasspathScanRequest(RequestType.SUBTYPE_OF_BY_TYPE_DEEP, parentTypeRequested));
+        return this;
+    }
+    
     public ClasspathScanRequestBuilder subtypeOfRegex(String parentTypeRegex)
     {
         

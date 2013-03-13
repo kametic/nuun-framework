@@ -27,13 +27,18 @@ public enum RequestType
      */
     TYPE_OF_BY_REGEX_MATCH,
     /**
-     * Request classes based on type of parent class
+     * Request classes based on type of direct parent class
      */
     SUBTYPE_OF_BY_CLASS , 
     /**
-     * Request classes based on type of parent class
+     * Request classes based on type of direct parent class
      */
-    SUBTYPE_OF_BY_REGEX_MATCH, 
+    SUBTYPE_OF_BY_REGEX_MATCH,
+    
+    /**
+     * Request classes based on type of ancestor class
+     */
+    SUBTYPE_OF_BY_TYPE_DEEP,
     /**
      * Selection of the class is made via the Specification<Class> given.
      */
@@ -47,7 +52,7 @@ public enum RequestType
     
     
 //    ,ANNOTATION_TYPE_DEEP , ANNOTATION_SUFFIX_NAME_MATCH_DEEP , 
-//     SUBTYPE_OF_BY_TYPE_DEEP ,    SUBTYPE_OF_SUFFIX_NAME_MATCH_DEEP 
+//      ,    SUBTYPE_OF_SUFFIX_NAME_MATCH_DEEP 
     ;
     
 }

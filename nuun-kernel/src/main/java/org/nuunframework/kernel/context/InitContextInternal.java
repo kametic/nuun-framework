@@ -13,6 +13,7 @@ import java.util.Set;
 
 import org.nuunframework.kernel.annotations.KernelModule;
 import org.nuunframework.kernel.commons.specification.Specification;
+import org.nuunframework.kernel.commons.specification.reflect.DescendantOfSpecification;
 import org.nuunframework.kernel.plugin.Plugin;
 import org.nuunframework.kernel.scanner.ClasspathScanner;
 import org.nuunframework.kernel.scanner.ClasspathScannerFactory;
@@ -32,6 +33,7 @@ public class InitContextInternal implements InitContext
     ClasspathScanner                                                     classpathScanner;
 
     private final List<Class<?>>                                         parentTypesClassesToScan;
+    private final List<Class<?>>                                         ancestorTypesClassesToScan;
     private final List<Class<?>>                                         typesClassesToScan;
     private final List<String>                                           typesRegexToScan;
     private final List<Specification<Class<?>>>                          specificationsToScan;
@@ -41,6 +43,7 @@ public class InitContextInternal implements InitContext
     private final List<String>                                           annotationRegexToScan;
 
     private final List<Class<?>>                                         parentTypesClassesToBind;
+    private final List<Class<?>>                                         ancestorTypesClassesToBind;
     private final List<String>                                           parentTypesRegexToBind;
     private final List<Specification<Class<?>>>                          specificationsToBind;
     private final Map<Specification , Object>                            mapSpecificationScope;
@@ -61,7 +64,11 @@ public class InitContextInternal implements InitContext
     private final Map<String, String>                                    kernelParams;
 
     private Collection<Class<?>>                                         scanClasspathForSubType;
+    private Collection<Class<?>>                                         scanClasspathForAncestorType;
+    private Collection<Class<?>>                                         bindClasspathForSubType;
+    private Collection<Class<?>>                                         bindClasspathForAncestorType;
     private final Map<Class<?>, Collection<Class<?>>>                    mapSubTypes;
+    private final Map<Class<?>, Collection<Class<?>>>                    mapAncestorTypes;
     // private final Map<Class<?> , Collection<Class<?>>> mapTypes;
     private final Map<String, Collection<Class<?>>>                      mapSubTypesByName;
     private final Map<String, Collection<Class<?>>>                      mapTypesByName;
@@ -78,6 +85,7 @@ public class InitContextInternal implements InitContext
     {
         this.kernelParams = kernelParams;
         this.mapSubTypes = new HashMap<Class<?>, Collection<Class<?>>>();
+        this.mapAncestorTypes = new HashMap<Class<?>, Collection<Class<?>>>();
         // this.mapTypes = new HashMap<Class<?>, Collection<Class<?>>>();
         this.mapSubTypesByName = new HashMap<String, Collection<Class<?>>>();
         this.mapTypesByName = new HashMap<String, Collection<Class<?>>>();
@@ -89,6 +97,7 @@ public class InitContextInternal implements InitContext
 
         this.annotationTypesToScan = new LinkedList<Class<? extends Annotation>>();
         this.parentTypesClassesToScan = new LinkedList<Class<?>>();
+        this.ancestorTypesClassesToScan = new LinkedList<Class<?>>();
         this.typesClassesToScan = new LinkedList<Class<?>>();
         this.typesRegexToScan = new LinkedList<String>();
         this.specificationsToScan = new LinkedList<Specification<Class<?>>>(); 
@@ -98,6 +107,7 @@ public class InitContextInternal implements InitContext
 
         this.annotationTypesToBind = new LinkedList<Class<? extends Annotation>>();
         this.parentTypesClassesToBind = new LinkedList<Class<?>>();
+        this.ancestorTypesClassesToBind = new LinkedList<Class<?>>();
         this.parentTypesRegexToBind = new LinkedList<String>();
         this.specificationsToBind = new LinkedList<Specification<Class<?>>>();
         this.mapSpecificationScope = new HashMap<Specification, Object>();
@@ -171,6 +181,11 @@ public class InitContextInternal implements InitContext
             // clässes.addAll(scanClasspathForSubType);
             this.mapSubTypes.put(parentType, scanClasspathForSubType);
         }
+        for (Class<?> parentType : this.ancestorTypesClassesToScan)
+        {
+            scanClasspathForAncestorType = this.classpathScanner.scanClasspathForSpecification(new DescendantOfSpecification(parentType));
+            this.mapAncestorTypes.put(parentType, scanClasspathForAncestorType);
+        }
 
         // for (Class<?> type : this.typesClassesToScan)
         // {
@@ -216,8 +231,13 @@ public class InitContextInternal implements InitContext
         // ===============
         for (Class<?> parentType : this.parentTypesClassesToBind)
         {
-            scanClasspathForSubType = this.classpathScanner.scanClasspathForSubTypeClass(parentType);
-            classesToBind.addAll(scanClasspathForSubType);
+            bindClasspathForSubType = this.classpathScanner.scanClasspathForSubTypeClass(parentType);
+            classesToBind.addAll(bindClasspathForSubType);
+        }
+        for (Class<?> ancestorType : this.ancestorTypesClassesToBind)
+        {
+            bindClasspathForAncestorType = this.classpathScanner.scanClasspathForSpecification(new DescendantOfSpecification(ancestorType));
+            classesToBind.addAll(bindClasspathForAncestorType);
         }
 
         // TODO vérifier si ok parent types vs type. si ok changer de nom
@@ -290,6 +310,12 @@ public class InitContextInternal implements InitContext
     }
 
     @Override
+    public Map<Class<?>, Collection<Class<?>>> scannedSubTypesByAncestorClass()
+    {
+        return Collections.unmodifiableMap(this.mapAncestorTypes);
+    }
+
+    @Override
     public Map<String, Collection<Class<?>>> scannedSubTypesByParentRegex()
     {
         return Collections.unmodifiableMap(this.mapSubTypesByName);
@@ -346,6 +372,11 @@ public class InitContextInternal implements InitContext
         this.parentTypesClassesToScan.add(type);
     }
 
+    public void addAncestorTypeClassToScan(Class<?> type)
+    {
+        this.ancestorTypesClassesToScan.add(type);
+    }
+
     public void addResourcesRegexToScan(String regex)
     {
         this.resourcesRegexToScan.add(regex);
@@ -359,6 +390,11 @@ public class InitContextInternal implements InitContext
     public void addParentTypeClassToBind(Class<?> type)
     {
         this.parentTypesClassesToBind.add(type);
+    }
+
+    public void addAncestorTypeClassToBind(Class<?> type)
+    {
+        this.ancestorTypesClassesToBind.add(type);
     }
 
     public void addTypeRegexesToScan(String type)

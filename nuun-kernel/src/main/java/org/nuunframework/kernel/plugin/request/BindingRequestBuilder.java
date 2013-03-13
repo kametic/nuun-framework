@@ -80,17 +80,38 @@ public class BindingRequestBuilder implements Builder<Collection<BindingRequest>
 
     // SUBTYPE_OF_BY_CLASS
     
+    /**
+     * ask for a binding based on direct subtype of parentTypeRequested. 
+     * 
+     * @param parentTypeRequested
+     * @return
+     */
     public BindingRequestBuilder subtypeOf(Class<?> parentTypeRequested)
     {
-        
         requests.add(new BindingRequest(RequestType.SUBTYPE_OF_BY_CLASS, parentTypeRequested));
         
         return this;
     }
+    
     public BindingRequestBuilder subtypeOf(Class<?> parentTypeRequested, Object scope)
     {
         
         requests.add(new BindingRequest(RequestType.SUBTYPE_OF_BY_CLASS, parentTypeRequested,scope,null));
+        
+        return this;
+    }
+    
+    
+    // SUBTYPE DEEP 
+    /**
+     * ask for a binding based on direct subtype of parentTypeRequested. 
+     * 
+     * @param ancestorTypeRequested
+     * @return
+     */
+    public BindingRequestBuilder descendentTypeOf(Class<?> ancestorTypeRequested)
+    {
+        requests.add(new BindingRequest(RequestType.SUBTYPE_OF_BY_TYPE_DEEP, ancestorTypeRequested));
         
         return this;
     }

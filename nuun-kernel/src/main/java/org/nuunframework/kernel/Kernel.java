@@ -319,6 +319,9 @@ public final class Kernel
                         case SUBTYPE_OF_BY_CLASS:
                             this.initContext.addParentTypeClassToScan((Class<?>) request.objectRequested);
                             break;
+                        case SUBTYPE_OF_BY_TYPE_DEEP:
+                            this.initContext.addAncestorTypeClassToScan((Class<?>) request.objectRequested);
+                            break;
                         case SUBTYPE_OF_BY_REGEX_MATCH:
                             this.initContext.addParentTypeRegexesToScan((String) request.objectRequested);
                             break;
@@ -353,6 +356,9 @@ public final class Kernel
                             break;
                         case SUBTYPE_OF_BY_CLASS:
                             this.initContext.addParentTypeClassToBind((Class<?>) request.requestedObject);
+                            break;
+                        case SUBTYPE_OF_BY_TYPE_DEEP:
+                            this.initContext.addAncestorTypeClassToBind((Class<?>) request.requestedObject);
                             break;
                         case SUBTYPE_OF_BY_REGEX_MATCH:
                             this.initContext.addTypeRegexesToBind((String) request.requestedObject);

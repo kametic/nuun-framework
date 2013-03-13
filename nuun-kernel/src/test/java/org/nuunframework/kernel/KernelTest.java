@@ -6,7 +6,6 @@ package org.nuunframework.kernel;
 import static org.fest.assertions.Assertions.assertThat;
 import static org.fest.assertions.Fail.fail;
 
-import org.fest.assertions.Fail;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -25,6 +24,11 @@ import org.nuunframework.kernel.plugin.dummy23.DummyPlugin3;
 import org.nuunframework.kernel.plugin.dummy4.DummyPlugin4;
 import org.nuunframework.kernel.plugin.dummy4.Pojo1;
 import org.nuunframework.kernel.plugin.dummy4.Pojo2;
+import org.nuunframework.kernel.plugin.dummy5.DescendantFromClass;
+import org.nuunframework.kernel.plugin.dummy5.DescendantFromInterface;
+import org.nuunframework.kernel.plugin.dummy5.DummyPlugin5;
+import org.nuunframework.kernel.plugin.dummy5.ParentClass;
+import org.nuunframework.kernel.plugin.dummy5.ParentInterface;
 import org.nuunframework.kernel.sample.Holder;
 import org.nuunframework.kernel.sample.HolderForBeanWithParentType;
 import org.nuunframework.kernel.sample.HolderForContext;
@@ -33,7 +37,6 @@ import org.nuunframework.kernel.sample.HolderForPlugin;
 import org.nuunframework.kernel.sample.HolderForPrefixWithName;
 import org.nuunframework.kernel.sample.ModuleInError;
 import org.nuunframework.kernel.sample.ModuleInterface;
-import org.nuunframework.kernel.scanner.sample.Ignore;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.ConfigurationException;
@@ -76,6 +79,7 @@ public class KernelTest
                 assertThat(ke2.getMessage()).isEqualTo("plugin dummyPlugin2 misses the following plugin/s as dependency/ies [class org.nuunframework.kernel.plugin.dummy23.DummyPlugin3]");
                 underTest.addPlugins( DummyPlugin3.class);
                 underTest.addPlugins( plugin4);
+                underTest.addPlugins( DummyPlugin5.class);
                 underTest.init();
             }
         }
@@ -188,12 +192,42 @@ public class KernelTest
         assertThat(plugin4.collection).containsOnly(Pojo1.class);
     }
     
+    
+    
+    
     @Test
     public void binding_by_specification_should_work ()
     {
         assertThat( injector.getInstance(Pojo2.class) ).isNotNull();
         // we check for the scope
         assertThat(injector.getInstance(Pojo2.class)).isEqualTo(injector.getInstance(Pojo2.class));
+        
+        try 
+        {
+            assertThat( injector.getInstance(Pojo1.class) ).isNull();
+            fail("Pojo1 should not be injector");
+        } catch (ConfigurationException ce)
+        {
+            String nl = System.getProperty("line.separator");
+            assertThat(ce.getMessage()).isEqualTo("Guice configuration errors:"+nl
+                    +nl
+                    +"1) Explicit bindings are required and org.nuunframework.kernel.plugin.dummy4.Pojo1 is not explicitly bound."+nl
+                    + "  while locating org.nuunframework.kernel.plugin.dummy4.Pojo1"+nl
+                    +nl
+                    +"1 error"
+                    );
+        }
+        
+    }
+
+    @Test
+    public void binding_by_ancestor_should_work ()
+    {
+        assertThat( injector.getInstance(ParentClass.class)).isNotNull ();
+        assertThat( injector.getInstance(DescendantFromClass.class)).isNotNull ();
+        
+//        assertThat( injector.getInstance(ParentInterface.class)).isNotNull ();
+//        assertThat( injector.getInstance(DescendantFromInterface.class)).isNotNull ();
         
         try 
         {

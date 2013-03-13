@@ -23,6 +23,8 @@ public interface InitContext
 
     public abstract Map<Class<?>, Collection<Class<?>>> scannedSubTypesByParentClass();
 
+    public abstract Map<Class<?>, Collection<Class<?>>> scannedSubTypesByAncestorClass();
+    
     public abstract Map<String, Collection<Class<?>>> scannedSubTypesByParentRegex();
 
     public abstract Map<Class<? extends Annotation>, Collection<Class<?>>> scannedClassesByAnnotationClass();
@@ -51,6 +53,7 @@ public interface InitContext
      * @return the instances of the plugin declared required by the method Plugin.pluginDependenciesRequired()
      */
     public abstract Collection<? extends Plugin> pluginsRequired ();
+
     
 
 }

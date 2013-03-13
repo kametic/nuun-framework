@@ -17,6 +17,7 @@ import org.nuunframework.kernel.commons.specification.AndSpecification;
 import org.nuunframework.kernel.commons.specification.NotSpecification;
 import org.nuunframework.kernel.commons.specification.OrSpecification;
 import org.nuunframework.kernel.commons.specification.Specification;
+import org.nuunframework.kernel.commons.specification.reflect.ClassMethodsAnnotatedWith;
 import org.nuunframework.kernel.commons.specification.reflect.DescendantOfSpecification;
 import org.nuunframework.kernel.context.Context;
 import org.nuunframework.kernel.context.InitContext;
@@ -123,6 +124,11 @@ public abstract class AbstractPlugin implements Plugin
         return new DescendantOfSpecification(ancestor);
     }
     
+    
+    protected Specification<Class<?>> classMethodsAnnotatedWith (final Class<? extends Annotation> annotationClass)
+    {
+    	return new ClassMethodsAnnotatedWith(annotationClass);
+    }
     protected Specification<Class<?>> fieldAnnotatedWith (final Class<? extends Annotation> annotationClass)
     {
     	return new AbstractSpecification<Class<?>> ()
@@ -143,7 +149,7 @@ public abstract class AbstractPlugin implements Plugin
     	};
     }
 
-    protected Specification<Class<?>> annotatedWith(final Class<? extends Annotation> klass)
+    protected Specification<Class<?>> classIsAnnotatedWith(final Class<? extends Annotation> klass)
     {
         return new AbstractSpecification<Class<?>>()
         {
@@ -155,7 +161,8 @@ public abstract class AbstractPlugin implements Plugin
         };
     }
 
-    protected Specification<Class<?>> isImplementing(final Class<?> klass)
+    // TODO replace this implementation by the one in ClassMethodsAnnotatedWithSpecification
+    protected Specification<Class<?>> classIsImplementing(final Class<?> klass)
     {
         return new AbstractSpecification<Class<?>>()
         {

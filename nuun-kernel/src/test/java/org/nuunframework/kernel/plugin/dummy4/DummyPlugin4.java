@@ -35,7 +35,7 @@ public class DummyPlugin4 extends AbstractPlugin
     @SuppressWarnings("unchecked")
     public Collection<BindingRequest> bindingRequests()
     {
-        Specification<Class<?>> specification = and( annotatedWith(MarkerSample5.class) , isImplementing(Interface2.class));
+        Specification<Class<?>> specification = and( classIsAnnotatedWith(MarkerSample5.class) , classIsImplementing(Interface2.class));
         
         assertThat( specification.isSatisfiedBy(Pojo1.class) ).isFalse();
         assertThat( specification.isSatisfiedBy(Pojo2.class) ).isTrue();
@@ -47,7 +47,7 @@ public class DummyPlugin4 extends AbstractPlugin
     @Override
     public Collection<ClasspathScanRequest> classpathScanRequests()
     {
-        specification = and( annotatedWith(MarkerSample.class) , isImplementing(Interface1.class));
+        specification = and( classIsAnnotatedWith(MarkerSample.class) , classIsImplementing(Interface1.class));
 
         assertThat( specification.isSatisfiedBy(Pojo1.class) ).isTrue();
         assertThat( specification.isSatisfiedBy(Pojo2.class) ).isFalse();

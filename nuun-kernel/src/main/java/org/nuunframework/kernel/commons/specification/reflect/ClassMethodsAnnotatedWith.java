@@ -9,9 +9,14 @@ import java.util.List;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.nuunframework.kernel.commons.specification.AbstractSpecification;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ClassMethodsAnnotatedWith extends AbstractSpecification<Class<?>> 
 {
+	
+	Logger logger = LoggerFactory.getLogger(ClassMethodsAnnotatedWith.class);
+	
 	private MethodAnnotatedWith methodAnnotatedWith;
 	
 	public ClassMethodsAnnotatedWith(Class<? extends Annotation> annotation) 
@@ -22,18 +27,29 @@ public class ClassMethodsAnnotatedWith extends AbstractSpecification<Class<?>>
 	@Override
 	public boolean isSatisfiedBy(Class<?> candidate) 
 	{
-		Class<?>[] clazzes = getAllInterfacesAndClasses(candidate);
-		
-		for(Class<?> clazz : clazzes) 
+		if (null != candidate)
 		{
-			 for ( Method method : clazz.getDeclaredMethods() )
-			 {
-				 if ( methodAnnotatedWith.isSatisfiedBy(method) ) 
-				 {
-					 return true;
+			try {
+				
+				Class<?>[] clazzes = getAllInterfacesAndClasses(candidate);
+				
+				for(Class<?> clazz : clazzes) 
+				{
+					for ( Method method : clazz.getDeclaredMethods() )
+					 {
+						 if ( methodAnnotatedWith.isSatisfiedBy(method) ) 
+						 {
+							 return true;
+						 }
+					 }
 				 }
-			 }
-		 }
+				
+			} 
+			  catch (Throwable cnfe)
+			{
+				logger.warn("Exception on isSatisfiedBy () ", cnfe);
+			}
+		}
 		
 		return false;
 	}

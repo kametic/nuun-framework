@@ -3,6 +3,7 @@ package org.nuunframework.rest;
 import java.util.Collection;
 
 import javax.inject.Scope;
+import javax.servlet.http.HttpServlet;
 import javax.ws.rs.Path;
 import javax.ws.rs.ext.ContextResolver;
 import javax.ws.rs.ext.ExceptionMapper;
@@ -14,6 +15,7 @@ import org.nuunframework.kernel.commons.specification.Specification;
 import org.nuunframework.kernel.context.InitContext;
 import org.nuunframework.kernel.plugin.AbstractPlugin;
 import org.nuunframework.kernel.plugin.Plugin;
+import org.nuunframework.kernel.plugin.PluginException;
 import org.nuunframework.kernel.plugin.request.BindingRequest;
 import org.nuunframework.kernel.plugin.request.KernelParamsRequest;
 import org.nuunframework.web.NuunWebPlugin;
@@ -24,11 +26,13 @@ import com.google.inject.Scopes;
 public class NuunRestPlugin extends AbstractPlugin
 {
 
-    public static String NUUN_REST_URL_PATTERN                  = "nuun.rest.url.pattern";
-    public static String NUUN_REST_PACKAGE_ROOT                 = "nuun.rest.package.root";
-    public static String NUUN_REST_POJO_MAPPING_FEATURE_ENABLED = "nuun.rest.pojo.mapping.feature.enabled";
+    public static String NUUN_REST_URL_PATTERN                   = "nuun.rest.url.pattern";
+    public static String NUUN_REST_PACKAGE_ROOT                  = "nuun.rest.package.root";
+    public static String NUUN_JERSEY_GUICECONTAINER_CUSTOM_CLASS = "nuun.jersey.guicecontainer.custom.class";
+    public static String NUUN_REST_POJO_MAPPING_FEATURE_ENABLED  = "nuun.rest.pojo.mapping.feature.enabled";
 
-    private boolean      enablePojoMappingFeature               = true;
+    private boolean      enablePojoMappingFeature                = true;
+    private Class<? extends HttpServlet>     jerseyCustomClass   = null;
 
     private String       urlPattern;
 
@@ -47,21 +51,30 @@ public class NuunRestPlugin extends AbstractPlugin
         if (module == null)
         {
 
-            module = new NuunRestModule(urlPattern, enablePojoMappingFeature);
+            module = new NuunRestModule(urlPattern, enablePojoMappingFeature , jerseyCustomClass);
         }
 
         return module;
     }
 
-    @Override
+    @SuppressWarnings("unchecked")
+	@Override
     public void init(InitContext initContext)
     {
-
         this.urlPattern = initContext.getKernelParam(NUUN_REST_URL_PATTERN);
-        String tmp = initContext.getKernelParam(NUUN_REST_POJO_MAPPING_FEATURE_ENABLED);
-        if (tmp != null && !tmp.isEmpty())
+        String pojo = initContext.getKernelParam(NUUN_REST_POJO_MAPPING_FEATURE_ENABLED);
+        if (pojo != null && !pojo.isEmpty())
         {
-            this.enablePojoMappingFeature = Boolean.valueOf(tmp);
+            this.enablePojoMappingFeature = Boolean.valueOf(pojo);
+        }
+        String strJerseyClass = initContext.getKernelParam(NUUN_JERSEY_GUICECONTAINER_CUSTOM_CLASS);
+        if (strJerseyClass != null && !strJerseyClass.isEmpty())
+        {
+        	try {
+				this.jerseyCustomClass = (Class<? extends HttpServlet>) Class.forName(strJerseyClass);
+			} catch (ClassNotFoundException e) {
+				throw new PluginException ( strJerseyClass + " does not exists as class.", e);
+			}
         }
     }
 
@@ -100,7 +113,9 @@ public class NuunRestPlugin extends AbstractPlugin
     @Override
     public Collection<KernelParamsRequest> kernelParamsRequests()
     {
-        return kernelParamsRequestBuilder().mandatory(NUUN_REST_URL_PATTERN).optional(NUUN_REST_POJO_MAPPING_FEATURE_ENABLED).build();
+        return kernelParamsRequestBuilder() //
+        		.mandatory(NUUN_REST_URL_PATTERN) // 
+        		.optional(NUUN_REST_POJO_MAPPING_FEATURE_ENABLED).build();
     }
 
     /*

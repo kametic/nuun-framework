@@ -18,7 +18,14 @@ public class KernelParamsRequest
     {
         this.requestType = requestType;
         this.keyRequested = keyRequested;
-        
     }
+
+	@Override
+	public String toString() {
+		return "KernelParamsRequest [requestType=" + requestType
+				+ ", keyRequested=" + keyRequested + "]";
+	}
+    
+    
     
 }

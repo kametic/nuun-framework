@@ -4,9 +4,7 @@ import static org.reflections.ReflectionUtils.withAnnotation;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -85,7 +83,6 @@ public class InternalKernelGuiceModule extends AbstractModule
 		// We install modules and bind class in the right orders
         for (Installable installable : installableList)
         {
-        	logger.error( "  >>> " + installable );
         	if (Module.class.isAssignableFrom(installable.inner.getClass()))
         	{ // install module
         		logger.info("installing module {}", (installable.inner));
@@ -157,7 +154,7 @@ public class InternalKernelGuiceModule extends AbstractModule
             // inner is a class to bind
             if (this.inner instanceof Class)
             {
-            	innerClass = (Class<?>) anInstallable.inner;
+            	innerClass = (Class<?>) this.inner;
             }
             else if (Module.class.isAssignableFrom(this.inner.getClass()))
             	// inner is a module annotated
@@ -223,8 +220,6 @@ public class InternalKernelGuiceModule extends AbstractModule
         
     	if (! reachAtLeastOnce) finalOrder = Integer.MIN_VALUE;
     	
-    	logger.error(moduleCläss.getName() + " : " + finalOrder);
-        
         return finalOrder;
     }
 

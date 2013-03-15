@@ -16,7 +16,7 @@ public class MethodAnnotatedWith extends AbstractSpecification<Method> {
 	@Override
 	public boolean isSatisfiedBy(Method candidate) {
 
-		return candidate.isAnnotationPresent(annotation);
+		return candidate != null && candidate.isAnnotationPresent(annotation);
 	}
 
 }

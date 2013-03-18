@@ -64,7 +64,9 @@ public class DummyPlugin3 extends AbstractPlugin
      /* (non-Javadoc)
      * @see org.nuunframework.kernel.plugin.AbstractPlugin#pluginsRequired()
      */
-     @SuppressWarnings("unchecked")
+     @SuppressWarnings({
+            "unchecked", "rawtypes"
+    })
     @Override
      public Collection<Class<? extends Plugin>> pluginDependenciesRequired()
      {

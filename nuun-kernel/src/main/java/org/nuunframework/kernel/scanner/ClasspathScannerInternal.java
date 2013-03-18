@@ -87,6 +87,50 @@ class ClasspathScannerInternal implements ClasspathScanner
         return (Collection) postTreatment((Collection) typesAnnotatedWith);
     }
 
+    @SuppressWarnings({
+        "unchecked", "rawtypes"
+    })
+    public Collection<Class<?>> scanClasspathForMetaAnnotation(Class<? extends Annotation> annotationType)
+    {
+        ConfigurationBuilder configurationBuilder = configurationBuilder();
+        Set<URL> computeUrls = computeUrls();
+        Reflections reflections = new Reflections(configurationBuilder.addUrls(computeUrls).setScanners(new MetaAnnotationScanner(annotationType)));
+        
+         Multimap<String, String> multimap = reflections.getStore().get(MetaAnnotationScanner.class);
+         Collection<String> names = multimap.get(annotationType.getName());
+         Collection<Class<?>> typesAnnotatedWith = toClasses2(names);
+//        Collection<Class<?>> typesAnnotatedWith = reflections.getTypesAnnotatedWith(annotationType);
+        
+        if (typesAnnotatedWith == null)
+        {
+            typesAnnotatedWith = Collections.emptySet();
+        }
+        
+        return (Collection) postTreatment((Collection) typesAnnotatedWith);
+    }
+
+    @SuppressWarnings({
+            "unchecked", "rawtypes"
+    })
+    @Override
+    public Collection<Class<?>> scanClasspathForMetaAnnotationRegex(String metaAnnotationRegex) 
+    {
+        ConfigurationBuilder configurationBuilder = configurationBuilder();
+        Set<URL> computeUrls = computeUrls();
+        Reflections reflections = new Reflections(configurationBuilder.addUrls(computeUrls).setScanners(new MetaAnnotationScanner(metaAnnotationRegex)));
+        
+         Multimap<String, String> multimap = reflections.getStore().get(MetaAnnotationScanner.class);
+         Collection<String> names = multimap.get(metaAnnotationRegex);
+         Collection<Class<?>> typesAnnotatedWith = toClasses2(names);
+        
+        if (typesAnnotatedWith == null)
+        {
+            typesAnnotatedWith = Collections.emptySet();
+        }
+        
+        return (Collection) postTreatment((Collection) typesAnnotatedWith);
+    }
+    
     static class IgnorePredicate implements Predicate<Class<?>>
     {
 
@@ -386,19 +430,19 @@ class ClasspathScannerInternal implements ClasspathScanner
         return urls;
     }
 
-    private <T> Collection<Class<? extends T>> toClasses2(Collection<String> names)
+    private <T> Collection<Class<?>> toClasses2(Collection<String> names)
     {
-        Collection classes = new HashSet();
+        Collection<Class<?>> classes = new HashSet();
 
         for (String name : names)
         {
             try
             {
-                classes.add(Class.forName(name));
+                classes.add((Class<T>) Class.forName(name));
             }
-            catch (ClassNotFoundException e)
+            catch (Exception e)
             {
-                e.printStackTrace();
+                logger.warn("Error when converting " + name + " to class.", e);
             }
         }
 

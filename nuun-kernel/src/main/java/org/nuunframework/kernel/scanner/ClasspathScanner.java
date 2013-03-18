@@ -12,6 +12,8 @@ public interface ClasspathScanner
 
     Collection<Class<?>> scanClasspathForAnnotationRegex(String annotationTypeName);
 
+    Collection<Class<?>> scanClasspathForMetaAnnotationRegex(String annotationTypeName);
+
     Collection<Class<?>> scanClasspathForSubTypeClass(Class<?> subType);
 
     Collection<Class<?>> scanClasspathForTypeRegex(String typeRegex);
@@ -21,4 +23,6 @@ public interface ClasspathScanner
     Collection<String> scanClasspathForResource(String pattern);
 
     Collection<Class<?>> scanClasspathForSpecification(Specification<Class<?>> specification);
+
+    Collection<Class<?>> scanClasspathForMetaAnnotation(Class<? extends Annotation> annotationType);
 }

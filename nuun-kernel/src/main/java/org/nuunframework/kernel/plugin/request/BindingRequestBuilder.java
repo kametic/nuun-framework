@@ -9,72 +9,63 @@ import java.util.Collections;
 import java.util.HashSet;
 
 import org.nuunframework.kernel.commons.specification.Specification;
+import org.nuunframework.kernel.plugin.request.builders.BindingRequestBuilderOptionsBuildMain;
 
 
 /**
+ *
+ *  
+ * 
  * @author Epo Jemba
  *
  */
-public class BindingRequestBuilder implements Builder<Collection<BindingRequest>>
+public class BindingRequestBuilder implements BindingRequestBuilderOptionsBuildMain
 {
     
     private Collection<BindingRequest> requests;
+    private BindingRequest currentBindingRequest = null;
     
-    /**
-     * 
-     */
     public BindingRequestBuilder()
     {
         requests = new HashSet<BindingRequest>();
     }
     
     
-    
     // VIA SPECIFICATION
-    public BindingRequestBuilder specification(Specification<Class<?>> specification)
+    @Override
+    public BindingRequestBuilderOptionsBuildMain specification(Specification<Class<?>> specification)
     {
         
-        requests.add(new BindingRequest(RequestType.VIA_SPECIFICATION, null,specification));
+        requests.add(currentBindingRequest = new BindingRequest(RequestType.VIA_SPECIFICATION, null,specification));
         
         return this;
     }
 
-    public BindingRequestBuilder specification(Specification<Class<?>> specification, Object scope)
-    {
-        requests.add(new BindingRequest(RequestType.VIA_SPECIFICATION, scope,specification));
-        return this;
-    }
-    
     // ANNOTATION TYPE
-    public BindingRequestBuilder annotationType(Class<? extends Annotation> annotationTypeRequested)
+    @Override
+    public BindingRequestBuilderOptionsBuildMain annotationType(Class<? extends Annotation> annotationTypeRequested)
     {
-        
-        requests.add(new BindingRequest(RequestType.ANNOTATION_TYPE, annotationTypeRequested));
-        
+        requests.add(currentBindingRequest = new BindingRequest(RequestType.ANNOTATION_TYPE, annotationTypeRequested));
         return this;
     }
-    
-    public BindingRequestBuilder annotationType(Class<? extends Annotation> annotationTypeRequested, Object scope)
+
+    @Override
+    public BindingRequestBuilderOptionsBuildMain metaAnnotationType(Class<? extends Annotation> metaAnnotationTypeRequested)
     {
-        
-        requests.add(new BindingRequest(RequestType.ANNOTATION_TYPE, annotationTypeRequested,scope,null));
-        
+        requests.add(currentBindingRequest = new BindingRequest(RequestType.META_ANNOTATION_TYPE, metaAnnotationTypeRequested));
         return this;
     }
-    
-    // ANNOTATION_REGEX_MATCH
-    public BindingRequestBuilder annotationRegex(String annotationRegex)
+ 
+    @Override
+    public BindingRequestBuilderOptionsBuildMain annotationRegex(String annotationRegex)
     {
-        
-        requests.add(new BindingRequest(RequestType.ANNOTATION_REGEX_MATCH, annotationRegex));
-        
+        requests.add(currentBindingRequest = new BindingRequest(RequestType.ANNOTATION_REGEX_MATCH, annotationRegex));
         return this;
     }
-    public BindingRequestBuilder annotationRegex(String annotationRegex, Object scope)
-    {
-        
-        requests.add(new BindingRequest(RequestType.ANNOTATION_REGEX_MATCH, annotationRegex,scope,null));
-        
+
+    @Override
+    public BindingRequestBuilderOptionsBuildMain metaAnnotationRegex(String metaAnnotationRegex)  {
+        requests.add(currentBindingRequest = new BindingRequest(RequestType.META_ANNOTATION_REGEX_MATCH, metaAnnotationRegex));
         return this;
     }
 
@@ -86,54 +77,59 @@ public class BindingRequestBuilder implements Builder<Collection<BindingRequest>
      * @param parentTypeRequested
      * @return
      */
-    public BindingRequestBuilder subtypeOf(Class<?> parentTypeRequested)
+    @Override
+    public BindingRequestBuilderOptionsBuildMain subtypeOf(Class<?> parentTypeRequested)
     {
-        requests.add(new BindingRequest(RequestType.SUBTYPE_OF_BY_CLASS, parentTypeRequested));
+        requests.add(currentBindingRequest = new BindingRequest(RequestType.SUBTYPE_OF_BY_CLASS, parentTypeRequested));
         
         return this;
     }
     
-    public BindingRequestBuilder subtypeOf(Class<?> parentTypeRequested, Object scope)
-    {
-        
-        requests.add(new BindingRequest(RequestType.SUBTYPE_OF_BY_CLASS, parentTypeRequested,scope,null));
-        
-        return this;
-    }
-    
-    
-    // SUBTYPE DEEP 
     /**
      * ask for a binding based on direct subtype of parentTypeRequested. 
      * 
      * @param ancestorTypeRequested
      * @return
      */
-    public BindingRequestBuilder descendentTypeOf(Class<?> ancestorTypeRequested)
+    @Override
+    public BindingRequestBuilderOptionsBuildMain descendentTypeOf(Class<?> ancestorTypeRequested)
     {
-        requests.add(new BindingRequest(RequestType.SUBTYPE_OF_BY_TYPE_DEEP, ancestorTypeRequested));
+        requests.add(currentBindingRequest = new BindingRequest(RequestType.SUBTYPE_OF_BY_TYPE_DEEP, ancestorTypeRequested));
         
         return this;
     }
     
-    // SUBTYPE_OF_BY_REGEX_MATCH
+    // SUBTYPE_OF_BY_REGEX_MATCH    
+    @Override
+    public BindingRequestBuilderOptionsBuildMain subtypeOfRegex(String parentTypeRegex)
+    {
+        
+        requests.add(currentBindingRequest = new BindingRequest(RequestType.SUBTYPE_OF_BY_REGEX_MATCH, parentTypeRegex));
+        
+        return this;
+    }
+
+//    public BindingRequestBuilderOptionsBuildMain subtypeOfRegex(String parentTypeRegex,Object scope)
+//    {
+//        
+//        requests.add(currentBindingRequest = new BindingRequest(RequestType.SUBTYPE_OF_BY_REGEX_MATCH, parentTypeRegex,scope,null));
+//        
+//        return this;
+//    }
     
-    public BindingRequestBuilder subtypeOfRegex(String parentTypeRegex)
+    @Override
+    public BindingRequestBuilderOptionsBuildMain withConstraint(Object constraint)
     {
-        
-        requests.add(new BindingRequest(RequestType.SUBTYPE_OF_BY_REGEX_MATCH, parentTypeRegex));
-        
+        currentBindingRequest.requestedConstraint = constraint;
         return this;
     }
 
-    public BindingRequestBuilder subtypeOfRegex(String parentTypeRegex,Object scope)
+    @Override
+    public BindingRequestBuilderOptionsBuildMain withScope(Object scope)
     {
-        
-        requests.add(new BindingRequest(RequestType.SUBTYPE_OF_BY_REGEX_MATCH, parentTypeRegex,scope,null));
-        
+        currentBindingRequest.requestedScope = scope;
         return this;
     }
-
     
     @Override
     public Collection<BindingRequest> build()

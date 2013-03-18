@@ -7,9 +7,12 @@ import static org.fest.assertions.Assertions.assertThat;
 
 import java.lang.annotation.Annotation;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
+import org.nuunframework.kernel.Kernel;
+import org.nuunframework.kernel.KernelTest;
 import org.nuunframework.kernel.context.Context;
 import org.nuunframework.kernel.context.InitContext;
 import org.nuunframework.kernel.plugin.AbstractPlugin;
@@ -27,6 +30,10 @@ import org.slf4j.LoggerFactory;
  */
 public class DummyPlugin extends AbstractPlugin
 {
+
+    public  static final String ALIAS_DUMMY_PLUGIN1 = "alias.dummy.plugin1";
+
+    public static final String NUUNROOTALIAS = "nuunrootalias";
 
     private Logger logger = LoggerFactory.getLogger(DummyPlugin.class);
 
@@ -107,6 +114,10 @@ public class DummyPlugin extends AbstractPlugin
         assertThat(param).isNotEmpty();
         assertThat(param).isEqualTo("WAZAAAA");
 
+        String param2 = initContext.getKernelParam( Kernel.NUUN_ROOT_PACKAGE );
+        assertThat(param2).isNotEmpty();
+        assertThat(param2).isEqualTo(KernelTest.class.getPackage().getName());
+        
         Map<Class<? extends Annotation>, Collection<Class<?>>> scannedClassesByAnnotationClass = initContext.scannedClassesByAnnotationClass();
         
         Collection<Class<?>> cAnnotations1 = scannedClassesByAnnotationClass.get(MarkerSample4.class);
@@ -269,6 +280,15 @@ public class DummyPlugin extends AbstractPlugin
     public void stop()
     {
         logger.info("DummyPlugin is stopping");
+    }
+
+    @Override
+    public Map<String, String> kernelParametersAliases()
+    {
+        Map<String, String> m = new HashMap<String, String>();
+        m.put(NUUNROOTALIAS, Kernel.NUUN_ROOT_PACKAGE);
+        m.put(ALIAS_DUMMY_PLUGIN1, "dummy.plugin1");
+        return m;
     }
 
     /*

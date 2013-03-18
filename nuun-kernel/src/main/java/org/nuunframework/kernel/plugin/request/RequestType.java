@@ -18,10 +18,16 @@ public enum RequestType
      * Request classes based on annotation regex match on name
      */
     ANNOTATION_REGEX_MATCH,
-//    /**
-//     * Request classes based on type of parent class
-//     */
-//    TYPE_OF_BY_CLASS , 
+    
+    /**
+     * Request classes annotated with annotation annotated by this annotation class type 
+     */
+    META_ANNOTATION_TYPE , 
+    /**
+     * Request classes annotated with annotation annotated by this annotation regex name
+     */
+    META_ANNOTATION_REGEX_MATCH,
+
     /**
      * Request classes based on type of parent class
      */

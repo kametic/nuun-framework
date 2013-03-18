@@ -15,8 +15,9 @@ public class BindingRequest
 
     public final RequestType requestType;
     public final Object requestedObject;
-    public final Object requestedScope;
+    public Object requestedScope;
     public final Specification<Class<?>> specification;
+    public Object requestedConstraint;
 
     public BindingRequest(RequestType requestType , Object keyRequested)
     {

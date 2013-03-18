@@ -32,14 +32,6 @@ public class AssertUtils
 
     // ANNOTATION //
 
-    // public static boolean hasAnnotationDeep(Field field , Class<? extends Annotation> klass)
-    // {
-    // if (field.isAnnotationPresent(klass))
-    // return true;
-    // else
-    // return hasAnnotationDeep(field., klass)
-    //
-    // }
     public static boolean hasAnnotationDeep(Class<?> memberDeclaringClass, Class<? extends Annotation> klass)
     {
 
@@ -57,6 +49,26 @@ public class AssertUtils
             }
         }
 
+        return false;
+    }
+
+    public static boolean hasAnnotationDeepRegex(Class<?> memberDeclaringClass, String metaAnnotationRegex)
+    {
+        
+        if (memberDeclaringClass.getName().matches(metaAnnotationRegex))
+        {
+            return true;
+        }
+        
+        for (Annotation anno : memberDeclaringClass.getAnnotations())
+        {
+            Class<? extends Annotation> annoClass = anno.annotationType();
+            if (!annoClass.getPackage().getName().startsWith("java.lang") && hasAnnotationDeepRegex(annoClass, metaAnnotationRegex))
+            {
+                return true;
+            }
+        }
+        
         return false;
     }
 
@@ -112,15 +124,15 @@ public class AssertUtils
         {
             this.annotationModelType = annotationModelType;
             this.annotationClone = annotationClone;
-
         }
 
         @SuppressWarnings("unchecked")
         public static <A extends Annotation> A of(Class<A> annotationModelType, Annotation annotationClone)
         {
-            return (A) Proxy.newProxyInstance(annotationModelType.getClassLoader(), new Class[] {
-                annotationModelType
-            }, new AnnotationCopy(annotationModelType, annotationClone));
+            return (A) Proxy.newProxyInstance ( 
+                    annotationModelType.getClassLoader() , 
+                    new Class[] { annotationModelType } , 
+                    new AnnotationCopy(annotationModelType, annotationClone));
         }
 
         @Override

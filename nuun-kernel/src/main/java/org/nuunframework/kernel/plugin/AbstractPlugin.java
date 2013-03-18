@@ -9,6 +9,7 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -28,6 +29,7 @@ import org.nuunframework.kernel.plugin.request.ClasspathScanRequest;
 import org.nuunframework.kernel.plugin.request.ClasspathScanRequestBuilder;
 import org.nuunframework.kernel.plugin.request.KernelParamsRequest;
 import org.nuunframework.kernel.plugin.request.KernelParamsRequestBuilder;
+import org.nuunframework.kernel.plugin.request.builders.BindingRequestBuilderMain;
 
 /**
  * @author Epo Jemba
@@ -98,7 +100,7 @@ public abstract class AbstractPlugin implements Plugin
         return scanBuilder;
     }
 
-    protected BindingRequestBuilder bindingRequestsBuilder()
+    protected BindingRequestBuilderMain bindingRequestsBuilder()
     {
         bindingBuilder.reset();
         return bindingBuilder;
@@ -149,7 +151,7 @@ public abstract class AbstractPlugin implements Plugin
     	};
     }
 
-    protected Specification<Class<?>> classIsAnnotatedWith(final Class<? extends Annotation> klass)
+    protected Specification<Class<?>> classAnnotatedWith(final Class<? extends Annotation> klass)
     {
         return new AbstractSpecification<Class<?>>()
         {
@@ -162,7 +164,7 @@ public abstract class AbstractPlugin implements Plugin
     }
 
     // TODO replace this implementation by the one in ClassMethodsAnnotatedWithSpecification
-    protected Specification<Class<?>> classIsImplementing(final Class<?> klass)
+    protected Specification<Class<?>> classImplements(final Class<?> klass)
     {
         return new AbstractSpecification<Class<?>>()
         {
@@ -247,6 +249,13 @@ public abstract class AbstractPlugin implements Plugin
     public DependencyInjectionProvider dependencyInjectionProvider()
     {
         return null;
+    }
+    
+    
+    @Override
+    public Map<String, String> kernelParametersAliases()
+    {
+        return new HashMap<String, String>();
     }
 
     protected <T> Collection<T> collectionOf(T... items)

@@ -7,14 +7,13 @@ TODO
 - Requests : 
     - Specification<Class<?>> apply
     - add meta annotations
+- Requests : 
     - method with annotation
     - fields with annotation
-- Plugin dependencies : give to plugin the required plugin singleton instances it asks for. @ the init time.
 - Request : add Request constraints : Unique, Maxi, Mini
 - Parameter kernel for Plugin Strict Mode (all plugins or zero) or Degraded Mode (Not all can start , beware of dependencies)  
-- ajouter lifecycle autour des listener
+- Ajouter Lifecycle autour des listener
   comme dans https://bitbucket.org/peachjean/peachguice/src/660df406811cde318658821b8fae3548b62247b3/peachguice-base/src/main/java/net/peachjean/guice/PeachGuiceServletContextListener.java?at=default
-- KernelModule => dependencyInjectionDef + provider pour autre di que guice
 - add clear reporting in the log
 - add clear run fix fix fix behaviour
   - Exception system rewrite (http://northconcepts.com/blog/2013/01/18/6-tips-to-improve-your-exception-handling/) 
@@ -34,6 +33,7 @@ TODO
 - JSR303 (validation)
 - JSR107 (cache)
 - Créer les org.nuunframework.kernel.plugin.provider.DependencyInjectionProvider 
+  KernelModule => dependencyInjectionDef + provider pour autre di que guice
   - handle 
    - from Guice 
    - to Something else
@@ -47,6 +47,7 @@ TODO
 
 DONE
 ====
+- Plugin dependencies : give to plugin the required plugin singleton instances it asks for. @ the init time.
 - add resource scanners
 - Plugin requirement
 - Plugin Handling

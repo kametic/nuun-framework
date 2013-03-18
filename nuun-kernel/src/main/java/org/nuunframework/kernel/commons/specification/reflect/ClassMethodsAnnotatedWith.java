@@ -4,7 +4,6 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 
 import org.apache.commons.lang.ArrayUtils;
@@ -72,18 +71,18 @@ public class ClassMethodsAnnotatedWith extends AbstractSpecification<Class<?>>
         {
             List<Class<?>> extendedClasses = new ArrayList<Class<?>>();
             // all interfaces hierarchy
-            for (Class clazz: classes) {
+            for (Class<?> clazz: classes) {
             	if (clazz != null) 
             	{
-            		Class[] interfaces = clazz.getInterfaces();
+            		Class<?>[] interfaces = clazz.getInterfaces();
 	                if (interfaces != null)
 	                {
-	                	extendedClasses.addAll((Collection<? extends Class<?>>) Arrays.asList( interfaces ) );
+	                	extendedClasses.addAll((List<? extends Class<?>>) Arrays.asList( interfaces ) );
 	                }
-	                Class superclass = clazz.getSuperclass();
+	                Class<?> superclass = clazz.getSuperclass();
 	                if (superclass != null && superclass != Object.class)
 	                {
-	                	extendedClasses.addAll((Collection<? extends Class<?>>) Arrays.asList( superclass ) );
+	                	extendedClasses.addAll((List<? extends Class<?>>) Arrays.asList( superclass ) );
 	                }
             	}
             }

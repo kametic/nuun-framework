@@ -6,8 +6,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import javax.inject.Qualifier;
-
 import org.nuunframework.kernel.stereotype.Concern;
 
 @Concern(name="security" , priority=Concern.Priority.LOW)

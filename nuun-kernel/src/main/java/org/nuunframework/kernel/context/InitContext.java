@@ -18,6 +18,7 @@ import com.google.inject.Module;
  * @author Epo Jemba
  *
  */
+@SuppressWarnings("rawtypes")
 public interface InitContext
 {
 

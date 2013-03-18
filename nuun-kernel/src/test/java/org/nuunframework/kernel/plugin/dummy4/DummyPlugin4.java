@@ -35,19 +35,19 @@ public class DummyPlugin4 extends AbstractPlugin
     @SuppressWarnings("unchecked")
     public Collection<BindingRequest> bindingRequests()
     {
-        Specification<Class<?>> specification = and( classIsAnnotatedWith(MarkerSample5.class) , classIsImplementing(Interface2.class));
+        Specification<Class<?>> specification = and( classAnnotatedWith(MarkerSample5.class) , classImplements(Interface2.class));
         
         assertThat( specification.isSatisfiedBy(Pojo1.class) ).isFalse();
         assertThat( specification.isSatisfiedBy(Pojo2.class) ).isTrue();
         
-        return bindingRequestsBuilder().specification(specification , Scopes.SINGLETON).build();
+        return bindingRequestsBuilder().specification(specification ).withScope(Scopes.SINGLETON).build();
     }
     
     @SuppressWarnings("unchecked")
     @Override
     public Collection<ClasspathScanRequest> classpathScanRequests()
     {
-        specification = and( classIsAnnotatedWith(MarkerSample.class) , classIsImplementing(Interface1.class));
+        specification = and( classAnnotatedWith(MarkerSample.class) , classImplements(Interface1.class));
 
         assertThat( specification.isSatisfiedBy(Pojo1.class) ).isTrue();
         assertThat( specification.isSatisfiedBy(Pojo2.class) ).isFalse();
@@ -56,6 +56,7 @@ public class DummyPlugin4 extends AbstractPlugin
     }
     
     
+    @SuppressWarnings("rawtypes")
     @Override
     public void init(InitContext initContext)
     {

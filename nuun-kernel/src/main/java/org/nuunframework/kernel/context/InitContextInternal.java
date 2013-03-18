@@ -11,10 +11,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.nuunframework.kernel.annotations.KernelModule;
 import org.nuunframework.kernel.commons.specification.Specification;
 import org.nuunframework.kernel.commons.specification.reflect.DescendantOfSpecification;
 import org.nuunframework.kernel.plugin.Plugin;
+import org.nuunframework.kernel.plugin.request.RequestType;
 import org.nuunframework.kernel.scanner.ClasspathScanner;
 import org.nuunframework.kernel.scanner.ClasspathScannerFactory;
 import org.slf4j.Logger;
@@ -24,7 +27,7 @@ import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
-
+@SuppressWarnings("rawtypes")
 public class InitContextInternal implements InitContext
 {
 
@@ -46,9 +49,11 @@ public class InitContextInternal implements InitContext
     private final List<Class<?>>                                         ancestorTypesClassesToBind;
     private final List<String>                                           parentTypesRegexToBind;
     private final List<Specification<Class<?>>>                          specificationsToBind;
-    private final Map<Specification , Object>                            mapSpecificationScope;
+    private final Map<Key , Object>                                       mapOfScopes;
     private final List<Class<? extends Annotation>>                      annotationTypesToBind;
+    private final List<Class<? extends Annotation>>                      metaAnnotationTypesToBind;
     private final List<String>                                           annotationRegexToBind;
+    private final List<String>                                           metaAnnotationRegexToBind;
 
     private final List<String>                                           propertiesPrefix;
 
@@ -106,12 +111,14 @@ public class InitContextInternal implements InitContext
         this.annotationRegexToScan = new LinkedList<String>();
 
         this.annotationTypesToBind = new LinkedList<Class<? extends Annotation>>();
+        this.metaAnnotationTypesToBind = new LinkedList<Class<? extends Annotation>>();
         this.parentTypesClassesToBind = new LinkedList<Class<?>>();
         this.ancestorTypesClassesToBind = new LinkedList<Class<?>>();
         this.parentTypesRegexToBind = new LinkedList<String>();
         this.specificationsToBind = new LinkedList<Specification<Class<?>>>();
-        this.mapSpecificationScope = new HashMap<Specification, Object>();
+        this.mapOfScopes = new HashMap<Key, Object>();
         this.annotationRegexToBind = new LinkedList<String>();
+        this.metaAnnotationRegexToBind = new LinkedList<String>();
 
         this.propertiesPrefix = new LinkedList<String>();
         this.childModules = new LinkedList<Module>();
@@ -158,7 +165,7 @@ public class InitContextInternal implements InitContext
         }
     }
 
-    @SuppressWarnings("rawtypes")
+    
     public void executeRequests()
     {
         initScanner();
@@ -232,11 +239,17 @@ public class InitContextInternal implements InitContext
         for (Class<?> parentType : this.parentTypesClassesToBind)
         {
             bindClasspathForSubType = this.classpathScanner.scanClasspathForSubTypeClass(parentType);
+            
+            RequestType requestType = RequestType.SUBTYPE_OF_BY_CLASS;
+            addScopeToClasses( bindClasspathForSubType , scope(requestType , parentType ) , classesWithScopes);
+            
             classesToBind.addAll(bindClasspathForSubType);
         }
         for (Class<?> ancestorType : this.ancestorTypesClassesToBind)
         {
             bindClasspathForAncestorType = this.classpathScanner.scanClasspathForSpecification(new DescendantOfSpecification(ancestorType));
+            RequestType requestType = RequestType.SUBTYPE_OF_BY_TYPE_DEEP;
+            addScopeToClasses( bindClasspathForAncestorType , scope(requestType , ancestorType ) , classesWithScopes);
             classesToBind.addAll(bindClasspathForAncestorType);
         }
 
@@ -244,15 +257,17 @@ public class InitContextInternal implements InitContext
         for (String typeName : this.parentTypesRegexToBind)
         {
             Collection<Class<?>> scanClasspathForTypeName = this.classpathScanner.scanClasspathForTypeRegex(typeName);
+            RequestType requestType = RequestType.SUBTYPE_OF_BY_REGEX_MATCH;
+            addScopeToClasses( scanClasspathForTypeName , scope(requestType , typeName ) , classesWithScopes);
             classesToBind.addAll(scanClasspathForTypeName);
         }
 
         for (Specification<Class<?>>  spec : this.specificationsToBind)
         {
-            Object scope = this.mapSpecificationScope.get(spec);
             Collection<Class<?>> scanClasspathForTypeName = this.classpathScanner.scanClasspathForSpecification(spec);
             
-            addScope(scanClasspathForTypeName, scope , classesWithScopes);
+            RequestType requestType = RequestType.VIA_SPECIFICATION;
+            addScopeToClasses(scanClasspathForTypeName, scope(requestType , spec ) , classesWithScopes);
             
             classesToBind.addAll(scanClasspathForTypeName);
         }
@@ -260,12 +275,32 @@ public class InitContextInternal implements InitContext
         for (Class<? extends Annotation> annotationType : this.annotationTypesToBind)
         {
             Collection<Class<?>> scanClasspathForAnnotation = this.classpathScanner.scanClasspathForAnnotation(annotationType);
+            RequestType requestType = RequestType.ANNOTATION_TYPE;
+            addScopeToClasses( scanClasspathForAnnotation , scope(requestType , annotationType ) , classesWithScopes);
             classesToBind.addAll(scanClasspathForAnnotation);
         }
 
-        for (String annotationName : this.annotationRegexToBind)
+        for (Class<? extends Annotation> metaAnnotationType : this.metaAnnotationTypesToBind) 
         {
-            Collection<Class<?>> scanClasspathForAnnotation = this.classpathScanner.scanClasspathForAnnotationRegex(annotationName);
+            Collection<Class<?>> scanClasspathForAnnotation = this.classpathScanner.scanClasspathForMetaAnnotation(metaAnnotationType);
+            RequestType requestType = RequestType.META_ANNOTATION_TYPE;
+            addScopeToClasses( scanClasspathForAnnotation , scope(requestType , metaAnnotationType ) , classesWithScopes);
+            classesToBind.addAll(scanClasspathForAnnotation);
+        }
+
+        for (String annotationNameRegex : this.annotationRegexToBind)
+        {
+            Collection<Class<?>> scanClasspathForAnnotation = this.classpathScanner.scanClasspathForAnnotationRegex(annotationNameRegex);
+            RequestType requestType = RequestType.ANNOTATION_REGEX_MATCH;
+            addScopeToClasses( scanClasspathForAnnotation , scope(requestType , annotationNameRegex ) , classesWithScopes);
+            classesToBind.addAll(scanClasspathForAnnotation);
+        }
+
+        for (String metaAnnotationNameRegex : this.metaAnnotationRegexToBind)
+        {
+            Collection<Class<?>> scanClasspathForAnnotation = this.classpathScanner.scanClasspathForMetaAnnotationRegex(metaAnnotationNameRegex);
+            RequestType requestType = RequestType.META_ANNOTATION_REGEX_MATCH;
+            addScopeToClasses( scanClasspathForAnnotation , scope(requestType , metaAnnotationNameRegex ) , classesWithScopes);
             classesToBind.addAll(scanClasspathForAnnotation);
         }
 
@@ -286,8 +321,15 @@ public class InitContextInternal implements InitContext
             this.mapPropertiesFiles.put(prefix, propertiesFilesTmp);
         }
     }
+
+    private Object scope( RequestType requestType , Object spec)
+    {
+        Object scope = this.mapOfScopes.get( key( requestType ,  spec));
+        if (null == scope) scope = Scopes.NO_SCOPE;
+        return scope;
+    }
     
-    private void addScope(Collection<Class<?>> classes , Object scope, Map<Class<?>, Object> inClassesWithScopes)
+    private void addScopeToClasses(Collection<Class<?>> classes , Object scope, Map<Class<?>, Object> inClassesWithScopes)
     {
         for (Class<?> klass : classes)
         {
@@ -387,13 +429,20 @@ public class InitContextInternal implements InitContext
         this.typesClassesToScan.add(type);
     }
 
-    public void addParentTypeClassToBind(Class<?> type)
+    private Key key(RequestType type , Object key)
     {
+        return new Key(type, key);
+    }
+    
+    public void addParentTypeClassToBind(Class<?> type , Object scope)
+    {
+        updateScope(key ( RequestType.SUBTYPE_OF_BY_CLASS ,  type), scope);
         this.parentTypesClassesToBind.add(type);
     }
 
-    public void addAncestorTypeClassToBind(Class<?> type)
+    public void addAncestorTypeClassToBind(Class<?> type , Object scope)
     {
+        updateScope(key ( RequestType.SUBTYPE_OF_BY_TYPE_DEEP ,  type), scope);
         this.ancestorTypesClassesToBind.add(type);
     }
 
@@ -412,23 +461,39 @@ public class InitContextInternal implements InitContext
         this.parentTypesRegexToScan.add(type);
     }
 
-    public void addTypeRegexesToBind(String type)
+    public void addTypeRegexesToBind(String type , Object scope)
     {
+        updateScope(key ( RequestType.TYPE_OF_BY_REGEX_MATCH,  type), scope);
         this.parentTypesRegexToBind.add(type);
     }
-    public void addSpecificationToBind(Specification<Class<?>> specification)
-    {
-        this.specificationsToBind.add(specification);
-        this.mapSpecificationScope.put(specification, Scopes.NO_SCOPE);
-    }
+    /**
+     * @category bind
+     * @param specification
+     */
+//    public void addSpecificationToBind(Specification<Class<?>> specification)
+//    {
+//        this.specificationsToBind.add(specification);
+//        this.mapSpecificationScope.put(specification, Scopes.NO_SCOPE);
+//    }
 
+    private void updateScope ( Key key , Object scope)
+    {
+        if (scope != null)
+        {
+            this.mapOfScopes.put(key, scope);
+        }
+        else
+        {
+            this.mapOfScopes.put(key, Scopes.NO_SCOPE);
+        }
+            
+        
+    }
+    
     public void addSpecificationToBind(Specification<Class<?>> specification , Object scope)
     {
         this.specificationsToBind.add(specification);
-        if (scope != null)
-        {
-            this.mapSpecificationScope.put(specification, scope);
-        }
+        updateScope(key ( RequestType.VIA_SPECIFICATION ,  specification), scope);
     }
 
     public void addAnnotationTypesToScan(Class<? extends Annotation> types)
@@ -436,9 +501,16 @@ public class InitContextInternal implements InitContext
         this.annotationTypesToScan.add(types);
     }
 
-    public void addAnnotationTypesToBind(Class<? extends Annotation> types)
+    public void addAnnotationTypesToBind(Class<? extends Annotation> types , Object scope)
     {
         this.annotationTypesToBind.add(types);
+        updateScope(key ( RequestType.ANNOTATION_TYPE ,  types), scope);
+    }
+
+    public void addMetaAnnotationTypesToBind(Class<? extends Annotation> types , Object scope)
+    {
+        this.metaAnnotationTypesToBind.add(types);
+        updateScope(key ( RequestType.META_ANNOTATION_TYPE ,  types), scope);
     }
 
     public void addAnnotationRegexesToScan(String names)
@@ -446,9 +518,15 @@ public class InitContextInternal implements InitContext
         this.annotationRegexToScan.add(names);
     }
 
-    public void addAnnotationRegexesToBind(String names)
+    public void addAnnotationRegexesToBind(String names, Object scope)
     {
         this.annotationRegexToBind.add(names);
+        updateScope(key ( RequestType.ANNOTATION_REGEX_MATCH ,  names), scope);
+    }
+    public void addMetaAnnotationRegexesToBind(String names, Object scope)
+    {
+        this.metaAnnotationRegexToBind.add(names);
+        updateScope(key ( RequestType.META_ANNOTATION_REGEX_MATCH,  names), scope);
     }
 
     public void addChildModule(Module module)
@@ -483,6 +561,7 @@ public class InitContextInternal implements InitContext
         return (List) Collections.unmodifiableList(this.classesToBind);
     }
     
+    @SuppressWarnings({"unchecked"})
     public Map<Class<?> , Object> classesWithScopes ()
     {
         return  (Map) Collections.unmodifiableMap(classesWithScopes );
@@ -490,7 +569,7 @@ public class InitContextInternal implements InitContext
 
     @Override
     @SuppressWarnings({
-            "unchecked", "rawtypes"
+            "unchecked"
     })
     public List<Module> moduleResults()
     {
@@ -498,7 +577,7 @@ public class InitContextInternal implements InitContext
     }
 
     @SuppressWarnings({
-            "rawtypes", "unchecked"
+            "unchecked"
     })
     @Override
     public Collection<String> propertiesFiles()
@@ -510,6 +589,31 @@ public class InitContextInternal implements InitContext
     public Collection<? extends Plugin> pluginsRequired()
     {
         return Collections.emptySet();
+    }
+    
+    static class Key
+    {
+        private final RequestType type;
+        private final Object key;
+        
+        public Key(RequestType type , Object key)
+        {
+            this.type = type;
+            this.key = key;
+        }
+        
+        @Override
+        public boolean equals(Object obj)
+        {
+            Key key2 = (Key)obj;
+            return new EqualsBuilder().append(this.type, key2.type ).append( this.key, key2.key).isEquals() ;
+        }
+        
+        @Override
+        public int hashCode()
+        {
+            return new HashCodeBuilder().append(this.type).append( this.key).toHashCode();
+        }
     }
 
 }

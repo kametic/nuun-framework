@@ -12,10 +12,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -38,6 +38,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Strings;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
@@ -62,7 +64,7 @@ public final class Kernel
 
     private final InitContextInternal               initContext;
     private Injector                                mainInjector;
-    private final Map<String, String>               kernelParams;
+    private final AliasMap                          kernelParams;
 
     private boolean                                 started                = false;
     private boolean                                 initialized            = false;
@@ -70,13 +72,15 @@ public final class Kernel
     private Collection<DependencyInjectionProvider> dependencyInjectionProviders;
     private Object                                  containerContext;
     private ArrayList<Plugin>                       orderedPlugins;
-    
+
     private Collection<DependencyInjectionProvider> globalDependencyInjectionProviders;
+    private List<Iterator<Plugin>>                  pluginIterators;
+    private Multimap<String, String>                kernelParametersAliases;
+    private List<Plugin>                            fetchedPlugins;
 
     private Kernel(String... keyValues)
     {
-
-        kernelParams = new HashMap<String, String>();
+        kernelParams = new AliasMap();
 
         this.initContext = new InitContextInternal(NUUN_PROPERTIES_PREFIX, kernelParams);
 
@@ -90,6 +94,91 @@ public final class Kernel
                 value = it.next();
             logger.info("Adding {} = {} as param to kernel", key, value);
             kernelParams.put(key, value);
+        }
+
+    }
+
+    public boolean isStarted()
+    {
+        return started;
+    }
+
+    public boolean isInitialized()
+    {
+        return initialized;
+    }
+
+    /**
+     * 
+     * 
+     */
+    public synchronized void init()
+    {
+        if (!initialized)
+        {
+            fetchPlugins();
+            computeAliases();
+            checkPlugins();
+            initPlugins();
+            initialized = true;
+        }
+        else
+        {
+            throw new KernelException("Kernel is already initialized");
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void fetchPlugins()
+    {
+        // plugin from kernel call api
+        Iterator<Plugin> iterator1 = pluginsToAdd.values().iterator();
+
+        // TODO add unit and test integration test for this
+        if (spiPluginEnabled)
+        {
+            pluginLoader = ServiceLoader.load(Plugin.class, Thread.currentThread().getContextClassLoader());
+
+            // plugin from service loader
+            Iterator<Plugin> iterator2 = pluginLoader.iterator();
+            pluginIterators = Arrays.asList(iterator2, iterator1);
+        }
+        else
+        {
+            pluginIterators = Arrays.asList(iterator1);
+        }
+
+        fetchedPlugins = new LinkedList<Plugin>();
+
+        for (Iterator<Plugin> iterator : pluginIterators)
+        {
+            Plugin plugin;
+            while (iterator.hasNext())
+            {
+                plugin = iterator.next();
+                fetchedPlugins.add(plugin);
+            }
+
+        }
+    }
+
+    private void computeAliases()
+    {
+        // kernel parameters aliases
+        kernelParametersAliases = ArrayListMultimap.create();
+
+        // Compute alias
+        for (Plugin plugin : fetchedPlugins)
+        {
+            Map<String, String> pluginKernelParametersAliases = plugin.kernelParametersAliases();
+            for (Entry<String, String> entry : pluginKernelParametersAliases.entrySet())
+            {
+                // entry.getValue() is the alias to give
+                // entry.getKey() is the key to alias
+                
+                logger.info("Adding alias parameter \"{}\" to key \"{}\"." , entry.getKey() ,  entry.getValue());
+                kernelParams.putAlias(entry.getKey() , entry.getValue());
+            }
         }
 
         //
@@ -111,31 +200,81 @@ public final class Kernel
         }
     }
 
-    public boolean isStarted()
-    {
-        return started;
-    }
-
-    public boolean isInitialized()
-    {
-        return initialized;
-    }
+    // String getKernelParam(String key)
+    // {
+    //
+    // }
 
     /**
      * 
-     * 
      */
-    public synchronized void init()
+    private void checkPlugins()
     {
-        if (!initialized)
-        {
-            checkPlugins();
-            initPlugins();
-            initialized = true;
+        logger.info("Plugins initialisation ");
+        plugins.clear();
+
+        List<Class<? extends Plugin>> pluginClasses = new ArrayList<Class<? extends Plugin>>();
+        // we initialize plugins
+
+        for (Plugin plugin : fetchedPlugins) {                       
+            {
+
+                logger.info("checking Plugin {}.", plugin.name());
+                if (!Strings.isNullOrEmpty(plugin.name()))
+                {
+                    Object ok = plugins.put(plugin.name(), plugin);
+                    if (ok == null)
+                    {
+                        // Check for required param
+                        // ========================
+                        Collection<KernelParamsRequest> kernelParamsRequests = plugin.kernelParamsRequests();
+                        Collection<String> computedMandatoryParams = new HashSet<String>();
+                        for (KernelParamsRequest kernelParamsRequest : kernelParamsRequests)
+                        {
+                            if (kernelParamsRequest.requestType == KernelParamsRequestType.MANDATORY)
+                            {
+                                computedMandatoryParams.add(kernelParamsRequest.keyRequested);
+                            }
+                        }
+
+                        if (kernelParams.containsAllKeys(computedMandatoryParams))
+//                            if (kernelParams.keySet().containsAll(computedMandatoryParams))
+                        {
+                            pluginClasses.add(plugin.getClass());
+                        }
+                        else
+                        {
+                            logger.error("plugin {} miss parameter/s : {}", plugin.name(), kernelParamsRequests.toString());
+                            throw new KernelException("plugin " + plugin.name() + " miss parameter/s : " + kernelParamsRequests.toString());
+                        }
+
+                    }
+                    else
+                    {
+                        logger.error("Can not have 2 Plugin {} of the same type {}. please fix this before the kernel can start.", plugin.name(), plugin.getClass().getName());
+                        throw new KernelException(
+                                "Can not have 2 Plugin %s of the same type %s. please fix this before the kernel can start.", plugin.name(), plugin.getClass().getName());
+                    }
+                }
+                else
+                {
+                    logger.warn("Plugin {} has no correct name it won't be installed.", plugin.getClass());
+                    throw new KernelException("Plugin %s has no correct name it won't be installed.", plugin.name());
+                }
+            }
         }
-        else
+
+        // Check for dependencies
+        for (Plugin plugin : plugins.values())
         {
-            throw new KernelException("Kernel is already initialized");
+            Collection<Class<? extends Plugin>> pluginDependenciesRequired = plugin.pluginDependenciesRequired();
+
+            if (pluginDependenciesRequired != null && !pluginDependenciesRequired.isEmpty() && !pluginClasses.containsAll(pluginDependenciesRequired))
+            {
+                logger.error("plugin {} misses the following plugin/s as dependency/ies {}", plugin.name(), pluginDependenciesRequired.toString());
+                throw new KernelException("plugin %s misses the following plugin/s as dependency/ies %s", plugin.name(), pluginDependenciesRequired.toString());
+
+            }
         }
     }
 
@@ -147,8 +286,6 @@ public final class Kernel
             mainInjector = Guice.createInjector(new InternalKernelGuiceModule(initContext));
 
             // Here we can pass the mainInjector to the non guice modules
-            
-            
 
             context = mainInjector.getInstance(Context.class);
 
@@ -194,101 +331,9 @@ public final class Kernel
      * 
      */
     @SuppressWarnings("unchecked")
-    private void checkPlugins()
-    {
-        logger.info("Plugins initialisation");
-        plugins.clear();
-        // plugin from kernel call api
-        Iterator<Plugin> iterator1 = pluginsToAdd.values().iterator();
-
-        List<Iterator<Plugin>> iterators;
-
-        // TODO add unit and test integration test for this
-        if (spiPluginEnabled)
-        {
-            pluginLoader = ServiceLoader.load(Plugin.class, Thread.currentThread().getContextClassLoader());
-
-            // plugin from service loader
-            Iterator<Plugin> iterator2 = pluginLoader.iterator();
-            iterators = Arrays.asList(iterator2, iterator1);
-        }
-        else
-        {
-            iterators = Arrays.asList(iterator1);
-        }
-
-        List<Class<? extends Plugin>> pluginClasses = new ArrayList<Class<? extends Plugin>>();
-        // we initialize plugins
-        for (Iterator<Plugin> iterator : iterators)
-        {
-            Plugin plugin;
-            while (iterator.hasNext())
-            {
-                plugin = iterator.next();
-                logger.info("checking Plugin {}.", plugin.name());
-                if (!Strings.isNullOrEmpty(plugin.name()))
-                {
-                    Object ok = plugins.put(plugin.name(), plugin);
-                    if (ok == null)
-                    {
-                        // Check for required param
-                        // ========================
-                        Collection<KernelParamsRequest> kernelParamsRequests = plugin.kernelParamsRequests();
-                        Collection<String> computedMandatoryParams = new HashSet<String>();
-                        for (KernelParamsRequest kernelParamsRequest : kernelParamsRequests)
-                        {
-                            if (kernelParamsRequest.requestType == KernelParamsRequestType.MANDATORY)
-                            {
-                                computedMandatoryParams.add(kernelParamsRequest.keyRequested);
-                            }
-                        }
-
-                        if (kernelParams.keySet().containsAll(computedMandatoryParams))
-                        {
-                            pluginClasses.add(plugin.getClass());
-                        }
-                        else
-                        {
-                            logger.error("plugin {} miss parameter/s : {}", plugin.name(), kernelParamsRequests.toString());
-                            throw new KernelException("plugin " + plugin.name() + " miss parameter/s : " + kernelParamsRequests.toString());
-                        }
-
-                    }
-                    else
-                    {
-                        logger.error("Plugin {} is already in the installed list. please fix this before the kernel can start.", plugin.name());
-                        throw new KernelException("Plugin %s is already in the installed list. please fix this before the kernel can start.", plugin.name());
-
-                    }
-                }
-                else
-                {
-                    logger.warn("Plugin {} has no correct name it won't be installed.", plugin.getClass());
-                    throw new KernelException("Plugin %s has no correct name it won't be installed.", plugin.name());
-                }
-            }
-        }
-
-        // Check for dependencies
-        for (Plugin plugin : plugins.values())
-        {
-            Collection<Class<? extends Plugin>> pluginDependenciesRequired = plugin.pluginDependenciesRequired();
-
-            if (pluginDependenciesRequired != null && !pluginDependenciesRequired.isEmpty() && !pluginClasses.containsAll(pluginDependenciesRequired))
-            {
-                logger.error("plugin {} misses the following plugin/s as dependency/ies {}", plugin.name(), pluginDependenciesRequired.toString());
-                throw new KernelException("plugin %s misses the following plugin/s as dependency/ies %s", plugin.name(), pluginDependenciesRequired.toString());
-
-            }
-        }
-    }
-
-    /**
-     * 
-     */
-    @SuppressWarnings("unchecked")
     private void initPlugins()
     {
+
         //
         for (Plugin plugin : plugins.values())
         {
@@ -316,6 +361,13 @@ public final class Kernel
                         case ANNOTATION_REGEX_MATCH:
                             this.initContext.addAnnotationRegexesToScan((String) request.objectRequested);
                             break;
+                        // case META_ANNOTATION_TYPE:
+                        // this.initContext.addAnnotationTypesToScan((Class<? extends Annotation>)
+                        // request.objectRequested);
+                        // break;
+                        // case META_ANNOTATION_REGEX_MATCH:
+                        // this.initContext.addAnnotationRegexesToScan((String) request.objectRequested);
+                        // break;
                         case SUBTYPE_OF_BY_CLASS:
                             this.initContext.addParentTypeClassToScan((Class<?>) request.objectRequested);
                             break;
@@ -349,19 +401,25 @@ public final class Kernel
                     switch (request.requestType)
                     {
                         case ANNOTATION_TYPE:
-                            this.initContext.addAnnotationTypesToBind((Class<? extends Annotation>) request.requestedObject);
+                            this.initContext.addAnnotationTypesToBind((Class<? extends Annotation>) request.requestedObject, request.requestedScope);
                             break;
                         case ANNOTATION_REGEX_MATCH:
-                            this.initContext.addAnnotationRegexesToBind((String) request.requestedObject);
+                            this.initContext.addAnnotationRegexesToBind((String) request.requestedObject, request.requestedScope);
+                            break;
+                        case META_ANNOTATION_TYPE:
+                            this.initContext.addMetaAnnotationTypesToBind((Class<? extends Annotation>) request.requestedObject, request.requestedScope);
+                            break;
+                        case META_ANNOTATION_REGEX_MATCH:
+                            this.initContext.addAnnotationRegexesToBind((String) request.requestedObject, request.requestedScope);
                             break;
                         case SUBTYPE_OF_BY_CLASS:
-                            this.initContext.addParentTypeClassToBind((Class<?>) request.requestedObject);
+                            this.initContext.addParentTypeClassToBind((Class<?>) request.requestedObject, request.requestedScope);
                             break;
                         case SUBTYPE_OF_BY_TYPE_DEEP:
-                            this.initContext.addAncestorTypeClassToBind((Class<?>) request.requestedObject);
+                            this.initContext.addAncestorTypeClassToBind((Class<?>) request.requestedObject, request.requestedScope);
                             break;
                         case SUBTYPE_OF_BY_REGEX_MATCH:
-                            this.initContext.addTypeRegexesToBind((String) request.requestedObject);
+                            this.initContext.addTypeRegexesToBind((String) request.requestedObject, request.requestedScope);
                             break;
                         case VIA_SPECIFICATION:
                             this.initContext.addSpecificationToBind(request.specification, request.requestedScope);
@@ -744,6 +802,66 @@ public final class Kernel
         {
             throw new KernelException("Plugin %s can not be added. Kernel already is started", plugin.name());
         }
+    }
+
+    static class AliasMap extends HashMap<String, String>
+    {
+        Map<String, String> aliases = new HashMap<String, String>();
+
+        /**
+         * 
+         * 
+         * @param key      the key to alias.
+         * @param alias   the alias to give to the key.
+         * @return
+         */
+        public String putAlias(String key, String alias)
+        {
+            if (super.containsKey(alias))
+                throw new IllegalArgumentException("alias "+alias+" already exists in map.");
+            return aliases.put(alias, key);
+        }
+
+
+        @Override
+        public String get(Object key)
+        {
+            String keyAlias = aliases.get(key);
+            if (keyAlias == null)
+            {
+                return super.get(key);
+            }
+            else
+            {
+                return super.get(keyAlias);
+            }
+        }
+        
+        public boolean containsAllKeys(Collection<String> computedMandatoryParams)
+        {
+            HashSet<String> allKeys = new HashSet<String>();
+            allKeys.addAll( this.keySet() );
+            allKeys.addAll(aliases.values());
+            
+            Collection<String> trans = new HashSet<String>();
+            for (String s : computedMandatoryParams)
+            {
+                String string = aliases.get(s);
+                if (string != null)
+                {
+                    trans.add(string);
+                }
+            }
+            
+            return allKeys.containsAll(trans);
+        }
+        
+        @Override
+        public boolean containsKey(Object key)
+        {
+            return  aliases.containsKey(key) ? true :  super.containsKey(key);
+        }
+        
     }
 
 }

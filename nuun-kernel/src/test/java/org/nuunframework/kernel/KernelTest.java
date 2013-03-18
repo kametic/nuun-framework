@@ -10,12 +10,14 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.nuunframework.kernel.Kernel.AliasMap;
 import org.nuunframework.kernel.context.ContextInternal;
 import org.nuunframework.kernel.plugin.dummy1.Bean6;
 import org.nuunframework.kernel.plugin.dummy1.Bean9;
 import org.nuunframework.kernel.plugin.dummy1.BeanWithCustomSuffix;
 import org.nuunframework.kernel.plugin.dummy1.BeanWithParentType;
 import org.nuunframework.kernel.plugin.dummy1.DummyMarker;
+import org.nuunframework.kernel.plugin.dummy1.DummyPlugin;
 import org.nuunframework.kernel.plugin.dummy1.MarkerSample4;
 import org.nuunframework.kernel.plugin.dummy1.ParentClassWithCustomSuffix;
 import org.nuunframework.kernel.plugin.dummy1.ParentInterfaceWithCustomSuffix;
@@ -25,10 +27,9 @@ import org.nuunframework.kernel.plugin.dummy4.DummyPlugin4;
 import org.nuunframework.kernel.plugin.dummy4.Pojo1;
 import org.nuunframework.kernel.plugin.dummy4.Pojo2;
 import org.nuunframework.kernel.plugin.dummy5.DescendantFromClass;
-import org.nuunframework.kernel.plugin.dummy5.DescendantFromInterface;
 import org.nuunframework.kernel.plugin.dummy5.DummyPlugin5;
 import org.nuunframework.kernel.plugin.dummy5.ParentClass;
-import org.nuunframework.kernel.plugin.dummy5.ParentInterface;
+import org.nuunframework.kernel.plugin.dummy5.ToFind;
 import org.nuunframework.kernel.sample.Holder;
 import org.nuunframework.kernel.sample.HolderForBeanWithParentType;
 import org.nuunframework.kernel.sample.HolderForContext;
@@ -60,7 +61,7 @@ public class KernelTest
     @BeforeClass
     public static void init()
     {
-        underTest = Kernel.createKernel("dummy.plugin1", "WAZAAAA").build();
+        underTest = Kernel.createKernel(DummyPlugin.ALIAS_DUMMY_PLUGIN1 , "WAZAAAA", DummyPlugin.NUUNROOTALIAS , KernelTest.class.getPackage().getName()).build();
         try
         {
             underTest.init();
@@ -221,10 +222,26 @@ public class KernelTest
     }
 
     @Test
+    public void binding_by_metaannotation_should_work ()
+    {
+        ToFind tofind = injector.getInstance(ToFind.class);
+        assertThat( tofind).isNotNull ();
+        // singleton
+        assertThat( tofind).isEqualTo(injector.getInstance(ToFind.class));
+    }
+    
+    @Test
     public void binding_by_ancestor_should_work ()
     {
-        assertThat( injector.getInstance(ParentClass.class)).isNotNull ();
-        assertThat( injector.getInstance(DescendantFromClass.class)).isNotNull ();
+        ParentClass instance = injector.getInstance(ParentClass.class);
+        DescendantFromClass instance2 = injector.getInstance(DescendantFromClass.class);
+        assertThat( instance).isNotNull ();
+        assertThat( instance2).isNotNull ();
+        // scope SINGLETON has been registered
+        assertThat( instance).isEqualTo(injector.getInstance(ParentClass.class));        
+        assertThat( instance2).isEqualTo(injector.getInstance(DescendantFromClass.class));
+        
+        
         
 //        assertThat( injector.getInstance(ParentInterface.class)).isNotNull ();
 //        assertThat( injector.getInstance(DescendantFromInterface.class)).isNotNull ();
@@ -356,7 +373,35 @@ public class KernelTest
         
         assertThat(holder.__nothing).isNotNull();
         assertThat(holder.__nothing).isEqualTo("");
+    }
+    
+    @Test
+    public void get_parameter_from_alias_should_work ()
+    {
+        
+    }
+    
+    @Test
+    public void AliasMap_should_work()
+    {
+        AliasMap map = new AliasMap();
+        map.putAlias("realkey1", "alias1");
+        map.putAlias("realkey2", "alias2");
+        
+        Object object1 = new Object();        
+        Object object2 = new Object();
+        
+        map.put("realkey1", object1.toString());
+        map.put("realkey2", object2.toString());
+        
+        assertThat(map.get("alias1")).isEqualTo(object1.toString());
+        assertThat(map.get("alias2")).isEqualTo(object2.toString());
 
+        
+        assertThat(map.containsKey("alias1")).isTrue();
+        assertThat(map.containsKey("alias2")).isTrue();
+        
+        
     }
 
     @AfterClass

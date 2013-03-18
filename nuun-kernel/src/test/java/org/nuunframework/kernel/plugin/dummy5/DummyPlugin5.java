@@ -10,7 +10,6 @@ import org.nuunframework.kernel.context.InitContext;
 import org.nuunframework.kernel.plugin.AbstractPlugin;
 import org.nuunframework.kernel.plugin.request.BindingRequest;
 import org.nuunframework.kernel.plugin.request.ClasspathScanRequest;
-import org.nuunframework.kernel.scanner.sample.MarkerSample;
 
 import com.google.inject.Scopes;
 
@@ -37,7 +36,8 @@ public class DummyPlugin5 extends AbstractPlugin
     {
         
         return bindingRequestsBuilder() //
-                .descendentTypeOf(GrandParentClass.class) // 
+                .descendentTypeOf(GrandParentClass.class).withScope(Scopes.SINGLETON) //
+                .metaAnnotationType(MetaMarkerSample.class).withScope(Scopes.SINGLETON) //
 //                .descendentTypeOf(GrandParentInterface.class) // 
                 .build();
     }

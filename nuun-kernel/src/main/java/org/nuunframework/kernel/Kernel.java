@@ -468,9 +468,9 @@ public final class Kernel
         // ArrayList<Plugin> orderedPlugins = sortPlugins (plugins.values());
         ArrayList<Plugin> unOrderedPlugins = new ArrayList<Plugin>(plugins.values());
 
-        logger.trace("unordered plugins: " + unOrderedPlugins);
+        logger.info("unordered plugins: (" + unOrderedPlugins.size() + ") " + unOrderedPlugins);
         orderedPlugins = sortPlugins(unOrderedPlugins);
-        logger.trace("ordered plugins: " + orderedPlugins);
+        logger.info("ordered plugins: ("  + orderedPlugins.size()  + ") "  +  orderedPlugins);
         for (Plugin plugin : orderedPlugins)
         {
             InitContext actualInitContext = this.initContext;
@@ -533,9 +533,10 @@ public final class Kernel
         Map<Class<? extends Plugin>, Integer> classPlugIdx = new HashMap<Class<? extends Plugin>, Integer>();
 
         // Add vertices
-        for (int i = 0; i < unsortedPlugins.size(); i++)
+        for (short i = 0; i < unsortedPlugins.size(); i++)
         {
-            char c = ("" + i).charAt(0);
+        	
+        	char c = (char) i;
             Plugin unsortedPlugin = unsortedPlugins.get(i);
             Integer pluginIndex = graph.addVertex(c);
 
@@ -563,7 +564,7 @@ public final class Kernel
 
         for (Character c : topologicalSort)
         {
-            sorted.add(charPlug.get(c));
+        	sorted.add(charPlug.get(c));
         }
 
         return sorted;

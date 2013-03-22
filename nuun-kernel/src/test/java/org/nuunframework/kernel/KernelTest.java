@@ -6,12 +6,20 @@ package org.nuunframework.kernel;
 import static org.fest.assertions.Assertions.assertThat;
 import static org.fest.assertions.Fail.fail;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.nuunframework.kernel.Kernel.AliasMap;
 import org.nuunframework.kernel.context.ContextInternal;
+import org.nuunframework.kernel.plugin.AbstractPlugin;
+import org.nuunframework.kernel.plugin.Plugin;
 import org.nuunframework.kernel.plugin.dummy1.Bean6;
 import org.nuunframework.kernel.plugin.dummy1.Bean9;
 import org.nuunframework.kernel.plugin.dummy1.BeanWithCustomSuffix;
@@ -38,6 +46,7 @@ import org.nuunframework.kernel.sample.HolderForPlugin;
 import org.nuunframework.kernel.sample.HolderForPrefixWithName;
 import org.nuunframework.kernel.sample.ModuleInError;
 import org.nuunframework.kernel.sample.ModuleInterface;
+import org.powermock.reflect.Whitebox;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.ConfigurationException;
@@ -376,9 +385,137 @@ public class KernelTest
     }
     
     @Test
-    public void get_parameter_from_alias_should_work ()
+    public void plugin_sort_algo () throws Exception
     {
-        
+    	ArrayList<Plugin> plugins = new ArrayList<Plugin>() , plugins2 = null; 
+    	
+    	p1 e1 = new p1();
+		plugins.add(e1);
+    	p2 e2 = new p2();
+		plugins.add(e2); // -> 13
+    	p3 e3 = new p3();
+		plugins.add(e3);
+    	p4 e4 = new p4();
+		plugins.add(e4);
+    	p5 e5 = new p5();
+		plugins.add(e5);
+    	p6 e6 = new p6();
+		plugins.add(e6);
+    	p7 e7 = new p7();
+		plugins.add(e7); // -> 11
+    	p8 e8 = new p8();
+		plugins.add(e8);
+    	p9 e9 = new p9();
+		plugins.add(e9);
+    	p10 e10 = new p10();
+		plugins.add(e10);
+    	p11 e11 = new p11();
+		plugins.add(e11);
+    	p12 e12 = new p12();
+		plugins.add(e12); // -> 6
+    	p13 e13 = new p13();
+		plugins.add(e13); // -> 11
+    	
+    	plugins2 = Whitebox.invokeMethod(underTest, "sortPlugins", plugins);
+    	
+    	assertThat(plugins2).isNotNull();    	
+    	assertThat(plugins2).containsOnly ( e1 , e2 , e3 , e4, e5, e6, e7, e8, e9, e10, e11, e12, e13 );
+    	assertThat(plugins2).containsSequence ( e11 , e13 , e6 , e12  , e10  );
+    
+    }
+    
+    
+    static abstract class AbstractTestPlugin extends AbstractPlugin{
+    	public Collection<Class<? extends Plugin>> dep(Class<? extends Plugin> klazz)
+    	{
+    		Collection<Class<? extends Plugin>> plugins = new ArrayList<Class<? extends Plugin>>();
+            plugins.add(klazz);
+            return plugins;
+    	}
+    }
+    
+    static class p1 extends AbstractTestPlugin
+    {
+    	public String name() {return this.getClass().getName(); }
+    }
+    static class p2 extends AbstractTestPlugin
+    {
+    	public String name() {return this.getClass().getName(); }    	
+    	public Collection<Class<? extends Plugin>> pluginDependenciesRequired() {return dep(p13.class); }
+    }
+    static class p3 extends AbstractTestPlugin
+    {
+    	public String name() {return this.getClass().getName(); }
+    }
+    static class p4 extends AbstractTestPlugin
+    {
+    	public String name() {return this.getClass().getName(); }
+    }
+    static class p5 extends AbstractTestPlugin
+    {
+    	public String name() {return this.getClass().getName(); }
+    }
+    static class p6 extends AbstractTestPlugin
+    {
+    	public String name() {return this.getClass().getName(); }
+    }
+    static class p7 extends AbstractTestPlugin
+    {
+    	public String name() {return this.getClass().getName(); }
+    	public Collection<Class<? extends Plugin>> pluginDependenciesRequired() {return dep(p11.class); }
+    }
+    static class p8 extends AbstractTestPlugin
+    {
+    	public String name() {return this.getClass().getName(); }
+    }
+    static class p9 extends AbstractTestPlugin
+    {
+    	public String name() {return this.getClass().getName(); }
+    }
+    static class p10 extends AbstractTestPlugin
+    {
+    	public String name() {return this.getClass().getName(); }
+    }
+    static class p11 extends AbstractTestPlugin
+    {
+    	public String name() {return this.getClass().getName(); }
+    }
+    static class p12 extends AbstractTestPlugin
+    {
+    	public String name() {return this.getClass().getName(); }
+    	public Collection<Class<? extends Plugin>> pluginDependenciesRequired() {return dep(p6.class); }
+    }    
+    static class p13 extends AbstractTestPlugin
+    {
+    	public String name() {return this.getClass().getName(); }
+    	public Collection<Class<? extends Plugin>> pluginDependenciesRequired() {return dep(p11.class); }
+    }
+    
+    public Plugin createPlugin (final String name , final Class<? extends Plugin> dependency)
+    {
+    	return new AbstractPlugin () { 
+			
+			@Override
+			public String name() {
+				return name;
+			}
+			
+			@Override
+			public Collection<Class<? extends Plugin>> pluginDependenciesRequired() {
+				
+				if (dependency != null)
+				{
+					Set<Class <? extends Plugin>> plugins = new HashSet<Class<? extends Plugin>>();
+					plugins.add(dependency);
+					return plugins; 
+				}
+				else
+				{
+					return Collections.EMPTY_SET;
+				}
+				
+			}
+		};
     }
     
     @Test
@@ -396,12 +533,9 @@ public class KernelTest
         
         assertThat(map.get("alias1")).isEqualTo(object1.toString());
         assertThat(map.get("alias2")).isEqualTo(object2.toString());
-
         
         assertThat(map.containsKey("alias1")).isTrue();
         assertThat(map.containsKey("alias2")).isTrue();
-        
-        
     }
 
     @AfterClass

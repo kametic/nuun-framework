@@ -2,7 +2,6 @@ package org.nuunframework.rest;
 
 import java.util.Collection;
 
-import javax.inject.Scope;
 import javax.servlet.http.HttpServlet;
 import javax.ws.rs.Path;
 import javax.ws.rs.ext.ContextResolver;
@@ -19,6 +18,8 @@ import org.nuunframework.kernel.plugin.PluginException;
 import org.nuunframework.kernel.plugin.request.BindingRequest;
 import org.nuunframework.kernel.plugin.request.KernelParamsRequest;
 import org.nuunframework.web.NuunWebPlugin;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.inject.Module;
 import com.google.inject.Scopes;
@@ -26,6 +27,8 @@ import com.google.inject.Scopes;
 public class NuunRestPlugin extends AbstractPlugin
 {
 
+    Logger logger = LoggerFactory.getLogger(NuunRestPlugin.class); 
+    
     public static String NUUN_REST_URL_PATTERN                   = "nuun.rest.url.pattern";
     public static String NUUN_REST_PACKAGE_ROOT                  = "nuun.rest.package.root";
     public static String NUUN_JERSEY_GUICECONTAINER_CUSTOM_CLASS = "nuun.jersey.guicecontainer.custom.class";
@@ -68,10 +71,14 @@ public class NuunRestPlugin extends AbstractPlugin
             this.enablePojoMappingFeature = Boolean.valueOf(pojo);
         }
         String strJerseyClass = initContext.getKernelParam(NUUN_JERSEY_GUICECONTAINER_CUSTOM_CLASS);
-        if (strJerseyClass != null && !strJerseyClass.isEmpty())
+        if (strJerseyClass != null && !strJerseyClass.isEmpty() )
         {
         	try {
-				this.jerseyCustomClass = (Class<? extends HttpServlet>) Class.forName(strJerseyClass);
+				if (jerseyCustomClass != null )
+				{
+				    logger.info( String.format("Overringing %s by %s via kernel parameter %s." , jerseyCustomClass.getName() , strJerseyClass, NUUN_JERSEY_GUICECONTAINER_CUSTOM_CLASS));
+				}
+        	    this.jerseyCustomClass = (Class<? extends HttpServlet>) Class.forName(strJerseyClass);
 			} catch (ClassNotFoundException e) {
 				throw new PluginException ( strJerseyClass + " does not exists as class.", e);
 			}
@@ -98,11 +105,6 @@ public class NuunRestPlugin extends AbstractPlugin
                 .specification(specificationForNoScope)
                 .specification(specificationForSingletonScop).withScope(Scopes.SINGLETON)
                 .build();
-        
-//        return bindingRequestsBuilder() // 
-//                .annotationType(Path.class) // 
-//                .annotationType(Provider.class) // 
-//                .build(); // 
     }
 
     /*
@@ -126,9 +128,14 @@ public class NuunRestPlugin extends AbstractPlugin
             "unchecked", "rawtypes"
     })
     @Override
-    public Collection<Class<? extends Plugin>> pluginDependenciesRequired()
+    public Collection<Class<? extends Plugin>> requiredPlugins()
     {
         return (Collection) collectionOf(NuunWebPlugin.class);
+    }
+    
+    public void setjerseyCustomClass(Class<? extends HttpServlet> klass)
+    {
+        this.jerseyCustomClass = klass;
     }
 
 }

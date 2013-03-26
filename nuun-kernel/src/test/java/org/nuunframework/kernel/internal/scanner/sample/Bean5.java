@@ -1,4 +1,4 @@
-package org.nuunframework.kernel.scanner.sample;
+package org.nuunframework.kernel.internal.scanner.sample;
 
 
 @MarkerSample2

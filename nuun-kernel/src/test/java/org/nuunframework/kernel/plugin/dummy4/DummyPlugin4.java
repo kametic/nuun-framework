@@ -7,10 +7,10 @@ import java.util.Map;
 
 import org.nuunframework.kernel.commons.specification.Specification;
 import org.nuunframework.kernel.context.InitContext;
+import org.nuunframework.kernel.internal.scanner.sample.MarkerSample;
 import org.nuunframework.kernel.plugin.AbstractPlugin;
 import org.nuunframework.kernel.plugin.request.BindingRequest;
 import org.nuunframework.kernel.plugin.request.ClasspathScanRequest;
-import org.nuunframework.kernel.scanner.sample.MarkerSample;
 
 import com.google.inject.Scopes;
 

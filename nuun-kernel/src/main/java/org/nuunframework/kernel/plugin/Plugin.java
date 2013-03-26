@@ -80,9 +80,24 @@ public interface Plugin
     /**
      * list of plugins dependencies required by this plugin
      * 
+     * @return 
+     */
+    Collection<Class<? extends Plugin>> requiredPlugins();
+
+    /**
+     * list of plugins that become dependent on "this" plugin.
+     * Returns 
+     * 
+     *  If Z. return {A.class} A.will become dependent on Z. 
+     *  Z will virtually need A. Even if Z did not ask for it.
+     *  this allow pre init between plugin.
+     *  
+     *  InitContext?
+     * 
+     * 
      * @return
      */
-    Collection<Class<? extends Plugin>> pluginDependenciesRequired();
+    Collection<Class<? extends Plugin>> dependentPlugins();
 
     /**
      * The prefix for all the properties for this plugin.

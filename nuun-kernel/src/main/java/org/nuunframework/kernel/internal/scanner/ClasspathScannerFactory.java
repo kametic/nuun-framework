@@ -1,4 +1,4 @@
-package org.nuunframework.kernel.scanner;
+package org.nuunframework.kernel.internal.scanner;
 
 import java.net.URL;
 import java.util.Set;

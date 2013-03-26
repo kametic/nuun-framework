@@ -1,4 +1,4 @@
-package org.nuunframework.kernel.scanner;
+package org.nuunframework.kernel.internal.scanner;
 
 import static org.fest.assertions.Assertions.assertThat;
 
@@ -7,14 +7,14 @@ import java.util.Collection;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.nuunframework.kernel.annotations.KernelModule;
-import org.nuunframework.kernel.scanner.ClasspathScannerInternal;
-import org.nuunframework.kernel.scanner.sample.Bean1;
-import org.nuunframework.kernel.scanner.sample.Bean2;
-import org.nuunframework.kernel.scanner.sample.Bean3;
-import org.nuunframework.kernel.scanner.sample.MarkerSample;
-import org.nuunframework.kernel.scanner.sample.MarkerSample2;
-import org.nuunframework.kernel.scanner.sample.MyModule1;
-import org.nuunframework.kernel.scanner.sample.MyModule4;
+import org.nuunframework.kernel.internal.scanner.ClasspathScannerInternal;
+import org.nuunframework.kernel.internal.scanner.sample.Bean1;
+import org.nuunframework.kernel.internal.scanner.sample.Bean2;
+import org.nuunframework.kernel.internal.scanner.sample.Bean3;
+import org.nuunframework.kernel.internal.scanner.sample.MarkerSample;
+import org.nuunframework.kernel.internal.scanner.sample.MarkerSample2;
+import org.nuunframework.kernel.internal.scanner.sample.MyModule1;
+import org.nuunframework.kernel.internal.scanner.sample.MyModule4;
 import org.reflections.util.ClasspathHelper;
 
 

@@ -56,5 +56,13 @@ public interface InitContext
     public abstract Collection<? extends Plugin> pluginsRequired ();
 
     
+    /**
+     * Returns instances of the plugins that become dependent on this plugin.
+     * 
+     * @return
+     */
+    public abstract Collection<? extends Plugin> dependentPlugins ();
+
+    
 
 }

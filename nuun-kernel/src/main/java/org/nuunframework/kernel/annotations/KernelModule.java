@@ -8,7 +8,6 @@ import java.lang.annotation.Target;
 
 import javax.inject.Qualifier;
 
-@Qualifier
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ ElementType.TYPE})

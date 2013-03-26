@@ -441,7 +441,7 @@ public class KernelTest
     static class p2 extends AbstractTestPlugin
     {
     	public String name() {return this.getClass().getName(); }    	
-    	public Collection<Class<? extends Plugin>> pluginDependenciesRequired() {return dep(p13.class); }
+    	public Collection<Class<? extends Plugin>> requiredPlugins() {return dep(p13.class); }
     }
     static class p3 extends AbstractTestPlugin
     {
@@ -462,7 +462,7 @@ public class KernelTest
     static class p7 extends AbstractTestPlugin
     {
     	public String name() {return this.getClass().getName(); }
-    	public Collection<Class<? extends Plugin>> pluginDependenciesRequired() {return dep(p11.class); }
+    	public Collection<Class<? extends Plugin>> requiredPlugins() {return dep(p11.class); }
     }
     static class p8 extends AbstractTestPlugin
     {
@@ -483,12 +483,12 @@ public class KernelTest
     static class p12 extends AbstractTestPlugin
     {
     	public String name() {return this.getClass().getName(); }
-    	public Collection<Class<? extends Plugin>> pluginDependenciesRequired() {return dep(p6.class); }
+    	public Collection<Class<? extends Plugin>> requiredPlugins() {return dep(p6.class); }
     }    
     static class p13 extends AbstractTestPlugin
     {
     	public String name() {return this.getClass().getName(); }
-    	public Collection<Class<? extends Plugin>> pluginDependenciesRequired() {return dep(p11.class); }
+    	public Collection<Class<? extends Plugin>> requiredPlugins() {return dep(p11.class); }
     }
     
     public Plugin createPlugin (final String name , final Class<? extends Plugin> dependency)
@@ -501,7 +501,7 @@ public class KernelTest
 			}
 			
 			@Override
-			public Collection<Class<? extends Plugin>> pluginDependenciesRequired() {
+			public Collection<Class<? extends Plugin>> requiredPlugins() {
 				
 				if (dependency != null)
 				{

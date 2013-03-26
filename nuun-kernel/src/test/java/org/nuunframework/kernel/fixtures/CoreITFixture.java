@@ -1,6 +1,7 @@
 package org.nuunframework.kernel.fixtures;
 
 import org.nuunframework.kernel.Kernel;
+import org.nuunframework.kernel.Kernel.KernelBuilderWithPluginAndContext;
 import org.nuunframework.kernel.plugin.AbstractPlugin;
 import org.nuunframework.kernel.plugin.Plugin;
 
@@ -14,6 +15,8 @@ public class CoreITFixture extends AbstractFixture<Kernel> {
 
 	private String[] kernelParams = new String[0];
 	private Module[] modules = new Module[0];
+	private Plugin[] plugins = new Plugin[0];
+    boolean spiActivated = true;
 
 	public CoreITFixture() {
 	}
@@ -31,8 +34,17 @@ public class CoreITFixture extends AbstractFixture<Kernel> {
 	protected Kernel createUnitUnderTest() {
         
 		if (null == kernel) {
-			kernel = Kernel.createKernel(kernelParams) 
-					.withPlugins(createInternalPluginFromModules()).build();
+			KernelBuilderWithPluginAndContext kernelBuilder = Kernel.createKernel(kernelParams);
+			
+			kernelBuilder.withPlugins(createInternalPluginFromModules());
+
+			kernelBuilder.withPlugins(plugins);
+			
+			if(! spiActivated)
+			    kernelBuilder.withoutSpiPluginsLoader();
+
+					
+			kernel = kernelBuilder.build();
 			
 			kernel.init();
 			kernel.start();
@@ -102,7 +114,22 @@ public class CoreITFixture extends AbstractFixture<Kernel> {
 	public static class Builder {
 		private String[] params = new String[0];
 		private Module[] modules = new Module[0];
+		private Plugin[] plugins = new Plugin[0];
+		boolean spiActivated = true;
 
+		
+		public Builder withoutSpi()
+		{
+		    spiActivated = false;
+		    return this;
+		}
+		
+		public Builder withPlugins(Plugin... plugins)
+		{
+		    this.plugins = plugins;
+		    return this;
+		}
+		
 		public Builder withKernelParameters(String... params) {
 			this.params = params;
 			return this;
@@ -121,6 +148,12 @@ public class CoreITFixture extends AbstractFixture<Kernel> {
 			
 			if (modules != null)
 				cf.modules = this.modules;
+			
+			if (plugins != null)
+			    cf.plugins = this.plugins;
+			
+			cf.spiActivated = this.spiActivated;
+			
 
 			return cf;
 		}

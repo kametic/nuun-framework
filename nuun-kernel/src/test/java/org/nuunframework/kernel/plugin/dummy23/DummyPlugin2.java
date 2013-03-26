@@ -39,7 +39,7 @@ public class DummyPlugin2 extends AbstractPlugin
         "unchecked", "rawtypes"
     })
     @Override
-    public Collection<Class<? extends Plugin>> pluginDependenciesRequired()
+    public Collection<Class<? extends Plugin>> requiredPlugins()
     {
         return (Collection) collectionOf(DummyPlugin3.class);
     }

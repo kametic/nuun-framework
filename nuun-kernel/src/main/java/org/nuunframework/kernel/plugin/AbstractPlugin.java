@@ -216,7 +216,13 @@ public abstract class AbstractPlugin implements Plugin
     }
 
     @Override
-    public Collection<Class<? extends Plugin>> pluginDependenciesRequired()
+    public Collection<Class<? extends Plugin>> requiredPlugins()
+    {
+        return Collections.emptySet();
+    }
+    
+    @Override
+    public Collection<Class<? extends Plugin>> dependentPlugins()
     {
         return Collections.emptySet();
     }
@@ -258,7 +264,7 @@ public abstract class AbstractPlugin implements Plugin
         return new HashMap<String, String>();
     }
 
-    protected <T> Collection<T> collectionOf(T... items)
+    protected <T> Collection collectionOf(T... items)
     {
         return Arrays.asList(items);
     }

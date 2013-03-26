@@ -1,4 +1,4 @@
-package org.nuunframework.kernel.scanner.sample;
+package org.nuunframework.kernel.internal.scanner.sample;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -9,7 +9,7 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target({  ElementType.TYPE})
-public @interface MarkerSample2
+public @interface MarkerSample
 {
 
 }

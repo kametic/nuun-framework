@@ -264,16 +264,27 @@ public final class Kernel
             }
         }
 
-        // Check for dependencies
+        // Check for required and dependent plugins 
         for (Plugin plugin : plugins.values())
         {
-            Collection<Class<? extends Plugin>> pluginDependenciesRequired = plugin.pluginDependenciesRequired();
-
-            if (pluginDependenciesRequired != null && !pluginDependenciesRequired.isEmpty() && !pluginClasses.containsAll(pluginDependenciesRequired))
             {
-                logger.error("plugin {} misses the following plugin/s as dependency/ies {}", plugin.name(), pluginDependenciesRequired.toString());
-                throw new KernelException("plugin %s misses the following plugin/s as dependency/ies %s", plugin.name(), pluginDependenciesRequired.toString());
+                Collection<Class<? extends Plugin>> pluginDependenciesRequired = plugin.requiredPlugins();
+    
+                if (pluginDependenciesRequired != null && !pluginDependenciesRequired.isEmpty() && !pluginClasses.containsAll(pluginDependenciesRequired))
+                {
+                    logger.error("plugin {} misses the following plugin/s as dependency/ies {}", plugin.name(), pluginDependenciesRequired.toString());
+                    throw new KernelException("plugin %s misses the following plugin/s as dependency/ies %s", plugin.name(), pluginDependenciesRequired.toString());
+                }
+            }
+            
+            {
+                Collection<Class<? extends Plugin>> dependentPlugin = plugin.dependentPlugins();
 
+                if (dependentPlugin != null && !dependentPlugin.isEmpty() && !pluginClasses.containsAll(dependentPlugin))
+                {
+                    logger.error("plugin {} misses the following plugin/s as dependee/s {}", plugin.name(), dependentPlugin.toString());
+                    throw new KernelException("plugin %s misses the following plugin/s as dependee/s %s", plugin.name(), dependentPlugin.toString());
+                }
             }
         }
     }
@@ -474,10 +485,11 @@ public final class Kernel
         for (Plugin plugin : orderedPlugins)
         {
             InitContext actualInitContext = this.initContext;
-            if (plugin.pluginDependenciesRequired() != null && !plugin.pluginDependenciesRequired().isEmpty())
+            if ((plugin.requiredPlugins() != null && !plugin.requiredPlugins().isEmpty()) || (plugin.dependentPlugins() != null && !plugin.dependentPlugins().isEmpty())  )
             {
-                Collection<Plugin> selectedPlugins = filterPlugins(plugins.values(), plugin.pluginDependenciesRequired());
-                actualInitContext = proxyfy(initContext, selectedPlugins);
+                Collection<Plugin> requiredPlugins = filterPlugins(plugins.values(), plugin.requiredPlugins());
+                Collection<Plugin> dependentPlugins = filterPlugins(plugins.values(), plugin.dependentPlugins());
+                actualInitContext = proxyfy(initContext, requiredPlugins,dependentPlugins);
             }
 
             logger.info("initializing Plugin {}.", plugin.name());
@@ -550,11 +562,18 @@ public final class Kernel
         for (Entry<Integer, Plugin> entry : idxPlug.entrySet())
         {
             Plugin source = entry.getValue();
-
-            for (Class<? extends Plugin> dependencyClass : source.pluginDependenciesRequired())
+            // based on required plugins
+            for (Class<? extends Plugin> dependencyClass : source.requiredPlugins())
             {
                 int start = classPlugIdx.get(dependencyClass);
                 int end = plugIdx.get(source);
+                graph.addEdge(start, end);
+            }
+            // based on dependent plugins
+            for (Class<? extends Plugin> dependencyClass : source.dependentPlugins())
+            {
+                int start = plugIdx.get(source); // we inversed
+                int end = classPlugIdx.get(dependencyClass);
                 graph.addEdge(start, end);
             }
         }
@@ -562,9 +581,16 @@ public final class Kernel
         // launch the algo
         char[] topologicalSort = graph.topologicalSort();
 
-        for (Character c : topologicalSort)
+        if (topologicalSort != null)
         {
-        	sorted.add(charPlug.get(c));
+            for (Character c : topologicalSort)
+            {
+                sorted.add(charPlug.get(c));
+            }
+        }
+        else
+        {
+            throw new KernelException("Error when sorting plugins : either a Cycle in dependencies or another cause.");
         }
 
         return sorted;
@@ -585,7 +611,7 @@ public final class Kernel
         return filteredSet;
     }
 
-    private InitContext proxyfy(final InitContext initContext, final Collection<Plugin> plugins)
+    private InitContext proxyfy(final InitContext initContext, final Collection<Plugin> requiredPlugins , final  Collection<Plugin>  dependentPlugins)
     {
         return (InitContext) Proxy.newProxyInstance( //
                 initContext.getClass().getClassLoader(), //
@@ -598,13 +624,17 @@ public final class Kernel
                     @Override
                     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable
                     {
-                        if (!method.getName().equals("pluginsRequired"))
+                        if (method.getName().equals("pluginsRequired"))
+                        {
+                            return requiredPlugins;
+                        }
+                        else if (method.getName().equals("dependentPlugins"))
+                            {
+                                return dependentPlugins;
+                            }
+                            else
                         {
                             return method.invoke(initContext, args);
-                        }
-                        else
-                        {
-                            return plugins;
                         }
 
                     }

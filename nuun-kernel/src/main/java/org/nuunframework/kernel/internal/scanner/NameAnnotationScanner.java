@@ -1,4 +1,4 @@
-package org.nuunframework.kernel.scanner;
+package org.nuunframework.kernel.internal.scanner;
 
 import java.util.List;
 

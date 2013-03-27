@@ -1,4 +1,4 @@
-package org.nuunframework.kernel.api;
+package org.nuunframework.kernel.api.topology;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -11,13 +11,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import org.nuunframework.kernel.api.grapher.Grapher;
-import org.nuunframework.kernel.api.grapher.GrapherInternal;
-import org.nuunframework.kernel.api.grapher.InstanceBuilder;
-import org.nuunframework.kernel.api.grapher.ReferenceBuilder;
+import org.nuunframework.kernel.api.topology.grapher.Grapher;
+import org.nuunframework.kernel.api.topology.grapher.GrapherInternal;
+import org.nuunframework.kernel.api.topology.grapher.InstanceBuilder;
+import org.nuunframework.kernel.api.topology.grapher.ReferenceBuilder;
 import org.nuunframework.kernel.commons.specification.Specification;
 
-public abstract class AbstractObjectGraphDef implements ObjectGraphDef 
+public abstract class Topology implements ObjectGraphFactory 
 {
     protected Grapher grapher;
     private GrapherInternal internalGrapher;
@@ -35,7 +35,7 @@ public abstract class AbstractObjectGraphDef implements ObjectGraphDef
         try
         {
             describe();
-            for( org.nuunframework.kernel.api.grapher.GrapherInternal.instance instance : this.internalGrapher.instances)
+            for( org.nuunframework.kernel.api.topology.grapher.GrapherInternal.instance instance : this.internalGrapher.instances)
             {
                 InstanceInternal i = new InstanceInternal(instance.name, instance.type, new ArrayList<Reference>());
                 i.meta(instance.metadata);
@@ -50,7 +50,7 @@ public abstract class AbstractObjectGraphDef implements ObjectGraphDef
                 list.add(i);
             }
             
-            for (org.nuunframework.kernel.api.grapher.GrapherInternal.reference reference : this.internalGrapher.references)
+            for (org.nuunframework.kernel.api.topology.grapher.GrapherInternal.reference reference : this.internalGrapher.references)
             {
                 InstanceInternal source = (InstanceInternal) mapInstances.get(reference.source);
                 InstanceInternal target = (InstanceInternal) mapInstances.get(reference.target);

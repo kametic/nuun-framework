@@ -1,4 +1,4 @@
-package org.nuunframework.kernel.api;
+package org.nuunframework.kernel.api.topology;
 
 
 /**
@@ -8,7 +8,7 @@ package org.nuunframework.kernel.api;
  * @author ejemba
  *
  */
-public interface ObjectGraphDef
+public interface ObjectGraphFactory
 {
     
     String name();

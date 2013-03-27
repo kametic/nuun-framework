@@ -1,4 +1,4 @@
-package org.nuunframework.kernel.api.grapher;
+package org.nuunframework.kernel.api.topology.grapher;
 
 public interface ReferenceTargetBuilder
 {

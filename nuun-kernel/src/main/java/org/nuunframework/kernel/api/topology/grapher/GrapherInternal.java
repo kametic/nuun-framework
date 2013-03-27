@@ -1,4 +1,4 @@
-package org.nuunframework.kernel.api.grapher;
+package org.nuunframework.kernel.api.topology.grapher;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.nuunframework.kernel.api.InstanceMeta;
+import org.nuunframework.kernel.api.topology.InstanceMeta;
 import org.nuunframework.kernel.commons.specification.Specification;
 
 public class GrapherInternal implements Grapher, InstanceBuilder , ReferenceBuilder, ReferenceTargetBuilder , ReferenceOptionsBuilder

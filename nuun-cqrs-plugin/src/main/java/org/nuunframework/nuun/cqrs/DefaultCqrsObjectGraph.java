@@ -8,9 +8,9 @@ import org.axonframework.eventhandling.annotation.EventHandler;
 import org.axonframework.eventsourcing.EventSourcingRepository;
 import org.axonframework.eventsourcing.annotation.AbstractAnnotatedAggregateRoot;
 import org.axonframework.eventstore.fs.FileSystemEventStore;
-import org.nuunframework.kernel.api.AbstractObjectGraphDef;
+import org.nuunframework.kernel.api.topology.Topology;
 
-public class DefaultCqrsObjectGraph extends AbstractObjectGraphDef
+public class DefaultCqrsObjectGraph extends Topology
 {
 
     private static final String CommandHandler = "commandhandler";

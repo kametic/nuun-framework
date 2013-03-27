@@ -7,16 +7,22 @@ import java.util.Collection;
 import javax.inject.Inject;
 
 
+
 import org.junit.Ignore;
 import org.junit.Test;
 import org.nuunframework.kernel.Kernel;
+import org.nuunframework.kernel.api.topology.Instance;
+import org.nuunframework.kernel.api.topology.InstanceMeta;
+import org.nuunframework.kernel.api.topology.ObjectGraph;
+import org.nuunframework.kernel.api.topology.ObjectGraphFactory;
+import org.nuunframework.kernel.api.topology.Topology;
 import org.nuunframework.kernel.plugin.Plugin;
 
 import com.google.inject.Module;
 public class AbstractObjectGraphDefTest
 {
 
-    static class MyObjectGraphDef extends AbstractObjectGraphDef
+    static class MyObjectGraphDef extends Topology
     {
         @Override
         protected void describe()
@@ -32,7 +38,7 @@ public class AbstractObjectGraphDefTest
             newInstance(plugin , Plugin.class);
             newInstance(module , Module.class);
             newInstance(inject , Inject.class);
-            newInstance("inherit" , AbstractObjectGraphDef.class).asWildcard();
+            newInstance("inherit" , Topology.class).asWildcard();
             
             newReference("refPlugin") .from(kernel) .to(plugin);
             newReference("refModule") .from(kernel) .to(module);
@@ -46,7 +52,7 @@ public class AbstractObjectGraphDefTest
         }
     }
     
-    static class MyObjectGraphDefError1 extends AbstractObjectGraphDef
+    static class MyObjectGraphDefError1 extends Topology
     {
         @Override
         protected void describe()
@@ -65,7 +71,7 @@ public class AbstractObjectGraphDefTest
             return "error1";
         }
     }
-    static class MyObjectGraphDefError2 extends AbstractObjectGraphDef
+    static class MyObjectGraphDefError2 extends Topology
     {
         @Override
         protected void describe()
@@ -87,7 +93,7 @@ public class AbstractObjectGraphDefTest
             return "error1";
         }
     }
-    static class MyObjectGraphDefError3 extends AbstractObjectGraphDef
+    static class MyObjectGraphDefError3 extends Topology
     {
         @Override
         protected void describe()
@@ -114,7 +120,7 @@ public class AbstractObjectGraphDefTest
     @Test
     public void object_graph_should_work()
     {
-        ObjectGraphDef objectGraphUnderTest = new MyObjectGraphDef();
+        ObjectGraphFactory objectGraphUnderTest = new MyObjectGraphDef();
         ObjectGraph generatedObjectGraph = objectGraphUnderTest.generate();
         
         assertThat(generatedObjectGraph).isNotNull();
@@ -136,13 +142,13 @@ public class AbstractObjectGraphDefTest
 
         assertThat(generatedObjectGraph.reference("refInject").optionnal()).isTrue(); 
         
-        assertThat(generatedObjectGraph.instancesAssignableFrom(ObjectGraphDef.class)).hasSize(1);
+        assertThat(generatedObjectGraph.instancesAssignableFrom(ObjectGraphFactory.class)).hasSize(1);
     }
     
     @Test(expected=IllegalStateException.class)
     public void object_graphdef_should_raise_exception_when_two_instances_with_same_name ()
     {
-        ObjectGraphDef objectGraphUnderTest = new MyObjectGraphDefError1();
+        ObjectGraphFactory objectGraphUnderTest = new MyObjectGraphDefError1();
         ObjectGraph generatedObjectGraph = objectGraphUnderTest.generate();
     }
 
@@ -150,13 +156,13 @@ public class AbstractObjectGraphDefTest
     @Test(expected=IllegalStateException.class)
     public void object_graphdef_should_raise_exception_when_two_instance_and_reference_with_same_name ()
     {
-        ObjectGraphDef objectGraphUnderTest = new MyObjectGraphDefError2();
+        ObjectGraphFactory objectGraphUnderTest = new MyObjectGraphDefError2();
         ObjectGraph generatedObjectGraph = objectGraphUnderTest.generate();
     }
     @Test(expected=IllegalStateException.class)
     public void object_graphdef_should_raise_exception_when_dsl_badly_used ()
     {
-        ObjectGraphDef objectGraphUnderTest = new MyObjectGraphDefError3();
+        ObjectGraphFactory objectGraphUnderTest = new MyObjectGraphDefError3();
         ObjectGraph generatedObjectGraph = objectGraphUnderTest.generate();
     }
 

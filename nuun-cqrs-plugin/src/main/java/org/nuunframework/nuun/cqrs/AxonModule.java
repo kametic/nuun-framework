@@ -5,10 +5,10 @@ import java.util.Collection;
 
 import org.axonframework.commandhandling.CommandBus;
 import org.axonframework.commandhandling.gateway.CommandGateway;
-import org.nuunframework.kernel.api.Instance;
-import org.nuunframework.kernel.api.ObjectGraph;
-import org.nuunframework.kernel.api.ObjectGraphDef;
-import org.nuunframework.kernel.api.Reference;
+import org.nuunframework.kernel.api.topology.Instance;
+import org.nuunframework.kernel.api.topology.ObjectGraph;
+import org.nuunframework.kernel.api.topology.ObjectGraphFactory;
+import org.nuunframework.kernel.api.topology.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,7 +19,7 @@ class AxonModule extends AbstractModule
 
     Logger logger = LoggerFactory.getLogger(AxonModule.class);
     
-    ObjectGraphDef objectGraphDef = new DefaultCqrsObjectGraph();
+    ObjectGraphFactory objectGraphFactory = new DefaultCqrsObjectGraph();
     
     public AxonModule()
     {
@@ -28,7 +28,7 @@ class AxonModule extends AbstractModule
     @Override
     protected void configure()
     {
-        ObjectGraph og = objectGraphDef.generate();
+        ObjectGraph og = objectGraphFactory.generate();
         
         Collection<Instance> commandGateways = og.instancesAssignableFrom(CommandGateway.class);
         

@@ -1,4 +1,4 @@
-package org.nuunframework.kernel.api.grapher;
+package org.nuunframework.kernel.api.topology.grapher;
 
 import org.nuunframework.kernel.commons.specification.Specification;
 

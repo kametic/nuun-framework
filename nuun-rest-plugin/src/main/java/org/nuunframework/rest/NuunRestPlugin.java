@@ -64,7 +64,17 @@ public class NuunRestPlugin extends AbstractPlugin
 	@Override
     public void init(InitContext initContext)
     {
-        this.urlPattern = initContext.getKernelParam(NUUN_REST_URL_PATTERN);
+        
+        String urlPatternFromKernel = initContext.getKernelParam(NUUN_REST_URL_PATTERN);
+        
+        if ( urlPatternFromKernel != null && ! urlPatternFromKernel.trim().equals(""))
+        {
+            this.urlPattern = urlPatternFromKernel;
+        }
+        
+        if (this.urlPattern == null || this.urlPattern.trim().equals(""))
+            throw new PluginException( NUUN_REST_URL_PATTERN + " can not be null for plugin " + this.getClass().getName() + ".");
+        
         String pojo = initContext.getKernelParam(NUUN_REST_POJO_MAPPING_FEATURE_ENABLED);
         if (pojo != null && !pojo.isEmpty())
         {
@@ -136,6 +146,11 @@ public class NuunRestPlugin extends AbstractPlugin
     public void setjerseyCustomClass(Class<? extends HttpServlet> klass)
     {
         this.jerseyCustomClass = klass;
+    }
+    
+    public void setUrlPattern(String urlPattern)
+    {
+        this.urlPattern = urlPattern;
     }
 
 }

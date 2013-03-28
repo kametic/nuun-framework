@@ -2,27 +2,18 @@ package org.nuunframework.kernel.api.topology;
 
 import java.util.Collection;
 
-import org.nuunframework.kernel.commons.specification.Specification;
-
 public interface Instance
 {
     /**
      * @return The name of the instance
      */
-    String name();
+    Object identifier();
     
     /**
-     * @return the type of the instance
+     * @return The name of the instance
      */
-    Class<?> type();
+    String description();
     
-    /**
-     * When instance is a wildcard the specification to
-     * reach the set 
-     * 
-     * @return
-     */
-    Specification<Class<?>> typeSubset();
     
     /**
      * @return the reference associated with the instance.
@@ -44,10 +35,4 @@ public interface Instance
      */
     Collection<Reference> referencesByRegex(String regex);
 
-    /**
-     * Meta information describing the Instance 
-     * 
-     * @return can be Nominal or Wildcard ( an instance that represent user)
-     */
-    InstanceMeta meta();
 }

@@ -133,7 +133,7 @@ public class AbstractObjectGraphDefTest
         assertThat(instancesByClass).hasSize(2);
         for (Instance instance : instancesByClass)        
         {
-            assertThat(instance.name()).startsWith("kernel");
+            assertThat(instance.identifier()).startsWith("kernel");
         }
         assertThat(generatedObjectGraph.instance("kernel").references()).hasSize(2);
         assertThat(generatedObjectGraph.instance("kernel2").references()).hasSize(0);

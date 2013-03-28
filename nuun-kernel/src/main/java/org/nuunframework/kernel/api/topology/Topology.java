@@ -190,7 +190,7 @@ public abstract class Topology implements ObjectGraphFactory
             Collection<Instance> match = new HashSet<Instance>();
             for(Instance instance : instances)
             {
-                if (instance.name().matches(regex)) match.add(instance);
+                if (instance.identifier().matches(regex)) match.add(instance);
             }
             return match;
         }
@@ -335,7 +335,7 @@ public abstract class Topology implements ObjectGraphFactory
         
         
         @Override
-        public String name()
+        public String identifier()
         {
             return name;
         }

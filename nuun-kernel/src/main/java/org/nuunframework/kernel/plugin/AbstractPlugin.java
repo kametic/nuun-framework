@@ -246,7 +246,11 @@ public abstract class AbstractPlugin implements Plugin
     }
 
     @Override
-    public Set<URL> computeAdditionalClasspathScan(Object containerContext)
+    public void provideContainerContext(Object containerContext){
+    }
+    
+    @Override
+    public Set<URL> computeAdditionalClasspathScan()
     {
         return Collections.emptySet();
     }

@@ -1,16 +1,16 @@
 package org.nuunframework.spring;
 
-import java.util.Map;
-
+import com.google.inject.Provider;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.context.ApplicationContext;
 
-import com.google.inject.Provider;
+import java.util.Map;
 
 /**
  * Provides beans for injection by Guice that are managed by Spring
+ *
  * @param <T> the type of the bean to pull
  */
 class ByTypeSpringContextProvider<T> implements Provider<T> {
@@ -31,9 +31,8 @@ class ByTypeSpringContextProvider<T> implements Provider<T> {
 
     private T getPrimaryBean(Map<String, T> beans) {
         AutowireCapableBeanFactory factory = context.getAutowireCapableBeanFactory();
-        for(Map.Entry<String, T> bean : beans.entrySet()) {
-            if(factory instanceof ConfigurableListableBeanFactory &&
-                    ((ConfigurableListableBeanFactory) factory).getBeanDefinition(bean.getKey()).isPrimary()) {
+        for (Map.Entry<String, T> bean : beans.entrySet()) {
+            if (factory instanceof ConfigurableListableBeanFactory && ((ConfigurableListableBeanFactory) factory).getBeanDefinition(bean.getKey()).isPrimary()) {
                 return bean.getValue();
             }
         }

@@ -1,4 +1,4 @@
-package org.nuunframework.kernel.api.topology;
+package org.nuunframework.kernel.api.topology.instance;
 
 import java.util.Collection;
 

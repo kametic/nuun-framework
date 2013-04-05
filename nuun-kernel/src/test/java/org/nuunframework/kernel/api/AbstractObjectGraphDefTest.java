@@ -11,11 +11,11 @@ import javax.inject.Inject;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.nuunframework.kernel.Kernel;
-import org.nuunframework.kernel.api.topology.Instance;
-import org.nuunframework.kernel.api.topology.InstanceMeta;
-import org.nuunframework.kernel.api.topology.ObjectGraph;
-import org.nuunframework.kernel.api.topology.ObjectGraphFactory;
 import org.nuunframework.kernel.api.topology.Topology;
+import org.nuunframework.kernel.api.topology.instance.Instance;
+import org.nuunframework.kernel.api.topology.instance.InstanceMeta;
+import org.nuunframework.kernel.api.topology.objectgraph.ObjectGraph;
+import org.nuunframework.kernel.api.topology.objectgraph.ObjectGraphFactory;
 import org.nuunframework.kernel.plugin.Plugin;
 
 import com.google.inject.Module;

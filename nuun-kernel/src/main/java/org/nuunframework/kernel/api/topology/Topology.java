@@ -11,10 +11,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import org.nuunframework.kernel.api.topology.grapher.Grapher;
-import org.nuunframework.kernel.api.topology.grapher.GrapherInternal;
-import org.nuunframework.kernel.api.topology.grapher.InstanceBuilder;
-import org.nuunframework.kernel.api.topology.grapher.ReferenceBuilder;
+
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.nuunframework.kernel.api.topology.instance.Instance;
+import org.nuunframework.kernel.api.topology.objectgraph.ObjectGraph;
+import org.nuunframework.kernel.api.topology.objectgraph.ObjectGraphFactory;
+import org.nuunframework.kernel.api.topology.reference.Reference;
 import org.nuunframework.kernel.commons.specification.Specification;
 
 public abstract class Topology implements ObjectGraphFactory 
@@ -35,10 +38,10 @@ public abstract class Topology implements ObjectGraphFactory
         try
         {
             describe();
-            for( org.nuunframework.kernel.api.topology.grapher.GrapherInternal.instance instance : this.internalGrapher.instances)
+            for( org.nuunframework.kernel.api.topology.grapherold.GrapherInternal.instance instance : this.internalGrapher.instances)
             {
                 InstanceInternal i = new InstanceInternal(instance.name, instance.type, new ArrayList<Reference>());
-                i.meta(instance.metadata);
+                
                 instances.add(i);
                 mapInstances.put(i.name, i);
                 List<Instance> list = mapInstancesByClasses.get(i.type);
@@ -50,7 +53,7 @@ public abstract class Topology implements ObjectGraphFactory
                 list.add(i);
             }
             
-            for (org.nuunframework.kernel.api.topology.grapher.GrapherInternal.reference reference : this.internalGrapher.references)
+            for (org.nuunframework.kernel.api.topology.grapherold.GrapherInternal.reference reference : this.internalGrapher.references)
             {
                 InstanceInternal source = (InstanceInternal) mapInstances.get(reference.source);
                 InstanceInternal target = (InstanceInternal) mapInstances.get(reference.target);
@@ -107,19 +110,6 @@ public abstract class Topology implements ObjectGraphFactory
             return Collections.unmodifiableCollection(this.references);
         }
         
-
-        @Override
-        public Collection<Instance> instancesAsWildcard()
-        {
-            Collection<Instance> match = new HashSet<Instance>();
-            for(Instance instance : instances)
-            {
-                if ( instance.meta() == InstanceMeta.WILDCARD) 
-                {
-                    match.add(instance);
-                }
-            }
-            return match;
 
         }
         @Override
@@ -271,46 +261,18 @@ public abstract class Topology implements ObjectGraphFactory
         @Override
         public int hashCode()
         {
-            final int prime = 31;
-            int result = 1;
-            result = prime * result + ((name == null) ? 0 : name.hashCode());
-            result = prime * result + ((source == null) ? 0 : source.hashCode());
-            result = prime * result + ((target == null) ? 0 : target.hashCode());
-            return result;
+            
+            return new HashCodeBuilder(1 , 31).append(name).append(source).append(target).toHashCode();
         }
 
         @Override
         public boolean equals(Object obj)
         {
-            if (this == obj)
-                return true;
-            if (obj == null)
-                return false;
-            if (getClass() != obj.getClass())
-                return false;
-            ReferenceInternal other = (ReferenceInternal) obj;
-            if (name == null)
-            {
-                if (other.name != null)
-                    return false;
-            }
-            else if (!name.equals(other.name))
-                return false;
-            if (source == null)
-            {
-                if (other.source != null)
-                    return false;
-            }
-            else if (!source.equals(other.source))
-                return false;
-            if (target == null)
-            {
-                if (other.target != null)
-                    return false;
-            }
-            else if (!target.equals(other.target))
-                return false;
-            return true;
+            return new EqualsBuilder()
+               .append(this.name, getClass().cast(obj).name)
+               .append(this.source, getClass().cast(obj).source)
+               .append(this.target, getClass().cast(obj).target)
+               .isEquals();
         }
         
         
@@ -322,9 +284,7 @@ public abstract class Topology implements ObjectGraphFactory
 
         private String name;
         private Class<?> type;
-        private List<Reference> references; 
-        private InstanceMeta meta = InstanceMeta.NOMINAL;
-        private Specification<Class<?>> typeSubset;
+        private List<Reference> references;
         
         InstanceInternal(String name , Class<?> type , List<Reference> references)
         {
@@ -340,42 +300,13 @@ public abstract class Topology implements ObjectGraphFactory
             return name;
         }
 
-        @Override
-        public Class<?> type()
-        {
-            return type;
-        }
-        
-        @Override
-        public InstanceMeta meta()
-        {
-            return this.meta;
-        }
-        
-        public Instance meta(InstanceMeta meta)
-        {
-            this.meta = meta;
-            return this;
-        }
-
 
         @Override
         public Collection<Reference> references()
         {
             return Collections.unmodifiableCollection(this.references);
         }
-        
-        @Override
-        public Specification<Class<?>> typeSubset()
-        {
-            return this.typeSubset;
-        }
 
-        public void typeSubset(Specification<Class<?>> typeSubset)
-        {
-            this.typeSubset = typeSubset;
-        }
-        
         @Override
         public Collection<Reference> referencesByRegex(String regex)
         {
@@ -405,6 +336,7 @@ public abstract class Topology implements ObjectGraphFactory
         @Override
         public int hashCode()
         {
+            
             final int prime = 31;
             int result = 1;
             result = prime * result + ((name == null) ? 0 : name.hashCode());

@@ -52,11 +52,8 @@
 		<!-- ============== TODO UP TO CORE ======================= -->
 		<!-- ========================================================== -->
 
-<!-- 		<dependency>
-			<groupId>com.google.inject</groupId>
-			<artifactId>guice</artifactId>
-			<version>3.0</version>
-		</dependency> -->
+		<!-- <dependency> <groupId>com.google.inject</groupId> <artifactId>guice</artifactId> 
+			<version>3.0</version> </dependency> -->
 		<dependency>
 			<groupId>org.sonatype.sisu</groupId>
 			<artifactId>sisu-guice</artifactId>
@@ -145,19 +142,19 @@
 			<scope>test</scope>
 			<version>1.0.0</version>
 		</dependency>
-		
-		<dependency>
-            <groupId>org.powermock</groupId>
-            <artifactId>powermock-core</artifactId>
-            <version>1.5</version>
-        </dependency>
 
-        <dependency>
-            <groupId>org.powermock</groupId>
-            <artifactId>powermock-api-mockito</artifactId>
-            <version>1.5</version>            
-        </dependency>
-		
+		<dependency>
+			<groupId>org.powermock</groupId>
+			<artifactId>powermock-core</artifactId>
+			<version>1.5</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.powermock</groupId>
+			<artifactId>powermock-api-mockito</artifactId>
+			<version>1.5</version>
+		</dependency>
+
 		<!-- <dependency> <groupId>com.google.inject.extensions</groupId> <artifactId>guice-multibindings</artifactId> 
 			<version>3.0</version> </dependency> -->
 
@@ -191,6 +188,21 @@
 						</goals>
 						<configuration>
 							<pomFileName>nuun-kernel/pom.xml</pomFileName>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>net.ericaro</groupId>
+				<artifactId>diezel-maven-plugin</artifactId>
+				<version>1.0.0-beta-4</version>
+				<executions>
+					<execution>
+						<id>diezel</id>
+						<goals>
+							<goal>diezel</goal>
+						</goals>
+						<configuration>
 						</configuration>
 					</execution>
 				</executions>

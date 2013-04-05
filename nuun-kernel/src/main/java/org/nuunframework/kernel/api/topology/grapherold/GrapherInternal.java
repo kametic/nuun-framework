@@ -1,10 +1,8 @@
-package org.nuunframework.kernel.api.topology.grapher;
-
+package org.nuunframework.kernel.api.topology.grapherold;
 
 import static com.google.common.base.Preconditions.checkState;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -13,7 +11,7 @@ import java.util.Set;
 
 import org.nuunframework.kernel.commons.specification.Specification;
 
-public class GrapherInternal implements Grapher, Grapher2, Grapher3, Grapher5, Grapher6
+public class GrapherInternal implements Grapher, InstanceBuilder , ReferenceBuilder, ReferenceTargetBuilder , ReferenceOptionsBuilder
 {
 
     final Map<String, Object> all;
@@ -29,27 +27,11 @@ public class GrapherInternal implements Grapher, Grapher2, Grapher3, Grapher5, G
         public final String         name;
         public final Class<?>       type;
         public final Set<reference> references = new HashSet<GrapherInternal.reference>();
-        public final Collection<String> subInstances = new HashSet<String>();
-        public final Map<Object, Object> properties = new HashMap<Object, Object>();
-        public final Specification<Class<?>> specification;
         
-        public instance(String name )
-        {
-            this.name = name;
-            this.type = null;
-            this.specification = null;
-        }
         public instance(String name , Class<?> type )
         {
             this.name = name;
             this.type = type;
-            this.specification = null;
-        }
-        public instance(String name, Specification<Class<?>> specification)
-        {
-            this.name = name;
-            this.specification = specification;
-            this.type = null;
         }
         
     }
@@ -59,7 +41,7 @@ public class GrapherInternal implements Grapher, Grapher2, Grapher3, Grapher5, G
         public final String name;
         public final String target;
         public final String source;
-        public final Map<Object, Object> properties = new HashMap<Object, Object>();
+        public boolean optionnal = false;
 
         public reference(String name, String target , String source)
         {
@@ -68,7 +50,7 @@ public class GrapherInternal implements Grapher, Grapher2, Grapher3, Grapher5, G
             this.source = source;
         }
     }
-    
+
     public GrapherInternal()
     {
         all = new HashMap<String, Object>();
@@ -77,23 +59,9 @@ public class GrapherInternal implements Grapher, Grapher2, Grapher3, Grapher5, G
         references = new ArrayList<GrapherInternal.reference>();
     }
 
-    
     @Override
-    public Grapher3 newInstance(String name)
+    public InstanceBuilder newInstance(String name, Class<?> type)
     {
-        clearReference();
-        checkNotExisting(name);
-        currentInstance = new instance(name);
-        all.put( name , currentInstance);
-        instances.add(currentInstance);
-        instancesByName.put(name, currentInstance);
-        return this;
-    }
-
-    @Override
-    public Grapher3 newInstance(String name, Class<?> type)
-    {
-        clearReference();
         checkNotExisting(name);
         currentInstance = new instance(name,type);
         all.put( name , currentInstance);
@@ -101,55 +69,32 @@ public class GrapherInternal implements Grapher, Grapher2, Grapher3, Grapher5, G
         instancesByName.put(name, currentInstance);
         return this;
     }
+    
+    @Override
+    public InstanceBuilder newInstance(String name, Specification<Class<?>> typeSubset)
+    {
+        checkNotExisting(name);
+//        currentInstance = new instance(name,type);
+        all.put( name , currentInstance);
+        instances.add(currentInstance);
+        instancesByName.put(name, currentInstance);
+        return this;
+    }
+    
+    @Override
+    public void asWildcard()
+    {
+     
+    }
 
-    @Override
-    public Grapher3 newSpecificationInstance(String name,Specification<Class<?>> specification)
-    {
-        clearReference();
-        checkNotExisting(name);
-        currentInstance = new instance(name,specification);
-        all.put( name , currentInstance);
-        instances.add(currentInstance);
-        instancesByName.put(name, currentInstance);
-        return this;
-    }
-    
-    @Override
-    public Grapher6 newCompositeInstance(String name)
-    {
-        clearReference();
-        checkNotExisting(name);
-        currentInstance = new instance(name);
-        all.put( name , currentInstance);
-        instances.add(currentInstance);
-        instancesByName.put(name, currentInstance);
-        return this;
-    }
-    
-    @Override
-    public Grapher3 withChildInstances ( String... names ) 
-    {
-        checkState(currentInstance != null , "currentInstance should not be null");
-        checkState(names != null , "Child Instance should be not null");
-        
-        for (String name : names)
-        {
-            currentInstance.subInstances.add( name );
-        }
-        
-        return this;
-    }
-    
-    ////////////////////////////////////////////////////////
-    
     String currentName;
     String currentSource;
     String currentTarget;
+
     
     @Override
-    public Grapher2 newReference(String referenceName)
+    public ReferenceBuilder newReference(String referenceName)
     {
-        clearInstance();
         boolean expression = 
                 (   currentName !=  null && currentSource != null &&  currentTarget != null) 
                 || (currentName ==  null && currentSource == null &&  currentTarget == null);
@@ -158,23 +103,23 @@ public class GrapherInternal implements Grapher, Grapher2, Grapher3, Grapher5, G
         currentName = currentSource = currentTarget = null;
         currentReference = null;
          
+        // checkNotExisting(referenceName);
+        // reference can have the same name
         currentName = referenceName;
-        
-        
         return this;
     }
 
     @Override
-    public Grapher5 from(String sourceInstance)
+    public ReferenceTargetBuilder from(String sourceInstance)
     {
         checkState(currentSource == null, "currentSource should be null.");
         checkState(all.get(sourceInstance) != null, "%s should exist." , sourceInstance);
         currentSource = sourceInstance;
         return this;
     }
-
+    
     @Override
-    public Grapher3 to(String targetInstance)
+    public ReferenceOptionsBuilder to(String targetInstance)
     {
         checkState(currentTarget == null, "currentTarget should be null.");
         checkState(all.get(targetInstance) != null, "%s should exist." , targetInstance);
@@ -187,33 +132,12 @@ public class GrapherInternal implements Grapher, Grapher2, Grapher3, Grapher5, G
         // we reinit the whole stuff.
         return this;
     }
-    
-    ////////////////////////////////////////////////////////
 
     @Override
-    public Grapher3 withProperty(Object key, Object value)
+    public void asOptionnal()
     {
-        if (currentReference != null)
-        {
-            currentReference.properties.put(key, value);
-        }
-        if (currentInstance != null )
-        {
-            currentInstance.properties.put(key, value);
-        }
-        
-        return this;
-    }
-    
-    ////////////////////////////////////////////////////////
-
-    private void clearInstance()
-    {
-        currentReference = null;
-    }
-    private void clearReference()
-    {
-        currentName = currentSource = currentTarget = null;
+        checkState(currentReference != null , "currentReference should not be null");
+        currentReference.optionnal = true;
     }
     
     private void checkNotExisting(String name)
@@ -221,4 +145,9 @@ public class GrapherInternal implements Grapher, Grapher2, Grapher3, Grapher5, G
         checkState(all.get(name) == null, "%s already exists.", name);
     }
 
+    @Override
+    public InstanceBuilder newInstance(String name)
+    {
+        return null;
+    }
 }

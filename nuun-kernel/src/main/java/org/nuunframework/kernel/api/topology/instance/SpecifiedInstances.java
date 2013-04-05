@@ -1,8 +1,8 @@
-package org.nuunframework.kernel.api.topology;
+package org.nuunframework.kernel.api.topology.instance;
 
 import org.nuunframework.kernel.commons.specification.Specification;
 
-public interface SpecifiedCompositeInstance extends CompositeInstance 
+public interface SpecifiedInstances extends CompositeInstance 
 {
 	
 	Specification<Instance> specification();

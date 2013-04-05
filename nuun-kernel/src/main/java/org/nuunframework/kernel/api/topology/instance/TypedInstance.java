@@ -1,4 +1,7 @@
-package org.nuunframework.kernel.api.topology;
+package org.nuunframework.kernel.api.topology.instance;
+
+import java.util.Collection;
+
 /**
  * 
  * A typed instance is an instance with a Type.
@@ -12,5 +15,7 @@ public interface TypedInstance extends Instance {
      * @return the type of the instance
      */
     Class<?> type();
+    
+
 	
 }

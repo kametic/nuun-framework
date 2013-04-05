@@ -1,10 +1,14 @@
 package org.nuunframework.kernel.plugins.configuration;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.configuration.CompositeConfiguration;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;
+import org.apache.commons.configuration.MapConfiguration;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.nuunframework.kernel.context.InitContext;
 import org.nuunframework.kernel.plugin.AbstractPlugin;
@@ -21,10 +25,17 @@ public class NuunConfigurationPlugin extends AbstractPlugin
     private Module module = null;
 
     private CompositeConfiguration configuration;
+    private final List<Configuration> additionalConfigurations = new ArrayList<Configuration>();
     
     public NuunConfigurationPlugin()
     {
     }
+    
+    public void addConfiguration(Map<String, Object> configuration)
+    {
+    	additionalConfigurations.add(new MapConfiguration(configuration));
+    }
+    
     
     public Configuration getConfiguration()
     {
@@ -60,6 +71,11 @@ public class NuunConfigurationPlugin extends AbstractPlugin
         {
             logger.info("adding {} to module", propertiesFile);
             configuration.addConfiguration(configuration(propertiesFile));
+        }
+        for (Configuration additionalConfiguration : this.additionalConfigurations)
+        {
+        	logger.info("adding additionnal configuration {} to module", additionalConfiguration);
+        	configuration.addConfiguration(additionalConfiguration);
         }
     }
     

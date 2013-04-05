@@ -4,6 +4,6 @@ public interface TopologyElement
 {
     Object identifier();
     String description();
-    Topology topology();
+//    Topology topology();
     
 }

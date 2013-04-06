@@ -38,6 +38,7 @@ public abstract class AbstractPlugin implements Plugin
 {
 
     protected Context                         context = null;
+    protected Object                          containerContext = null;
     @SuppressWarnings("unused")
     private Map<String, String>               kernelParams;
     @SuppressWarnings("unused")
@@ -247,6 +248,7 @@ public abstract class AbstractPlugin implements Plugin
 
     @Override
     public void provideContainerContext(Object containerContext){
+    	this.containerContext = containerContext;
     }
     
     @Override

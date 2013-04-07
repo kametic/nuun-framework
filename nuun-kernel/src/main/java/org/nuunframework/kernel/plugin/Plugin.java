@@ -123,14 +123,19 @@ public interface Plugin
     Object dependencyInjectionDef();
 
     /**
-     * The kernel allow the plugin to compute additionnal classpath to scan. He passes a containerContext that
+     * Practical method to retrieve the container context as it is passed as argument.
+     * @param containerContext the context of the container
+     */
+    void provideContainerContext(Object containerContext);
+    
+    /**
+     * The kernel allow the plugin to compute additionnal classpath to scan. Method can use the containerContext - that
      * may be a ServletContext for servlet environement, BundleContext for osgi environnement or something
-     * else.
+     * else - given to the plugin via method provideContainerContext.
      * 
-     * @param containerContext
      * @return
      */
-    Set<URL> computeAdditionalClasspathScan(Object containerContext);
+    Set<URL> computeAdditionalClasspathScan();
 
     /**
      * return a dependency injection provider to the kernel.

@@ -27,7 +27,7 @@ public class NuunWebPlugin extends AbstractPlugin
     }
 
     @Override
-    public Set<URL> computeAdditionalClasspathScan(Object containerContext)
+    public Set<URL> computeAdditionalClasspathScan()
     {
         ServletContext servletContext = null;
 
@@ -44,18 +44,6 @@ public class NuunWebPlugin extends AbstractPlugin
             
         }   
         
-        return  this.additionalClasspath != null ? this.additionalClasspath : super.computeAdditionalClasspathScan(containerContext) ;
+        return  this.additionalClasspath != null ? this.additionalClasspath : super.computeAdditionalClasspathScan() ;
     }
-
-//    @Override
-//    public Object dependencyInjectionDef()
-//    {
-//        if (module == null)
-//        {
-//            module = new WorkAroundModule();
-//        }
-//
-//        return module;
-//    }
-
 }

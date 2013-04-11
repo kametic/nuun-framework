@@ -32,6 +32,4 @@ public interface ObjectGraph
 
     Collection<CompositeInstance> compositeInstances();
     Collection<SpecifiedInstances> specifiedInstances();
-
-
 }

@@ -13,6 +13,7 @@ import javax.ws.rs.ext.Provider;
 import org.nuunframework.kernel.commons.specification.Specification;
 import org.nuunframework.kernel.context.InitContext;
 import org.nuunframework.kernel.plugin.AbstractPlugin;
+import org.nuunframework.kernel.plugin.InitState;
 import org.nuunframework.kernel.plugin.Plugin;
 import org.nuunframework.kernel.plugin.PluginException;
 import org.nuunframework.kernel.plugin.request.BindingRequest;
@@ -62,7 +63,7 @@ public class NuunRestPlugin extends AbstractPlugin
 
     @SuppressWarnings("unchecked")
 	@Override
-    public void init(InitContext initContext)
+    public InitState init(InitContext initContext)
     {
         
         String urlPatternFromKernel = initContext.getKernelParam(NUUN_REST_URL_PATTERN);
@@ -93,6 +94,8 @@ public class NuunRestPlugin extends AbstractPlugin
 				throw new PluginException ( strJerseyClass + " does not exists as class.", e);
 			}
         }
+        
+        return InitState.INITIALIZED;
     }
 
     @SuppressWarnings("unchecked")

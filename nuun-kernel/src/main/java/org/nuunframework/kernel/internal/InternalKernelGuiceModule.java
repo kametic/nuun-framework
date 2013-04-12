@@ -4,6 +4,7 @@ import static org.reflections.ReflectionUtils.withAnnotation;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -63,7 +64,7 @@ public class InternalKernelGuiceModule extends AbstractModule
     })
     private void bindFromClasspath()
     {
-        List<Class<?>> classes = this.currentContext.classesToBind();
+        Collection<Class<?>> classes = this.currentContext.classesToBind();
         Map<Class<?>, Object> classesWithScopes = this.currentContext.classesWithScopes();
         
         List<Installable> installableList = new ArrayList<Installable>();

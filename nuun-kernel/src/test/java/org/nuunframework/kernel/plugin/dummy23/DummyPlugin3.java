@@ -10,6 +10,7 @@ import java.util.Map;
 
 import org.nuunframework.kernel.context.InitContext;
 import org.nuunframework.kernel.plugin.AbstractPlugin;
+import org.nuunframework.kernel.plugin.InitState;
 import org.nuunframework.kernel.plugin.Plugin;
 import org.nuunframework.kernel.plugin.request.ClasspathScanRequest;
 import org.nuunframework.kernel.plugins.configuration.NuunConfigurationPlugin;
@@ -41,7 +42,7 @@ public class DummyPlugin3 extends AbstractPlugin
     }
 
     @Override
-    public void init(InitContext initContext)
+    public InitState init(InitContext initContext)
     {
         Map<String, Collection<String>> mapResourcesByRegex = initContext.mapResourcesByRegex();
         
@@ -58,7 +59,7 @@ public class DummyPlugin3 extends AbstractPlugin
         
         assertThat(confPlugin.getConfiguration().getString("value1")).isEqualTo("lorem ipsum");
         
-        
+        return InitState.INITIALIZED;
     }
 
      /* (non-Javadoc)

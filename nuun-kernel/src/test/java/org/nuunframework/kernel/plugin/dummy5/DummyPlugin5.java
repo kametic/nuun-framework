@@ -8,6 +8,7 @@ import java.util.Map;
 import org.nuunframework.kernel.commons.specification.Specification;
 import org.nuunframework.kernel.context.InitContext;
 import org.nuunframework.kernel.plugin.AbstractPlugin;
+import org.nuunframework.kernel.plugin.InitState;
 import org.nuunframework.kernel.plugin.request.BindingRequest;
 import org.nuunframework.kernel.plugin.request.ClasspathScanRequest;
 
@@ -55,7 +56,7 @@ public class DummyPlugin5 extends AbstractPlugin
     
     
     @Override
-    public void init(InitContext initContext)
+    public InitState init(InitContext initContext)
     {
         Map<Class<?>, Collection<Class<?>>> scannedSubTypesByAncestorClass = initContext.scannedSubTypesByAncestorClass();
         
@@ -64,6 +65,7 @@ public class DummyPlugin5 extends AbstractPlugin
         assertThat(collection).isNotEmpty();
         assertThat(collection).hasSize(2);
         assertThat(collection).containsOnly(DescendantFromClass.class , ParentClass.class);
+        return InitState.INITIALIZED;
     }
     
     

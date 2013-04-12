@@ -16,6 +16,7 @@ import org.nuunframework.kernel.KernelTest;
 import org.nuunframework.kernel.context.Context;
 import org.nuunframework.kernel.context.InitContext;
 import org.nuunframework.kernel.plugin.AbstractPlugin;
+import org.nuunframework.kernel.plugin.InitState;
 import org.nuunframework.kernel.plugin.Plugin;
 import org.nuunframework.kernel.plugin.dummy23.DummyPlugin2;
 import org.nuunframework.kernel.plugin.request.BindingRequest;
@@ -108,7 +109,7 @@ public class DummyPlugin extends AbstractPlugin
      * @see org.nuunframework.kernel.plugin.Plugin#init()
      */
     @Override
-    public void init(InitContext initContext)
+    public InitState init(InitContext initContext)
     {
         String param = initContext.getKernelParam("dummy.plugin1");
         assertThat(param).isNotEmpty();
@@ -152,7 +153,7 @@ public class DummyPlugin extends AbstractPlugin
         assertThat( initContext.pluginsRequired() ).isNotNull();
         assertThat( initContext.pluginsRequired() ).hasSize(1);
         assertThat( initContext.pluginsRequired().iterator().next().getClass() ).isEqualTo(DummyPlugin2.class);
-        
+        return InitState.INITIALIZED;
 
     }
     

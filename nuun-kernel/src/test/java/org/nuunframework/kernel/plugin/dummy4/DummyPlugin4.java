@@ -9,6 +9,7 @@ import org.nuunframework.kernel.commons.specification.Specification;
 import org.nuunframework.kernel.context.InitContext;
 import org.nuunframework.kernel.internal.scanner.sample.MarkerSample;
 import org.nuunframework.kernel.plugin.AbstractPlugin;
+import org.nuunframework.kernel.plugin.InitState;
 import org.nuunframework.kernel.plugin.request.BindingRequest;
 import org.nuunframework.kernel.plugin.request.ClasspathScanRequest;
 
@@ -58,7 +59,7 @@ public class DummyPlugin4 extends AbstractPlugin
     
     @SuppressWarnings("rawtypes")
     @Override
-    public void init(InitContext initContext)
+    public InitState init(InitContext initContext)
     {
         Map<Specification, Collection<Class<?>>> scannedTypesBySpecification = initContext.scannedTypesBySpecification();
         
@@ -67,6 +68,7 @@ public class DummyPlugin4 extends AbstractPlugin
         assertThat(collection).isNotEmpty();
         assertThat(collection).hasSize(1);
         assertThat(collection).containsOnly(Pojo1.class);
+        return InitState.INITIALIZED;
     }
     
     

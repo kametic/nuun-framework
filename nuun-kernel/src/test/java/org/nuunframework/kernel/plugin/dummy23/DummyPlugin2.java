@@ -9,6 +9,7 @@ import java.util.Collection;
 
 import org.nuunframework.kernel.context.InitContext;
 import org.nuunframework.kernel.plugin.AbstractPlugin;
+import org.nuunframework.kernel.plugin.InitState;
 import org.nuunframework.kernel.plugin.Plugin;
 
 
@@ -46,11 +47,12 @@ public class DummyPlugin2 extends AbstractPlugin
     
     
     @Override
-    public void init(InitContext initContext)
+    public InitState init(InitContext initContext)
     {
         assertThat( initContext.pluginsRequired() ).isNotNull();
         assertThat( initContext.pluginsRequired() ).hasSize(1);
         assertThat( initContext.pluginsRequired().iterator().next().getClass() ).isEqualTo(DummyPlugin3.class);
+        return InitState.INITIALIZED;
     }
 
 }

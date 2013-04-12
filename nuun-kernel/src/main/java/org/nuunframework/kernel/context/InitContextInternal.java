@@ -13,6 +13,7 @@ import java.util.Set;
 
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.nuunframework.kernel.KernelException;
 import org.nuunframework.kernel.annotations.KernelModule;
 import org.nuunframework.kernel.commons.specification.Specification;
 import org.nuunframework.kernel.commons.specification.reflect.DescendantOfSpecification;
@@ -35,63 +36,75 @@ public class InitContextInternal implements InitContext
 
     ClasspathScanner                                                     classpathScanner;
 
-    private final List<Class<?>>                                         parentTypesClassesToScan;
-    private final List<Class<?>>                                         ancestorTypesClassesToScan;
-    private final List<Class<?>>                                         typesClassesToScan;
-    private final List<String>                                           typesRegexToScan;
-    private final List<Specification<Class<?>>>                          specificationsToScan;
-    private final List<String>                                           resourcesRegexToScan;
-    private final List<String>                                           parentTypesRegexToScan;
-    private final List<Class<? extends Annotation>>                      annotationTypesToScan;
-    private final List<String>                                           annotationRegexToScan;
+    private List<Class<?>>                                         parentTypesClassesToScan;
+    private List<Class<?>>                                         ancestorTypesClassesToScan;
+    private List<Class<?>>                                         typesClassesToScan;
+    private List<String>                                           typesRegexToScan;
+    private List<Specification<Class<?>>>                          specificationsToScan;
+    private List<String>                                           resourcesRegexToScan;
+    private List<String>                                           parentTypesRegexToScan;
+    private List<Class<? extends Annotation>>                      annotationTypesToScan;
+    private List<String>                                           annotationRegexToScan;
 
-    private final List<Class<?>>                                         parentTypesClassesToBind;
-    private final List<Class<?>>                                         ancestorTypesClassesToBind;
-    private final List<String>                                           parentTypesRegexToBind;
-    private final List<Specification<Class<?>>>                          specificationsToBind;
-    private final Map<Key , Object>                                       mapOfScopes;
-    private final List<Class<? extends Annotation>>                      annotationTypesToBind;
-    private final List<Class<? extends Annotation>>                      metaAnnotationTypesToBind;
-    private final List<String>                                           annotationRegexToBind;
-    private final List<String>                                           metaAnnotationRegexToBind;
+    private List<Class<?>>                                         parentTypesClassesToBind;
+    private List<Class<?>>                                         ancestorTypesClassesToBind;
+    private List<String>                                           parentTypesRegexToBind;
+    private List<Specification<Class<?>>>                          specificationsToBind;
+    private Map<Key , Object>                                       mapOfScopes;
+    private List<Class<? extends Annotation>>                      annotationTypesToBind;
+    private List<Class<? extends Annotation>>                      metaAnnotationTypesToBind;
+    private List<String>                                           annotationRegexToBind;
+    private List<String>                                           metaAnnotationRegexToBind;
 
-    private final List<String>                                           propertiesPrefix;
+    private List<String>                                           propertiesPrefix;
 
-    private final List<Module>                                           childModules;
-    private final List<String>                                           packageRoots;
-    private final Set<URL>                                               additionalClasspathScan;
+    private List<Module>                                           childModules;
+    private List<String>                                           packageRoots;
+    private Set<URL>                                               additionalClasspathScan;
 
-    private List<Class<?>>                                               classesToBind;
+    private Set<Class<?>>                                               classesToBind;
     private Map<Class<?> , Object>                                       classesWithScopes;
 
     private Collection<String>                                           propertiesFiles;
 
-    private final Map<String, String>                                    kernelParams;
+    private Map<String, String>                                    kernelParams;
 
     private Collection<Class<?>>                                         scanClasspathForSubType;
     private Collection<Class<?>>                                         scanClasspathForAncestorType;
     private Collection<Class<?>>                                         bindClasspathForSubType;
     private Collection<Class<?>>                                         bindClasspathForAncestorType;
-    private final Map<Class<?>, Collection<Class<?>>>                    mapSubTypes;
-    private final Map<Class<?>, Collection<Class<?>>>                    mapAncestorTypes;
-    // private final Map<Class<?> , Collection<Class<?>>> mapTypes;
-    private final Map<String, Collection<Class<?>>>                      mapSubTypesByName;
-    private final Map<String, Collection<Class<?>>>                      mapTypesByName;
-    private final Map<Specification, Collection<Class<?>>>               mapTypesBySpecification;
-    private final Map<Class<? extends Annotation>, Collection<Class<?>>> mapAnnotationTypes;
-    private final Map<String, Collection<Class<?>>>                      mapAnnotationTypesByName;
-    private final Map<String, Collection<String>>                        mapPropertiesFiles;
-    private final Map<String, Collection<String>>                        mapResourcesByRegex;
+    private Map<Class<?>, Collection<Class<?>>>                    mapSubTypes;
+    private Map<Class<?>, Collection<Class<?>>>                    mapAncestorTypes;
+    private Map<String, Collection<Class<?>>>                      mapSubTypesByName;
+    private Map<String, Collection<Class<?>>>                      mapTypesByName;
+    private Map<Specification, Collection<Class<?>>>               mapTypesBySpecification;
+    private Map<Class<? extends Annotation>, Collection<Class<?>>> mapAnnotationTypes;
+    private Map<String, Collection<Class<?>>>                      mapAnnotationTypesByName;
+    private Map<String, Collection<String>>                        mapPropertiesFiles;
+    private Map<String, Collection<String>>                        mapResourcesByRegex;
+
+    private String initialPropertiesPrefix;
+
+    private int roundNumber = 0;
 
     /**
      * @param inPackageRoots
      */
     public InitContextInternal(String initialPropertiesPrefix, Map<String, String> kernelParams)
     {
+        this.packageRoots = new LinkedList<String>();
+        this.initialPropertiesPrefix = initialPropertiesPrefix;
         this.kernelParams = kernelParams;
+        this.childModules = new LinkedList<Module>();
+        classesToBind = new HashSet<Class<?>>();
+        classesWithScopes = new HashMap<Class<?>, Object>();
+        reset();
+    }
+    
+    public void reset()
+    {
         this.mapSubTypes = new HashMap<Class<?>, Collection<Class<?>>>();
         this.mapAncestorTypes = new HashMap<Class<?>, Collection<Class<?>>>();
-        // this.mapTypes = new HashMap<Class<?>, Collection<Class<?>>>();
         this.mapSubTypesByName = new HashMap<String, Collection<Class<?>>>();
         this.mapTypesByName = new HashMap<String, Collection<Class<?>>>();
         this.mapTypesBySpecification = new HashMap<Specification, Collection<Class<?>>>();
@@ -99,7 +112,7 @@ public class InitContextInternal implements InitContext
         this.mapAnnotationTypesByName = new HashMap<String, Collection<Class<?>>>();
         this.mapPropertiesFiles = new HashMap<String, Collection<String>>();
         this.mapResourcesByRegex = new HashMap<String, Collection<String>>();
-
+        
         this.annotationTypesToScan = new LinkedList<Class<? extends Annotation>>();
         this.parentTypesClassesToScan = new LinkedList<Class<?>>();
         this.ancestorTypesClassesToScan = new LinkedList<Class<?>>();
@@ -109,7 +122,7 @@ public class InitContextInternal implements InitContext
         this.resourcesRegexToScan = new LinkedList<String>();
         this.parentTypesRegexToScan = new LinkedList<String>();
         this.annotationRegexToScan = new LinkedList<String>();
-
+        
         this.annotationTypesToBind = new LinkedList<Class<? extends Annotation>>();
         this.metaAnnotationTypesToBind = new LinkedList<Class<? extends Annotation>>();
         this.parentTypesClassesToBind = new LinkedList<Class<?>>();
@@ -119,16 +132,10 @@ public class InitContextInternal implements InitContext
         this.mapOfScopes = new HashMap<Key, Object>();
         this.annotationRegexToBind = new LinkedList<String>();
         this.metaAnnotationRegexToBind = new LinkedList<String>();
-
+        
         this.propertiesPrefix = new LinkedList<String>();
-        this.childModules = new LinkedList<Module>();
         this.propertiesPrefix.add(initialPropertiesPrefix);
-        this.packageRoots = new LinkedList<String>();
         this.additionalClasspathScan = new HashSet<URL>();
-        // for (String packageRoot : inPackageRoots)
-        // {
-        // this.packageRoots.add(packageRoot);
-        // }
     }
 
     private void initScanner()
@@ -170,8 +177,7 @@ public class InitContextInternal implements InitContext
     {
         initScanner();
 
-        classesToBind = new LinkedList<Class<?>>();
-        classesWithScopes = new HashMap<Class<?>, Object>();
+
         
         { // bind modules
             Collection<Class<?>> scanClasspathForModules = this.classpathScanner.scanClasspathForAnnotation(KernelModule.class);
@@ -333,7 +339,20 @@ public class InitContextInternal implements InitContext
     {
         for (Class<?> klass : classes)
         {
-            inClassesWithScopes.put(klass, scope);
+            if (!inClassesWithScopes.containsKey(klass)  && scope != null )
+            {
+                inClassesWithScopes.put(klass, scope);
+            }
+            else
+            {
+                Object insideScope = inClassesWithScopes.get(klass);
+                if ( ! insideScope.equals(scope))
+                {
+                    String format = String.format("Class %s is already associated with scope %s but  %s", klass.getName() , insideScope , scope );
+                    logger.error(format);
+                    throw new KernelException(format);
+                }
+            }
         }
     }
     
@@ -342,6 +361,13 @@ public class InitContextInternal implements InitContext
         if (paths != null && paths.size() > 0)
         {
             this.additionalClasspathScan.addAll( paths );
+        }
+    }
+    public void addClasspathToScan(URL path)
+    {
+        if (path != null )
+        {
+            this.additionalClasspathScan.add( path );
         }
     }
 
@@ -554,11 +580,11 @@ public class InitContextInternal implements InitContext
 
     @Override
     @SuppressWarnings({
-            "unchecked", "rawtypes"
+            "unchecked"
     })
-    public List<Class<?>> classesToBind()
+    public Collection<Class<?>> classesToBind()
     {
-        return (List) Collections.unmodifiableList(this.classesToBind);
+        return (Collection) Collections.unmodifiableSet(this.classesToBind);
     }
     
     @SuppressWarnings({"unchecked"})
@@ -595,6 +621,19 @@ public class InitContextInternal implements InitContext
     {
         return Collections.emptySet();
     }
+    
+    @Override
+    public int roundNumber()
+    {
+        return this.roundNumber;
+    }
+    
+    public void roundNumber(int roundNumber)
+    {
+        this.roundNumber  = roundNumber;
+        
+    }
+    
     
     static class Key
     {

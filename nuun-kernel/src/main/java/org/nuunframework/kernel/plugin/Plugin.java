@@ -22,7 +22,7 @@ public interface Plugin
     /**
      * Lifecycle method : init()
      */
-    void init(InitContext initContext);
+    InitState init(InitContext initContext);
 
     /**
      * Lifecycle method : start()
@@ -154,5 +154,13 @@ public interface Plugin
      * </pre>
      */
     Map<String, String> kernelParametersAliases();
+    
+    /**
+     * Round Environment provide information regarding the current round to the plugin.
+     * The kernel pass this object to the plugin before all 
+     * 
+     * @param roundEnvironment
+     */
+    void provideRoundEnvironment (RoundEnvironment roundEnvironment);
 
 }

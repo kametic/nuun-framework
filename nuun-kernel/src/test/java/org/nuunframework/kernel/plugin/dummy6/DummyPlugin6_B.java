@@ -6,11 +6,22 @@ import java.util.Collection;
 
 import org.nuunframework.kernel.context.InitContext;
 import org.nuunframework.kernel.plugin.AbstractPlugin;
+import org.nuunframework.kernel.plugin.InitState;
 import org.nuunframework.kernel.plugin.Plugin;
-
+/**
+ * 
+ * A 2 rounds plugin
+ * 
+ * @author ejemba
+ *
+ */
 public class DummyPlugin6_B extends AbstractPlugin
 {
 
+    public DummyPlugin6_B()
+    {
+    }
+    
     @Override
     public String name()
     {
@@ -21,27 +32,50 @@ public class DummyPlugin6_B extends AbstractPlugin
     @Override
     public Collection<Class<? extends Plugin>> dependentPlugins()
     {
-        return collectionOf(  DummyPlugin6_D.class , DummyPlugin6_C.class);
+        if (roundEnvironment != null && roundEnvironment.firstRound() )
+        {
+            return collectionOf(  DummyPlugin6_D.class , DummyPlugin6_C.class);
+        }
+        else
+        {
+            return super.dependentPlugins();
+        }
     }
     
     
     @Override
-    public void init(InitContext initContext)
+    public InitState init(InitContext initContext)
     {
-        Collection<? extends Plugin> dependentPlugins = initContext.dependentPlugins();
-        assertThat(dependentPlugins).isNotNull();
-        assertThat(dependentPlugins).hasSize(2);
-        
-        for (Plugin plugin : dependentPlugins)
+        if (roundEnvironment.roundNumber() != 5 )
         {
-            if (DummyPlugin6_D.class.isAssignableFrom(plugin.getClass())) 
+            Collection<? extends Plugin> dependentPlugins = initContext.dependentPlugins();
+            assertThat(dependentPlugins).isNotNull();
+            if (roundEnvironment.firstRound())
             {
-                DummyPlugin6_D.class.cast(plugin).setInternal(true);
+                assertThat(dependentPlugins).hasSize(2);
             }
-            if (DummyPlugin6_C.class.isAssignableFrom(plugin.getClass())) 
+            else
             {
-                DummyPlugin6_C.class.cast(plugin).setInternal(true);
+                assertThat(dependentPlugins).hasSize(0);
             }
+            
+            for (Plugin plugin : dependentPlugins)
+            {
+                if (DummyPlugin6_D.class.isAssignableFrom(plugin.getClass())) 
+                {
+                    DummyPlugin6_D.class.cast(plugin).setInternal(true);
+                }
+                if (DummyPlugin6_C.class.isAssignableFrom(plugin.getClass())) 
+                {
+                    DummyPlugin6_C.class.cast(plugin).setInternal(true);
+                }
+            }
+        
+            return InitState.NON_INITIALIZED;
+        } 
+        else 
+        {
+            return InitState.INITIALIZED;
         }
         
     }

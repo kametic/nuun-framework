@@ -12,6 +12,7 @@ import org.apache.commons.configuration.MapConfiguration;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.nuunframework.kernel.context.InitContext;
 import org.nuunframework.kernel.plugin.AbstractPlugin;
+import org.nuunframework.kernel.plugin.InitState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,7 +62,7 @@ public class NuunConfigurationPlugin extends AbstractPlugin
     
     
     @Override
-    public void init(InitContext initContext)
+    public InitState init(InitContext initContext)
     {
      // find all properties classes in the classpath
         Collection<String> propertiesFiles = initContext.propertiesFiles();        
@@ -77,6 +78,7 @@ public class NuunConfigurationPlugin extends AbstractPlugin
         	logger.info("adding additionnal configuration {} to module", additionalConfiguration);
         	configuration.addConfiguration(additionalConfiguration);
         }
+        return InitState.INITIALIZED;
     }
     
     /**

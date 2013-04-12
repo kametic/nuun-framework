@@ -28,7 +28,9 @@ import org.nuunframework.kernel.context.Context;
 import org.nuunframework.kernel.context.InitContext;
 import org.nuunframework.kernel.context.InitContextInternal;
 import org.nuunframework.kernel.internal.InternalKernelGuiceModule;
+import org.nuunframework.kernel.plugin.InitState;
 import org.nuunframework.kernel.plugin.Plugin;
+import org.nuunframework.kernel.plugin.RoundEnvironementInternal;
 import org.nuunframework.kernel.plugin.provider.DependencyInjectionProvider;
 import org.nuunframework.kernel.plugin.request.BindingRequest;
 import org.nuunframework.kernel.plugin.request.ClasspathScanRequest;
@@ -38,8 +40,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Strings;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Multimap;
+import com.google.common.collect.Sets;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
@@ -52,6 +53,7 @@ public final class Kernel
     public static final String                      NUUN_ROOT_PACKAGE      = "nuun.root.package";
     public static final String                      NUUN_NUM_CP_PATH       = "nuun.num.classpath.path";
     public static final String                      NUUN_CP_PATH_PREFIX    = "nuun.classpath.path.prefix-";
+    private final int MAXIMAL_ROUND_NUMBER                                 = 50;
     private Logger                                  logger                 = LoggerFactory.getLogger(Kernel.class);
     private static Kernel                           kernel;
 
@@ -75,8 +77,9 @@ public final class Kernel
 
     private Collection<DependencyInjectionProvider> globalDependencyInjectionProviders;
     private List<Iterator<Plugin>>                  pluginIterators;
-    private Multimap<String, String>                kernelParametersAliases;
     private List<Plugin>                            fetchedPlugins;
+    private Set<URL>                                globalAdditionalClasspath;
+    private RoundEnvironementInternal roundEnv;
 
     private Kernel(String... keyValues)
     {
@@ -118,13 +121,63 @@ public final class Kernel
         {
             fetchPlugins();
             computeAliases();
+            initRoundEnvironment();
             checkPlugins();
+            fetchGlobalParametersFromPlugins();
             initPlugins();
             initialized = true;
         }
         else
         {
             throw new KernelException("Kernel is already initialized");
+        }
+    }
+
+    private void initRoundEnvironment()
+    {
+        // we initialize plugins
+        roundEnv = new RoundEnvironementInternal();
+
+        for (Plugin plugin : fetchedPlugins)
+        {
+            // we pass the roundEnvironment
+            plugin.provideRoundEnvironment(roundEnv);
+
+        }
+        
+    }
+
+    private void fetchGlobalParametersFromPlugins()
+    {
+        globalDependencyInjectionProviders = new HashSet<DependencyInjectionProvider>();
+        globalAdditionalClasspath = Sets.newHashSet();
+        
+  
+        
+        // Constants from plugin outside rounds
+        // We pass the container context object for plugin
+        for (Plugin plugin : plugins.values())
+        {
+  
+            
+            logger.info("Get additional classpath to scan from Plugin {}.", plugin.name());
+            Set<URL> computeAdditionalClasspathScan = plugin.computeAdditionalClasspathScan();
+            if (computeAdditionalClasspathScan != null && computeAdditionalClasspathScan.size() > 0)
+            {
+                logger.info("Adding from Plugin {} start.", plugin.name());
+                for (URL url : computeAdditionalClasspathScan)
+                {
+                    globalAdditionalClasspath.add(url);
+                    logger.debug(url.toExternalForm());
+                }
+                logger.info("Adding from Plugin {} end. {} elements.", plugin.name(), "" + computeAdditionalClasspathScan.size());
+            }
+            // Convert dependency manager classes to instances //
+            DependencyInjectionProvider iocProvider = plugin.dependencyInjectionProvider();
+            if (iocProvider != null)
+            {
+                globalDependencyInjectionProviders.add(iocProvider);
+            }
         }
     }
 
@@ -164,9 +217,6 @@ public final class Kernel
 
     private void computeAliases()
     {
-        // kernel parameters aliases
-        kernelParametersAliases = ArrayListMultimap.create();
-
         // Compute alias
         for (Plugin plugin : fetchedPlugins)
         {
@@ -214,54 +264,54 @@ public final class Kernel
         plugins.clear();
 
         List<Class<? extends Plugin>> pluginClasses = new ArrayList<Class<? extends Plugin>>();
-        // we initialize plugins
 
         for (Plugin plugin : fetchedPlugins) {                       
+            
+            logger.info("checking Plugin {}.", plugin.name());
+            if (!Strings.isNullOrEmpty(plugin.name()))
             {
-
-                logger.info("checking Plugin {}.", plugin.name());
-                if (!Strings.isNullOrEmpty(plugin.name()))
+                Object ok = plugins.put(plugin.name(), plugin);
+                if (ok == null)
                 {
-                    Object ok = plugins.put(plugin.name(), plugin);
-                    if (ok == null)
+                    // Check for required param
+                    // ========================
+                    Collection<KernelParamsRequest> kernelParamsRequests = plugin.kernelParamsRequests();
+                    Collection<String> computedMandatoryParams = new HashSet<String>();
+                    for (KernelParamsRequest kernelParamsRequest : kernelParamsRequests)
                     {
-                        // Check for required param
-                        // ========================
-                        Collection<KernelParamsRequest> kernelParamsRequests = plugin.kernelParamsRequests();
-                        Collection<String> computedMandatoryParams = new HashSet<String>();
-                        for (KernelParamsRequest kernelParamsRequest : kernelParamsRequests)
+                        if (kernelParamsRequest.requestType == KernelParamsRequestType.MANDATORY)
                         {
-                            if (kernelParamsRequest.requestType == KernelParamsRequestType.MANDATORY)
-                            {
-                                computedMandatoryParams.add(kernelParamsRequest.keyRequested);
-                            }
+                            computedMandatoryParams.add(kernelParamsRequest.keyRequested);
                         }
+                    }
 
-                        if (kernelParams.containsAllKeys(computedMandatoryParams))
-//                            if (kernelParams.keySet().containsAll(computedMandatoryParams))
-                        {
-                            pluginClasses.add(plugin.getClass());
-                        }
-                        else
-                        {
-                            logger.error("plugin {} miss parameter/s : {}", plugin.name(), kernelParamsRequests.toString());
-                            throw new KernelException("plugin " + plugin.name() + " miss parameter/s : " + kernelParamsRequests.toString());
-                        }
-
+                    if (kernelParams.containsAllKeys(computedMandatoryParams))
+                    // if (kernelParams.keySet().containsAll(computedMandatoryParams))
+                    {
+                        pluginClasses.add(plugin.getClass());
                     }
                     else
                     {
-                        logger.error("Can not have 2 Plugin {} of the same type {}. please fix this before the kernel can start.", plugin.name(), plugin.getClass().getName());
-                        throw new KernelException(
-                                "Can not have 2 Plugin %s of the same type %s. please fix this before the kernel can start.", plugin.name(), plugin.getClass().getName());
+                        logger.error("plugin {} miss parameter/s : {}", plugin.name(), kernelParamsRequests.toString());
+                        throw new KernelException("plugin " + plugin.name() + " miss parameter/s : " + kernelParamsRequests.toString());
                     }
+
                 }
                 else
                 {
-                    logger.warn("Plugin {} has no correct name it won't be installed.", plugin.getClass());
-                    throw new KernelException("Plugin %s has no correct name it won't be installed.", plugin.name());
+                    logger.error("Can not have 2 Plugin {} of the same type {}. please fix this before the kernel can start.", plugin.name(), plugin.getClass()
+                            .getName());
+                    throw new KernelException(
+                            "Can not have 2 Plugin %s of the same type %s. please fix this before the kernel can start.", plugin.name(), plugin.getClass()
+                                    .getName());
                 }
             }
+            else
+            {
+                logger.warn("Plugin {} has no correct name it won't be installed.", plugin.getClass());
+                throw new KernelException("Plugin %s has no correct name it won't be installed.", plugin.name());
+            }
+            
         }
 
         // Check for required and dependent plugins 
@@ -345,195 +395,211 @@ public final class Kernel
     private void initPlugins()
     {
 
-        //
-        for (Plugin plugin : plugins.values())
-        {
-            // Configure properties prefixes
-            if (!Strings.isNullOrEmpty(plugin.pluginPropertiesPrefix()))
-            {
-                this.initContext.addPropertiesPrefix(plugin.pluginPropertiesPrefix());
-            }
+        
+        // We reset the resettable element of initcontext
+        this.initContext.reset();
 
-            // Configure package root
-            if (!Strings.isNullOrEmpty(plugin.pluginPackageRoot()))
-            {
-                this.initContext.addPackageRoot(plugin.pluginPackageRoot());
-            }
-
-            if (plugin.classpathScanRequests() != null && plugin.classpathScanRequests().size() > 0)
-            {
-                for (ClasspathScanRequest request : plugin.classpathScanRequests())
-                {
-                    switch (request.requestType)
-                    {
-                        case ANNOTATION_TYPE:
-                            this.initContext.addAnnotationTypesToScan((Class<? extends Annotation>) request.objectRequested);
-                            break;
-                        case ANNOTATION_REGEX_MATCH:
-                            this.initContext.addAnnotationRegexesToScan((String) request.objectRequested);
-                            break;
-                        // case META_ANNOTATION_TYPE:
-                        // this.initContext.addAnnotationTypesToScan((Class<? extends Annotation>)
-                        // request.objectRequested);
-                        // break;
-                        // case META_ANNOTATION_REGEX_MATCH:
-                        // this.initContext.addAnnotationRegexesToScan((String) request.objectRequested);
-                        // break;
-                        case SUBTYPE_OF_BY_CLASS:
-                            this.initContext.addParentTypeClassToScan((Class<?>) request.objectRequested);
-                            break;
-                        case SUBTYPE_OF_BY_TYPE_DEEP:
-                            this.initContext.addAncestorTypeClassToScan((Class<?>) request.objectRequested);
-                            break;
-                        case SUBTYPE_OF_BY_REGEX_MATCH:
-                            this.initContext.addParentTypeRegexesToScan((String) request.objectRequested);
-                            break;
-                        case RESOURCES_REGEX_MATCH:
-                            this.initContext.addResourcesRegexToScan((String) request.objectRequested);
-                            // this.initContext.addTypeClassToScan((Class<?>) request.objectRequested);
-                            break;
-                        case TYPE_OF_BY_REGEX_MATCH:
-                            this.initContext.addTypeRegexesToScan((String) request.objectRequested);
-                            break;
-                        case VIA_SPECIFICATION: // pas encore pluggé
-                            this.initContext.addSpecificationToScan(request.specification);
-                            break;
-                        default:
-                            logger.warn("{} is not a ClasspathScanRequestType a o_O", request.requestType);
-                            break;
-                    }
-                }
-            }
-
-            if (plugin.bindingRequests() != null && plugin.bindingRequests().size() > 0)
-            {
-                for (BindingRequest request : plugin.bindingRequests())
-                {
-                    switch (request.requestType)
-                    {
-                        case ANNOTATION_TYPE:
-                            this.initContext.addAnnotationTypesToBind((Class<? extends Annotation>) request.requestedObject, request.requestedScope);
-                            break;
-                        case ANNOTATION_REGEX_MATCH:
-                            this.initContext.addAnnotationRegexesToBind((String) request.requestedObject, request.requestedScope);
-                            break;
-                        case META_ANNOTATION_TYPE:
-                            this.initContext.addMetaAnnotationTypesToBind((Class<? extends Annotation>) request.requestedObject, request.requestedScope);
-                            break;
-                        case META_ANNOTATION_REGEX_MATCH:
-                            this.initContext.addAnnotationRegexesToBind((String) request.requestedObject, request.requestedScope);
-                            break;
-                        case SUBTYPE_OF_BY_CLASS:
-                            this.initContext.addParentTypeClassToBind((Class<?>) request.requestedObject, request.requestedScope);
-                            break;
-                        case SUBTYPE_OF_BY_TYPE_DEEP:
-                            this.initContext.addAncestorTypeClassToBind((Class<?>) request.requestedObject, request.requestedScope);
-                            break;
-                        case SUBTYPE_OF_BY_REGEX_MATCH:
-                            this.initContext.addTypeRegexesToBind((String) request.requestedObject, request.requestedScope);
-                            break;
-                        case VIA_SPECIFICATION:
-                            this.initContext.addSpecificationToBind(request.specification, request.requestedScope);
-                            break;
-                        default:
-                            logger.warn("{} is not a BindingRequestType o_O !", request.requestType);
-                            break;
-                    }
-                }
-            }
-        }
-
-        globalDependencyInjectionProviders = new HashSet<DependencyInjectionProvider>();
-
-        // INITIALISATION
-        // We pass the container context object for plugin
-        for (Plugin plugin : plugins.values())
-        {
-        	plugin.provideContainerContext(containerContext);
-            logger.info("Get additional classpath to scan from Plugin {}.", plugin.name());
-            Set<URL> computeAdditionalClasspathScan = plugin.computeAdditionalClasspathScan();
-            if (computeAdditionalClasspathScan != null && computeAdditionalClasspathScan.size() > 0)
-            {
-                logger.info("Adding from Plugin {} start.", plugin.name());
-                for (URL url : computeAdditionalClasspathScan)
-                {
-                    logger.debug(url.toExternalForm());
-                }
-                logger.info("Adding from Plugin {} end. {} elements.", plugin.name(), "" + computeAdditionalClasspathScan.size());
-                initContext.addClasspathsToScan(computeAdditionalClasspathScan);
-            }
-            // Convert dependency manager classes to instances //
-            DependencyInjectionProvider iocProvider = plugin.dependencyInjectionProvider();
-            if (iocProvider != null)
-            {
-                globalDependencyInjectionProviders.add(iocProvider);
-            }
-        }
-
-        // // We also want to scan DependencyInjectionProvider before the classpath scan
-        // initContext.addParentTypeClassToScan(DependencyInjectionProvider.class);
-
-        // We launch classpath scan and store results of requests
-        this.initContext.executeRequests();
-
-        // INITIALISATION
-        // ArrayList<Plugin> orderedPlugins = sortPlugins (plugins.values());
-        ArrayList<Plugin> unOrderedPlugins = new ArrayList<Plugin>(plugins.values());
-
+        // Get plugins requests
+        // ====================
+        Collection<Plugin> globalPlugins = plugins.values(); // first round all plugins
+        
+        // We sort them
+        ArrayList<Plugin> unOrderedPlugins = new ArrayList<Plugin>(globalPlugins);
         logger.info("unordered plugins: (" + unOrderedPlugins.size() + ") " + unOrderedPlugins);
         orderedPlugins = sortPlugins(unOrderedPlugins);
         logger.info("ordered plugins: ("  + orderedPlugins.size()  + ") "  +  orderedPlugins);
-        for (Plugin plugin : orderedPlugins)
-        {
-            InitContext actualInitContext = this.initContext;
-            if ((plugin.requiredPlugins() != null && !plugin.requiredPlugins().isEmpty()) || (plugin.dependentPlugins() != null && !plugin.dependentPlugins().isEmpty())  )
+        Map<String,InitState> states = new HashMap<String, InitState>();
+        
+        ArrayList<Plugin> roundOrderedPlugins = new ArrayList<Plugin>(orderedPlugins);
+        
+        
+        do 
+        { // ROUND ITERATIONS
+            
+            // we update the number of initialization round.
+            this.initContext.roundNumber(roundEnv.roundNumber());
+            
+            logger.info("ROUND " + roundEnv.roundNumber() + " of the kernel initialisation.");
+            
+            for (Plugin plugin : roundOrderedPlugins)
             {
-                Collection<Plugin> requiredPlugins = filterPlugins(plugins.values(), plugin.requiredPlugins());
-                Collection<Plugin> dependentPlugins = filterPlugins(plugins.values(), plugin.dependentPlugins());
-                actualInitContext = proxyfy(initContext, requiredPlugins,dependentPlugins);
-            }
-
-            logger.info("initializing Plugin {}.", plugin.name());
-            plugin.init(actualInitContext);
-        }
-
-        // After been initialized plugin can give they module
-        // Configure module //
-
-        for (Plugin plugin : orderedPlugins)
-        {
-            Object pluginDependencyInjectionDef = plugin.dependencyInjectionDef();
-            if (pluginDependencyInjectionDef != null)
-            {
-                if (pluginDependencyInjectionDef instanceof com.google.inject.Module)
+                
+                
+                // Configure properties prefixes
+                if (!Strings.isNullOrEmpty(plugin.pluginPropertiesPrefix()))
                 {
-                    this.initContext.addChildModule(com.google.inject.Module.class.cast(pluginDependencyInjectionDef));
+                    this.initContext.addPropertiesPrefix(plugin.pluginPropertiesPrefix());
                 }
-                else
+                
+                // Configure package root
+                if (!Strings.isNullOrEmpty(plugin.pluginPackageRoot()))
                 {
-                    DependencyInjectionProvider provider = null;
-                    providerLoop: for (DependencyInjectionProvider providerIt : globalDependencyInjectionProviders)
+                    this.initContext.addPackageRoot(plugin.pluginPackageRoot());
+                }
+                
+                if (plugin.classpathScanRequests() != null && plugin.classpathScanRequests().size() > 0)
+                {
+                    for (ClasspathScanRequest request : plugin.classpathScanRequests())
                     {
-                        if (providerIt.canHandle(pluginDependencyInjectionDef.getClass()))
+                        switch (request.requestType)
                         {
-                            provider = providerIt;
-                            break providerLoop;
+                            case ANNOTATION_TYPE:
+                                this.initContext.addAnnotationTypesToScan((Class<? extends Annotation>) request.objectRequested);
+                                break;
+                            case ANNOTATION_REGEX_MATCH:
+                                this.initContext.addAnnotationRegexesToScan((String) request.objectRequested);
+                                break;
+                                // case META_ANNOTATION_TYPE:
+                                // this.initContext.addAnnotationTypesToScan((Class<? extends Annotation>)
+                                // request.objectRequested);
+                                // break;
+                                // case META_ANNOTATION_REGEX_MATCH:
+                                // this.initContext.addAnnotationRegexesToScan((String) request.objectRequested);
+                                // break;
+                            case SUBTYPE_OF_BY_CLASS:
+                                this.initContext.addParentTypeClassToScan((Class<?>) request.objectRequested);
+                                break;
+                            case SUBTYPE_OF_BY_TYPE_DEEP:
+                                this.initContext.addAncestorTypeClassToScan((Class<?>) request.objectRequested);
+                                break;
+                            case SUBTYPE_OF_BY_REGEX_MATCH:
+                                this.initContext.addParentTypeRegexesToScan((String) request.objectRequested);
+                                break;
+                            case RESOURCES_REGEX_MATCH:
+                                this.initContext.addResourcesRegexToScan((String) request.objectRequested);
+                                // this.initContext.addTypeClassToScan((Class<?>) request.objectRequested);
+                                break;
+                            case TYPE_OF_BY_REGEX_MATCH:
+                                this.initContext.addTypeRegexesToScan((String) request.objectRequested);
+                                break;
+                            case VIA_SPECIFICATION: // pas encore pluggé
+                                this.initContext.addSpecificationToScan(request.specification);
+                                break;
+                            default:
+                                logger.warn("{} is not a ClasspathScanRequestType a o_O", request.requestType);
+                                break;
                         }
                     }
-                    if (provider != null)
+                }
+                
+                if (plugin.bindingRequests() != null && plugin.bindingRequests().size() > 0)
+                {
+                    for (BindingRequest request : plugin.bindingRequests())
                     {
-                        this.initContext.addChildModule(provider.convert(pluginDependencyInjectionDef));
-                    }
-                    else
-                    {
-                        logger.error("Kernel did not recognize module {} of plugin {}", pluginDependencyInjectionDef, plugin.name());
-                        throw new KernelException(
-                                "Kernel did not recognize module %s of plugin %s. Please provide a DependencyInjectionProvider.",
-                                pluginDependencyInjectionDef.toString(), plugin.name());
+                        switch (request.requestType)
+                        {
+                            case ANNOTATION_TYPE:
+                                this.initContext.addAnnotationTypesToBind((Class<? extends Annotation>) request.requestedObject, request.requestedScope);
+                                break;
+                            case ANNOTATION_REGEX_MATCH:
+                                this.initContext.addAnnotationRegexesToBind((String) request.requestedObject, request.requestedScope);
+                                break;
+                            case META_ANNOTATION_TYPE:
+                                this.initContext.addMetaAnnotationTypesToBind((Class<? extends Annotation>) request.requestedObject, request.requestedScope);
+                                break;
+                            case META_ANNOTATION_REGEX_MATCH:
+                                this.initContext.addAnnotationRegexesToBind((String) request.requestedObject, request.requestedScope);
+                                break;
+                            case SUBTYPE_OF_BY_CLASS:
+                                this.initContext.addParentTypeClassToBind((Class<?>) request.requestedObject, request.requestedScope);
+                                break;
+                            case SUBTYPE_OF_BY_TYPE_DEEP:
+                                this.initContext.addAncestorTypeClassToBind((Class<?>) request.requestedObject, request.requestedScope);
+                                break;
+                            case SUBTYPE_OF_BY_REGEX_MATCH:
+                                this.initContext.addTypeRegexesToBind((String) request.requestedObject, request.requestedScope);
+                                break;
+                            case VIA_SPECIFICATION:
+                                this.initContext.addSpecificationToBind(request.specification, request.requestedScope);
+                                break;
+                            default:
+                                logger.warn("{} is not a BindingRequestType o_O !", request.requestType);
+                                break;
+                        }
                     }
                 }
+            } // end plugin request
+            
+            for (URL url : globalAdditionalClasspath)
+            {
+                initContext.addClasspathToScan(url);
             }
-        }
+            
+            // We launch classpath scan and store results of requests
+            this.initContext.executeRequests();
+            
+            // INITIALISATION
+            
+            for (Plugin plugin : roundOrderedPlugins)
+            {
+                InitContext actualInitContext = this.initContext;
+                
+                // TODO : we compute dependencies only in round 0 for first version , no other plugin will be given
+                if (roundEnv.roundNumber() == 0 && (plugin.requiredPlugins() != null && !plugin.requiredPlugins().isEmpty()) || (plugin.dependentPlugins() != null && !plugin.dependentPlugins().isEmpty())  )
+                {
+                    Collection<Plugin> requiredPlugins = filterPlugins(globalPlugins, plugin.requiredPlugins()); // TODO remplacer par global
+                    Collection<Plugin> dependentPlugins = filterPlugins(globalPlugins, plugin.dependentPlugins());
+                    actualInitContext = proxyfy(initContext, requiredPlugins,dependentPlugins);
+                }
+                
+                logger.info("initializing Plugin {}.", plugin.name());
+                InitState state = plugin.init(actualInitContext);
+                states.put(plugin.name(), state);
+            }
+            
+            // After been initialized plugin can give they module
+            // Configure module //
+            ArrayList<Plugin> nextRoundOrderedPlugins = new ArrayList<Plugin>();
+            
+            for (Plugin plugin : roundOrderedPlugins)
+            {
+                InitState state = states.get(plugin.name());
+                
+                if ( state == InitState.INITIALIZED )
+                {
+                    Object pluginDependencyInjectionDef = plugin.dependencyInjectionDef();
+                    if (pluginDependencyInjectionDef != null)
+                    {
+                        if (pluginDependencyInjectionDef instanceof com.google.inject.Module)
+                        {
+                            this.initContext.addChildModule(com.google.inject.Module.class.cast(pluginDependencyInjectionDef));
+                        }
+                        else
+                        {
+                            DependencyInjectionProvider provider = null;
+                            providerLoop: for (DependencyInjectionProvider providerIt : globalDependencyInjectionProviders)
+                            {
+                                if (providerIt.canHandle(pluginDependencyInjectionDef.getClass()))
+                                {
+                                    provider = providerIt;
+                                    break providerLoop;
+                                }
+                            }
+                            if (provider != null)
+                            {
+                                this.initContext.addChildModule(provider.convert(pluginDependencyInjectionDef));
+                            }
+                            else
+                            {
+                                logger.error("Kernel did not recognize module {} of plugin {}", pluginDependencyInjectionDef, plugin.name());
+                                throw new KernelException(
+                                        "Kernel did not recognize module %s of plugin %s. Please provide a DependencyInjectionProvider.",
+                                        pluginDependencyInjectionDef.toString(), plugin.name());
+                            }
+                        }
+                    } //
+                    
+                }
+                else
+                { // the plugin is not initialized we add it for a new round
+                    logger.info("Plugin " + plugin.name() + " is not initialized. We set it for a new round");
+                    nextRoundOrderedPlugins.add(plugin);
+                }
+            }
+            roundOrderedPlugins = nextRoundOrderedPlugins;
+            // increment round number
+            roundEnv.incrementRoundNumber();
+        } while( ! roundOrderedPlugins .isEmpty()  &&  roundEnv.roundNumber() < MAXIMAL_ROUND_NUMBER );
     }
 
     private ArrayList<Plugin> sortPlugins(ArrayList<Plugin> unsortedPlugins)
@@ -644,8 +710,6 @@ public final class Kernel
 
     void createDependencyInjectionProvidersMap(Collection<Class<?>> dependencyInjectionProvidersClasses)
     {
-        // Map<Class<?>, DependencyInjectionProvider> map = new HashMap<Class<?>,
-        // DependencyInjectionProvider>();
 
         dependencyInjectionProviders = new HashSet<DependencyInjectionProvider>();
 

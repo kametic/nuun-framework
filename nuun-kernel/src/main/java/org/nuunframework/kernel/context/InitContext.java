@@ -36,7 +36,7 @@ public interface InitContext
 
     public abstract String getKernelParam(String key);
 
-    public abstract List<Class<?>> classesToBind();
+    public abstract Collection<Class<?>> classesToBind();
 
     public abstract List<Module> moduleResults();
 
@@ -46,7 +46,7 @@ public interface InitContext
 
     public abstract Map<String, Collection<String>> mapResourcesByRegex();
 
-    public abstract Map<Specification, Collection<Class<?>>> scannedTypesBySpecification();    
+    public abstract Map<Specification, Collection<Class<?>>> scannedTypesBySpecification();
     
     /**
      * Return instances of the Plugin asked by the plugin
@@ -63,6 +63,11 @@ public interface InitContext
      */
     public abstract Collection<? extends Plugin> dependentPlugins ();
 
-    
+    /**
+     * Round Number of the initialization.
+     * 
+     * @return
+     */
+    public abstract int roundNumber();
 
 }

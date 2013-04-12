@@ -81,6 +81,7 @@ public class KernelSuite6Test
         DummyPlugin6_B b = new DummyPlugin6_B();  // <--- C ,  D
         plugins.add(b); 
 
+        plugins2 = Whitebox.invokeMethod(underTest, "initRoundEnvironment");
         plugins2 = Whitebox.invokeMethod(underTest, "sortPlugins", plugins);
 
         assertThat(plugins2).isNotNull();

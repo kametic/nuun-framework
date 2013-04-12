@@ -39,6 +39,7 @@ public abstract class AbstractPlugin implements Plugin
 
     protected Context                         context = null;
     protected Object                          containerContext = null;
+    protected RoundEnvironment roundEnvironment;
     @SuppressWarnings("unused")
     private Map<String, String>               kernelParams;
     @SuppressWarnings("unused")
@@ -59,12 +60,15 @@ public abstract class AbstractPlugin implements Plugin
 
     /**
      * ============================= PLUGIN LIFE CYCLE USED BY KERNEL =============================
+     * @return 
      **/
 
     @Override
-    public void init(InitContext initContext)
+    public InitState init(InitContext initContext)
     {
         this.initContext = initContext;
+        
+        return InitState.INITIALIZED;
     }
 
     @Override
@@ -261,6 +265,13 @@ public abstract class AbstractPlugin implements Plugin
     public DependencyInjectionProvider dependencyInjectionProvider()
     {
         return null;
+    }
+    
+    @Override
+    public void provideRoundEnvironment(RoundEnvironment roundEnvironment)
+    {
+        this.roundEnvironment = roundEnvironment;
+        
     }
     
     

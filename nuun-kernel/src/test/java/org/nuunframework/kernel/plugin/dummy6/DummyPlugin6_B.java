@@ -8,6 +8,8 @@ import org.nuunframework.kernel.context.InitContext;
 import org.nuunframework.kernel.plugin.AbstractPlugin;
 import org.nuunframework.kernel.plugin.InitState;
 import org.nuunframework.kernel.plugin.Plugin;
+import org.nuunframework.kernel.plugin.request.BindingRequest;
+import org.nuunframework.kernel.plugin.request.ClasspathScanRequest;
 /**
  * 
  * A 2 rounds plugin
@@ -44,6 +46,30 @@ public class DummyPlugin6_B extends AbstractPlugin
     
     
     @Override
+    public Collection<BindingRequest> bindingRequests()
+    {
+        if (roundEnvironment.roundNumber() == 3 )
+        {
+            return bindingRequestsBuilder().annotationType(Marker66.class).build();
+        }
+        return super.bindingRequests();
+    }
+    
+    @Override
+    public Collection<ClasspathScanRequest> classpathScanRequests()
+    {
+        
+        if (roundEnvironment.roundNumber() == 4 )
+        {
+            return classpathScanRequestBuilder().annotationType(Marker6.class).build();
+            
+        }
+        
+        return super.classpathScanRequests();
+    }
+    
+    
+    @Override
     public InitState init(InitContext initContext)
     {
         if (roundEnvironment.roundNumber() != 5 )
@@ -58,6 +84,20 @@ public class DummyPlugin6_B extends AbstractPlugin
             {
                 assertThat(dependentPlugins).hasSize(0);
             }
+            
+            
+            
+            if (roundEnvironment.roundNumber() == 4 )
+            {
+                Collection<Class<?>> collection = initContext.scannedClassesByAnnotationClass().get(Marker6.class);
+                assertThat(collection).hasSize(2);
+            }
+            else
+            {
+                Collection<Class<?>> collection = initContext.scannedClassesByAnnotationClass().get(Marker6.class);
+                assertThat(collection).isNullOrEmpty();
+            }
+            
             
             for (Plugin plugin : dependentPlugins)
             {

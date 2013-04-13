@@ -46,7 +46,7 @@ public class ClassMethodsAnnotatedWith extends AbstractSpecification<Class<?>>
 			} 
 			  catch (Throwable cnfe)
 			{
-				logger.warn("Exception on isSatisfiedBy () ", cnfe);
+				logger.warn("Exception on isSatisfiedBy () " + cnfe.getMessage());
 			}
 		}
 		

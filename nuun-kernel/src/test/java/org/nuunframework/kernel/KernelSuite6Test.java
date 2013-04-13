@@ -11,6 +11,7 @@ import org.nuunframework.kernel.plugin.dummy6.DummyPlugin6_A;
 import org.nuunframework.kernel.plugin.dummy6.DummyPlugin6_B;
 import org.nuunframework.kernel.plugin.dummy6.DummyPlugin6_C;
 import org.nuunframework.kernel.plugin.dummy6.DummyPlugin6_D;
+import org.nuunframework.kernel.plugin.dummy6.T2;
 import org.powermock.reflect.Whitebox;
 
 public class KernelSuite6Test
@@ -59,6 +60,9 @@ public class KernelSuite6Test
         assertThat(dummyPlugin6_C.isInternal()).isTrue();
         assertThat(dummyPlugin6_D.isInternal()).isTrue();
         underTest.start();
+        
+        T2 instance = underTest.getMainInjector().getInstance(T2.class);
+        assertThat(instance).isNotNull();
 
     }
 

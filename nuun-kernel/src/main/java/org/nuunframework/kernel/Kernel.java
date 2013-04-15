@@ -158,7 +158,7 @@ public final class Kernel
         // We pass the container context object for plugin
         for (Plugin plugin : plugins.values())
         {
-  
+            plugin.provideContainerContext(containerContext);
             
             logger.info("Get additional classpath to scan from Plugin {}.", plugin.name());
             Set<URL> computeAdditionalClasspathScan = plugin.computeAdditionalClasspathScan();

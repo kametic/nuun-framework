@@ -160,17 +160,18 @@ public final class Kernel
         {
             plugin.provideContainerContext(containerContext);
             
-            logger.info("Get additional classpath to scan from Plugin {}.", plugin.name());
+            String name = plugin.name();
+            logger.info("Get additional classpath to scan from Plugin {}.", name);
             Set<URL> computeAdditionalClasspathScan = plugin.computeAdditionalClasspathScan();
             if (computeAdditionalClasspathScan != null && computeAdditionalClasspathScan.size() > 0)
             {
-                logger.info("Adding from Plugin {} start.", plugin.name());
+                logger.info("Adding from Plugin {} start.", name);
                 for (URL url : computeAdditionalClasspathScan)
                 {
                     globalAdditionalClasspath.add(url);
                     logger.debug(url.toExternalForm());
                 }
-                logger.info("Adding from Plugin {} end. {} elements.", plugin.name(), "" + computeAdditionalClasspathScan.size());
+                logger.info("Adding from Plugin {} end. {} elements.", name, "" + computeAdditionalClasspathScan.size());
             }
             // Convert dependency manager classes to instances //
             DependencyInjectionProvider iocProvider = plugin.dependencyInjectionProvider();
@@ -267,10 +268,11 @@ public final class Kernel
 
         for (Plugin plugin : fetchedPlugins) {                       
             
-            logger.info("checking Plugin {}.", plugin.name());
-            if (!Strings.isNullOrEmpty(plugin.name()))
+            String pluginName = plugin.name();
+            logger.info("checking Plugin {}.", pluginName);
+            if (!Strings.isNullOrEmpty(pluginName))
             {
-                Object ok = plugins.put(plugin.name(), plugin);
+                Object ok = plugins.put(pluginName, plugin);
                 if (ok == null)
                 {
                     // Check for required param
@@ -292,24 +294,24 @@ public final class Kernel
                     }
                     else
                     {
-                        logger.error("plugin {} miss parameter/s : {}", plugin.name(), kernelParamsRequests.toString());
-                        throw new KernelException("plugin " + plugin.name() + " miss parameter/s : " + kernelParamsRequests.toString());
+                        logger.error("plugin {} miss parameter/s : {}", pluginName, kernelParamsRequests.toString());
+                        throw new KernelException("plugin " + pluginName + " miss parameter/s : " + kernelParamsRequests.toString());
                     }
 
                 }
                 else
                 {
-                    logger.error("Can not have 2 Plugin {} of the same type {}. please fix this before the kernel can start.", plugin.name(), plugin.getClass()
+                    logger.error("Can not have 2 Plugin {} of the same type {}. please fix this before the kernel can start.", pluginName, plugin.getClass()
                             .getName());
                     throw new KernelException(
-                            "Can not have 2 Plugin %s of the same type %s. please fix this before the kernel can start.", plugin.name(), plugin.getClass()
+                            "Can not have 2 Plugin %s of the same type %s. please fix this before the kernel can start.", pluginName, plugin.getClass()
                                     .getName());
                 }
             }
             else
             {
                 logger.warn("Plugin {} has no correct name it won't be installed.", plugin.getClass());
-                throw new KernelException("Plugin %s has no correct name it won't be installed.", plugin.name());
+                throw new KernelException("Plugin %s has no correct name it won't be installed.", pluginName);
             }
             
         }
@@ -426,20 +428,23 @@ public final class Kernel
                 
                 
                 // Configure properties prefixes
-                if (!Strings.isNullOrEmpty(plugin.pluginPropertiesPrefix()))
+                String pluginPropertiesPrefix = plugin.pluginPropertiesPrefix();
+                if (!Strings.isNullOrEmpty(pluginPropertiesPrefix))
                 {
-                    this.initContext.addPropertiesPrefix(plugin.pluginPropertiesPrefix());
+                    this.initContext.addPropertiesPrefix(pluginPropertiesPrefix);
                 }
                 
                 // Configure package root
-                if (!Strings.isNullOrEmpty(plugin.pluginPackageRoot()))
+                String pluginPackageRoot = plugin.pluginPackageRoot();
+                if (!Strings.isNullOrEmpty(pluginPackageRoot))
                 {
-                    this.initContext.addPackageRoot(plugin.pluginPackageRoot());
+                    this.initContext.addPackageRoot(pluginPackageRoot);
                 }
                 
-                if (plugin.classpathScanRequests() != null && plugin.classpathScanRequests().size() > 0)
+                Collection<ClasspathScanRequest> classpathScanRequests = plugin.classpathScanRequests();
+                if (classpathScanRequests != null && classpathScanRequests.size() > 0)
                 {
-                    for (ClasspathScanRequest request : plugin.classpathScanRequests())
+                    for (ClasspathScanRequest request : classpathScanRequests)
                     {
                         switch (request.requestType)
                         {
@@ -482,9 +487,10 @@ public final class Kernel
                     }
                 }
                 
-                if (plugin.bindingRequests() != null && plugin.bindingRequests().size() > 0)
+                Collection<BindingRequest> bindingRequests = plugin.bindingRequests();
+                if (bindingRequests != null && bindingRequests.size() > 0)
                 {
-                    for (BindingRequest request : plugin.bindingRequests())
+                    for (BindingRequest request : bindingRequests)
                     {
                         switch (request.requestType)
                         {
@@ -535,16 +541,19 @@ public final class Kernel
                 InitContext actualInitContext = this.initContext;
                 
                 // TODO : we compute dependencies only in round 0 for first version , no other plugin will be given
-                if (roundEnv.roundNumber() == 0 && (plugin.requiredPlugins() != null && !plugin.requiredPlugins().isEmpty()) || (plugin.dependentPlugins() != null && !plugin.dependentPlugins().isEmpty())  )
+                Collection<Class<? extends Plugin>> requiredPluginsClasses = plugin.requiredPlugins();
+                Collection<Class<? extends Plugin>> dependentPluginsClasses = plugin.dependentPlugins();
+                if (roundEnv.roundNumber() == 0 && (requiredPluginsClasses != null && !requiredPluginsClasses.isEmpty()) || (dependentPluginsClasses != null && !dependentPluginsClasses.isEmpty())  )
                 {
-                    Collection<Plugin> requiredPlugins = filterPlugins(globalPlugins, plugin.requiredPlugins()); // TODO remplacer par global
-                    Collection<Plugin> dependentPlugins = filterPlugins(globalPlugins, plugin.dependentPlugins());
+                    Collection<Plugin> requiredPlugins = filterPlugins(globalPlugins, requiredPluginsClasses); 
+                    Collection<Plugin> dependentPlugins = filterPlugins(globalPlugins, dependentPluginsClasses);
                     actualInitContext = proxyfy(initContext, requiredPlugins,dependentPlugins);
                 }
                 
-                logger.info("initializing Plugin {}.", plugin.name());
+                String name = plugin.name();
+                logger.info("initializing Plugin {}.", name);
                 InitState state = plugin.init(actualInitContext);
-                states.put(plugin.name(), state);
+                states.put(name, state);
             }
             
             // After been initialized plugin can give they module
@@ -553,7 +562,8 @@ public final class Kernel
             
             for (Plugin plugin : roundOrderedPlugins)
             {
-                InitState state = states.get(plugin.name());
+                String name = plugin.name();
+                InitState state = states.get(name);
                 
                 if ( state == InitState.INITIALIZED )
                 {
@@ -581,10 +591,10 @@ public final class Kernel
                             }
                             else
                             {
-                                logger.error("Kernel did not recognize module {} of plugin {}", pluginDependencyInjectionDef, plugin.name());
+                                logger.error("Kernel did not recognize module {} of plugin {}", pluginDependencyInjectionDef, name);
                                 throw new KernelException(
                                         "Kernel did not recognize module %s of plugin %s. Please provide a DependencyInjectionProvider.",
-                                        pluginDependencyInjectionDef.toString(), plugin.name());
+                                        pluginDependencyInjectionDef.toString(), name);
                             }
                         }
                     } //
@@ -592,7 +602,7 @@ public final class Kernel
                 }
                 else
                 { // the plugin is not initialized we add it for a new round
-                    logger.info("Plugin " + plugin.name() + " is not initialized. We set it for a new round");
+                    logger.info("Plugin " + name + " is not initialized. We set it for a new round");
                     nextRoundOrderedPlugins.add(plugin);
                 }
             }

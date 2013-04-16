@@ -8,6 +8,11 @@ import org.apache.commons.lang.builder.ToStringStyle;
 public abstract class AbstractSpecification<T> implements Specification<T>
 {
 
+    /**
+     * do not remove this simple object insure the specification is unique
+     */
+    private Object id = new Object();
+    
     // Chaining
 
     /**
@@ -64,6 +69,16 @@ public abstract class AbstractSpecification<T> implements Specification<T>
     public String toString()
     {
         return ToStringBuilder.reflectionToString(this, ToStringStyle.SHORT_PREFIX_STYLE);
+    }
+
+    public Object getId()
+    {
+        return id;
+    }
+
+    public void setId(Object id)
+    {
+        this.id = id;
     }
 
 }

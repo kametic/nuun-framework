@@ -434,14 +434,21 @@ public final class Kernel
                 {
                     this.initContext.addPropertiesPrefix(pluginPropertiesPrefix);
                 }
-                
-                // Configure package root
-                String pluginPackageRoot = plugin.pluginPackageRoot();
-                if (!Strings.isNullOrEmpty(pluginPackageRoot))
-                {
-                    this.initContext.addPackageRoot(pluginPackageRoot);
-                }
-                
+		
+		// Configure package root
+		String pluginPackageRoot = plugin.pluginPackageRoot();
+		if (!Strings.isNullOrEmpty(pluginPackageRoot))
+		{
+		    String[] packages = null;
+		    
+		    packages = pluginPackageRoot.split(",");
+		    
+		    for (String pack : packages) {
+			logger.info("Adding {} from plugin package root", pack);
+			this.initContext.addPackageRoot(pack.trim());
+		    }
+		}
+		
                 Collection<ClasspathScanRequest> classpathScanRequests = plugin.classpathScanRequests();
                 if (classpathScanRequests != null && classpathScanRequests.size() > 0)
                 {

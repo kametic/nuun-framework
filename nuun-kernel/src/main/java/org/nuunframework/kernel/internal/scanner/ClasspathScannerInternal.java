@@ -5,21 +5,29 @@ import static org.reflections.util.FilterBuilder.prefix;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Modifier;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import javax.annotation.Nullable;
+
+import org.apache.commons.lang.StringUtils;
 import org.nuunframework.kernel.KernelException;
 import org.nuunframework.kernel.annotations.Ignore;
+import org.nuunframework.kernel.commons.AssertUtils;
 import org.nuunframework.kernel.commons.specification.Specification;
 import org.reflections.ReflectionUtils;
 import org.reflections.Reflections;
 import org.reflections.Store;
 import org.reflections.scanners.ResourcesScanner;
+import org.reflections.scanners.Scanner;
 import org.reflections.scanners.SubTypesScanner;
 import org.reflections.scanners.TypeAnnotationsScanner;
 import org.reflections.scanners.TypesScanner;
@@ -31,7 +39,9 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Sets;
 
 class ClasspathScannerInternal implements ClasspathScanner
 {
@@ -42,6 +52,8 @@ class ClasspathScannerInternal implements ClasspathScanner
     private final boolean      reachAbstractClass;
     private Set<URL>           additionalClasspath;
     private Set<URL>           urls;
+
+    private final List<ScannerCommand> commands;
 
     public ClasspathScannerInternal(String... packageRoots_)
     {
@@ -63,74 +75,145 @@ class ClasspathScannerInternal implements ClasspathScanner
             this.packageRoots.add(packageRoot_);
         }
         this.reachAbstractClass = reachAbstractClass;
+        commands = new ArrayList<ClasspathScannerInternal.ScannerCommand>();
     }
 
+    static interface ScannerCommand 
+    {
+        void execute (Reflections reflections);
+        Scanner scanner ();
+    }
+    
     @SuppressWarnings({
             "unchecked", "rawtypes"
     })
-    public Collection<Class<?>> scanClasspathForAnnotation(Class<? extends Annotation> annotationType)
+    @Override
+    public void scanClasspathForAnnotation(final Class<? extends Annotation> annotationType , final Callback callback)
     {
-        ConfigurationBuilder configurationBuilder = configurationBuilder();
-        Set<URL> computeUrls = computeUrls();
-        Reflections reflections = new Reflections(configurationBuilder.addUrls(computeUrls).setScanners(new TypeAnnotationsScanner()));
+//        ConfigurationBuilder configurationBuilder = configurationBuilder();
+//        Set<URL> computeUrls = computeUrls();
+//        Reflections reflections = new Reflections(configurationBuilder.addUrls(computeUrls).setScanners(new TypeAnnotationsScanner()));
 
-        // Multimap<String, String> multimap = reflections.getStore().get(TypeAnnotationsScanner.class);
-        // Collection<String> names = multimap.get(annotationType.getName());
-        // Collection<Class<?>> typesAnnotatedWith = toClasses2(names);
-        Collection<Class<?>> typesAnnotatedWith = reflections.getTypesAnnotatedWith(annotationType);
-
-        if (typesAnnotatedWith == null)
+        ScannerCommand command = new ScannerCommand()
         {
-            typesAnnotatedWith = Collections.emptySet();
-        }
+            @Override
+            public Scanner scanner()
+            {
+                return new TypeAnnotationsScanner();
+            }
+            
+            @Override
+            public void execute(Reflections reflections)
+            {
+                Collection<Class<?>> typesAnnotatedWith = reflections.getTypesAnnotatedWith(annotationType);
+                if (typesAnnotatedWith == null)
+                {
+                    typesAnnotatedWith = Collections.emptySet();
+                }
+                callback.callback((Collection) postTreatment((Collection) typesAnnotatedWith));
+            }
+        };
+        
+        queue(command);
+                        
+        
+    }
 
-        return (Collection) postTreatment((Collection) typesAnnotatedWith);
+    private void queue(ScannerCommand command)
+    {
+        commands.add(command);
     }
 
     @SuppressWarnings({
         "unchecked", "rawtypes"
     })
-    public Collection<Class<?>> scanClasspathForMetaAnnotation(Class<? extends Annotation> annotationType)
+    @Override
+    public void scanClasspathForMetaAnnotation(final Class<? extends Annotation> annotationType , final Callback callback)
     {
-        ConfigurationBuilder configurationBuilder = configurationBuilder();
-        Set<URL> computeUrls = computeUrls();
-        Reflections reflections = new Reflections(configurationBuilder.addUrls(computeUrls).setScanners(new MetaAnnotationScanner(annotationType)));
+//        ConfigurationBuilder configurationBuilder = configurationBuilder();
+//        Set<URL> computeUrls = computeUrls();
+//        Reflections reflections = new Reflections(configurationBuilder.addUrls(computeUrls).setScanners(new TypesScanner()));
         
-         Multimap<String, String> multimap = reflections.getStore().get(MetaAnnotationScanner.class);
-         Collection<String> names = multimap.get(annotationType.getName());
-         Collection<Class<?>> typesAnnotatedWith = toClasses2(names);
-//        Collection<Class<?>> typesAnnotatedWith = reflections.getTypesAnnotatedWith(annotationType);
-        
-        if (typesAnnotatedWith == null)
+        queue(new ScannerCommand()
         {
-            typesAnnotatedWith = Collections.emptySet();
-        }
+            @Override
+            public void execute(Reflections reflections)
+            {
+                Multimap<String, String> multimap = reflections.getStore().get(TypesScanner.class);
+                Collection<Class<?>> typesAnnotatedWith = Sets.newHashSet();
+                for (String className : multimap.keys())
+                {
+                    Class<?> klass = toClass(className);
+                    if (annotationType != null && klass != null && AssertUtils.hasAnnotationDeep(klass, annotationType) && !klass.isAnnotation())
+                    {
+                        typesAnnotatedWith.add(klass);
+                    }
+                }
+                callback.callback((Collection) postTreatment((Collection) typesAnnotatedWith));
+            }
+
+            @Override
+            public Scanner scanner()
+            {
+                return new TypesScanner();
+            }
+
+        });
         
-        return (Collection) postTreatment((Collection) typesAnnotatedWith);
+        
     }
 
-    @SuppressWarnings({
-            "unchecked", "rawtypes"
-    })
+
     @Override
-    public Collection<Class<?>> scanClasspathForMetaAnnotationRegex(String metaAnnotationRegex) 
+    public void scanClasspathForMetaAnnotationRegex(final String metaAnnotationRegex , final Callback callback)
     {
-        ConfigurationBuilder configurationBuilder = configurationBuilder();
-        Set<URL> computeUrls = computeUrls();
-        Reflections reflections = new Reflections(configurationBuilder.addUrls(computeUrls).setScanners(new MetaAnnotationScanner(metaAnnotationRegex)));
+//        ConfigurationBuilder configurationBuilder = configurationBuilder();
+//        Set<URL> computeUrls = computeUrls();
+//        Reflections reflections = new Reflections(configurationBuilder.addUrls(computeUrls).setScanners(new TypesScanner()));
         
-         Multimap<String, String> multimap = reflections.getStore().get(MetaAnnotationScanner.class);
-         Collection<String> names = multimap.get(metaAnnotationRegex);
-         Collection<Class<?>> typesAnnotatedWith = toClasses2(names);
         
-        if (typesAnnotatedWith == null)
+        queue(new ScannerCommand()
         {
-            typesAnnotatedWith = Collections.emptySet();
-        }
-        
-        return (Collection) postTreatment((Collection) typesAnnotatedWith);
+            @Override
+            public void execute(Reflections reflections)
+            {
+                Multimap<String, String> multimap = reflections.getStore().get(TypesScanner.class);
+                
+                Collection<Class<?>> typesAnnotatedWith = Sets.newHashSet();
+                
+                for( String className : multimap.keys())
+                {
+                    Class<?> klass = toClass(className);
+                    if ( metaAnnotationRegex != null && klass != null&&  AssertUtils.hasAnnotationDeepRegex(klass, metaAnnotationRegex) && ! klass.isAnnotation() )
+//            if ( annotationType != null && klass != null &&  AssertUtils.hasAnnotationDeep(klass, annotationType) && ! klass.isAnnotation() )
+                    {
+                        typesAnnotatedWith.add(klass);
+                    }
+                }
+                callback.callback((Collection) postTreatment((Collection) typesAnnotatedWith));
+            }
+            @Override
+            public Scanner scanner()
+            {
+                return new TypesScanner();
+            }
+        });
     }
+
     
+    private Class<?> toClass(String candidate)
+    {
+        try
+        {
+            return  Class.forName(candidate);
+        }
+        catch (Throwable e)
+        {
+            logger.debug("String to Class : " + e.getMessage() );
+            
+        }
+        return null;
+    }
     static class IgnorePredicate implements Predicate<Class<?>>
     {
 
@@ -176,7 +259,7 @@ class ClasspathScannerInternal implements ClasspathScanner
     private Collection<Class<?>> postTreatment(Collection<Class<?>> set)
     {
 
-        // Sanity Check : throw a KernelException if one of the returned classes are null
+        // Sanity Check : throw a KernelException if one of the returned classes is null
         for (Class<?> class1 : set)
         {
             if (null == class1)
@@ -194,207 +277,358 @@ class ClasspathScannerInternal implements ClasspathScanner
     @SuppressWarnings({
             "unchecked", "rawtypes"
     })
-    public java.util.Collection<java.lang.Class<?>> scanClasspathForAnnotationRegex(String annotationTypeRegex)
+    @Override
+    public void scanClasspathForAnnotationRegex(final String annotationTypeRegex, final Callback callback)
     {
-        Reflections reflections = new Reflections(configurationBuilder().addUrls(computeUrls()).setScanners(new NameAnnotationScanner(annotationTypeRegex)));
+//        Reflections reflections = new Reflections(configurationBuilder().addUrls(computeUrls()).setScanners(new TypeAnnotationsScanner()));
 
-        Store store = reflections.getStore();
-
-        Multimap<String, String> multimap = store.get(NameAnnotationScanner.class);
-
-        String key = null;
-        for (String loopKey : multimap.keySet())
-        {
-            if (loopKey.matches(annotationTypeRegex))
-            {
-                key = loopKey;
-            }
-        }
-
-        Collection<Class<?>> typesAnnotatedWith = null;
-        if (key != null)
-        {
-            Collection<String> collectionOfString = multimap.get(key);
-            typesAnnotatedWith = toClasses(collectionOfString);
-        }
-
-        if (typesAnnotatedWith == null)
-        {
-            typesAnnotatedWith = Collections.emptySet();
-        }
-
-        return (Collection) postTreatment((Collection) typesAnnotatedWith);
+          queue(new ScannerCommand()
+          {
+              @Override
+              public void execute(Reflections reflections)
+              {
+                  Store store = reflections.getStore();
+                  
+                  Multimap<String, String> multimap = store.get(TypeAnnotationsScanner.class);
+                  
+                  List<String> key = new ArrayList<String>();
+                  for (String loopKey : multimap.keySet())
+                  {
+                      if (loopKey.matches(annotationTypeRegex))
+                      {
+                          key.add(loopKey);
+                      }
+                  }
+                  
+                  Collection<Class<?>> typesAnnotatedWith = new HashSet<Class<?>>();
+                  
+                  for (String k : key)
+                  {
+                      Collection<String> collectionOfString = multimap.get(k);
+                      typesAnnotatedWith.addAll(toClasses(collectionOfString));
+                  }
+                  callback .callback( (Collection) postTreatment((Collection) typesAnnotatedWith));
+              }
+              
+              @Override
+              public Scanner scanner()
+              {
+                  return new TypeAnnotationsScanner();
+              }
+              
+          });
     }
 
+
+    
     @SuppressWarnings({
             "unchecked", "rawtypes"
     })
     @Override
-    public Collection<Class<?>> scanClasspathForTypeRegex(String typeName)
+    public void scanClasspathForTypeRegex(final String typeName, final Callback callback)
     {
-        Reflections reflections = new Reflections(configurationBuilder().addUrls(computeUrls()).setScanners(new TypesScanner()));
-
-        Store store = reflections.getStore();
-
-        Multimap<String, String> multimap = store.get(TypesScanner.class);
-
-        Collection<String> collectionOfString = new HashSet<String>();
-
-        for (String loopKey : multimap.keySet())
+//        Reflections reflections = new Reflections(configurationBuilder().addUrls(computeUrls()).setScanners(new TypesScanner()));
+        queue(new ScannerCommand()
         {
-
-            if (loopKey.matches(typeName))
+            @Override
+            public void execute(Reflections reflections)
             {
-                collectionOfString.add(loopKey);
+                Store store = reflections.getStore();
+                Multimap<String, String> multimap = store.get(TypesScanner.class);
+                Collection<String> collectionOfString = new HashSet<String>();
+                for (String loopKey : multimap.keySet())
+                {
+                    if (loopKey.matches(typeName))
+                    {
+                        collectionOfString.add(loopKey);
+                    }
+                }
+
+                Collection<Class<?>> types = null;
+
+                if (collectionOfString.size() > 0)
+                {
+                    types = toClasses(collectionOfString);
+                }
+                else
+                {
+                    types = Collections.emptySet();
+                }
+                callback.callback((Collection) postTreatment((Collection) types));
+
             }
-        }
 
-        Collection<Class<?>> types = null;
+            @Override
+            public Scanner scanner()
+            {
+                return new TypesScanner();
+            }
 
-        if (collectionOfString.size() > 0)
-        {
-            types = toClasses(collectionOfString);
-        }
-        else
-        {
-            types = Collections.emptySet();
-        }
+        });
 
-        return (Collection) postTreatment((Collection) types);
 
     }
 
+    
+    
     @SuppressWarnings({
             "unchecked", "rawtypes"
     })
     @Override
-    public Collection<Class<?>> scanClasspathForSpecification(Specification<Class<?>> specification)
+    public void scanClasspathForSpecification(final Specification<Class<?>> specification , final Callback callback)
     {
-        Reflections reflections = new Reflections(configurationBuilder().addUrls(computeUrls()).setScanners(new TypesScanner()));
+//        Reflections reflections = new Reflections(configurationBuilder().addUrls(computeUrls()).setScanners(new TypesScanner()));
+          queue(new ScannerCommand()
+          {
+              @Override
+              public void execute(Reflections reflections)
+              {
+                  Store store = reflections.getStore();
+                  Multimap<String, String> multimap = store.get(TypesScanner.class);
+                  Collection<String> collectionOfString = multimap.keySet();
+                  
+                  Collection<Class<?>> types = null;
+                  Collection<Class<?>> filteredTypes = new HashSet<Class<?>>();
+                  
+                  // Convert String to classes
+                  if (collectionOfString.size() > 0)
+                  {
+                      types = toClasses(collectionOfString);
+                  }
+                  else
+                  {
+                      types = Collections.emptySet();
+                  }
+                  
+                  // Filter via specification
+                  for (Class<?> candidate : types)
+                  {
+                      if (specification.isSatisfiedBy(candidate))
+                      {
+                          filteredTypes.add(candidate);
+                      }
+                  }
+                  
+                  callback.callback((Collection) postTreatment((Collection) filteredTypes));
+                  
+              }
+              
+              @Override
+              public Scanner scanner()
+              {
+                  return new TypesScanner();
+              }
+              
+          });
 
-        Store store = reflections.getStore();
-
-        Multimap<String, String> multimap = store.get(TypesScanner.class);
-
-        Collection<String> collectionOfString = multimap.keySet();
-
-        Collection<Class<?>> types = null;
-        Collection<Class<?>> filteredTypes = new HashSet<Class<?>>();
-
-        // Convert String to classes
-        if (collectionOfString.size() > 0)
-        {
-            types = toClasses(collectionOfString);
-        }
-        else
-        {
-            types = Collections.emptySet();
-        }
-
-        // Filter via specification
-        for (Class<?> candidate : types)
-        {
-            if (specification.isSatisfiedBy(candidate))
-            {
-                filteredTypes.add(candidate);
-            }
-        }
-
-        return (Collection) postTreatment((Collection) filteredTypes);
 
     }
 
     @SuppressWarnings({})
     @Override
-    public Collection<Class<?>> scanClasspathForSubTypeRegex(String subTypeName)
+    public void scanClasspathForSubTypeRegex(final String subTypeName , final Callback callback)
     {
 
-        // Reflections reflections =
-        // new Reflections(configurationBuilder().addUrls(computeUrls()).setScanners(new TypesScanner()));
-        //
-        // Collection<Class<?>> typesAnnotatedWith = reflections.getSubTypesOf(type)
-        //
-        // if (typesAnnotatedWith == null)
-        // {
-        // typesAnnotatedWith = Collections.emptySet();
-        // }
-        //
-        // return (Collection) removeIgnore((Collection) typesAnnotatedWith);
-
-        Reflections reflections = new Reflections(configurationBuilder().addUrls(computeUrls()).setScanners(new TypesScanner()));
-
-        Store store = reflections.getStore();
-
-        Multimap<String, String> multimap = store.get(TypesScanner.class);
-
-        Collection<String> collectionOfString = new HashSet<String>();
-
-        for (String loopKey : multimap.keySet())
+//        Reflections reflections = new Reflections(configurationBuilder().addUrls(computeUrls()).setScanners(new TypesScanner()));
+        
+        
+        queue(new ScannerCommand()
         {
-
-            if (loopKey.matches(subTypeName))
+            @Override
+            public void execute(Reflections reflections)
             {
-                collectionOfString.add(loopKey);
+                // empty just add 
             }
-        }
 
-        Collection<Class<?>> types = null;
-
-        if (collectionOfString.size() > 0)
+            @Override
+            public Scanner scanner()
+            {
+                return new SubTypesScanner();
+            }
+        });
+        queue(new ScannerCommand()
         {
-            types = toClasses(collectionOfString);
-        }
-        else
-        {
-            types = Collections.emptySet();
-        }
+            @SuppressWarnings({
+                    "rawtypes", "unchecked"
+            })
+            @Override
+            public void execute(Reflections reflections)
+            {
+                Store store = reflections.getStore();
+                Multimap<String, String> multimap = store.get(TypesScanner.class);
 
-        // Then find subclasses of types
+                Collection<String> collectionOfString = new HashSet<String>();
 
-        Collection<Class<?>> finalClasses = new HashSet<Class<?>>();
-        for (Class<?> class1 : types)
-        {
-            Collection<Class<?>> scanClasspathForSubTypeClass = scanClasspathForSubTypeClass(class1);
-            finalClasses.addAll(scanClasspathForSubTypeClass);
-        }
+                for (String loopKey : multimap.keySet())
+                {
 
-        // removed ignored already done
-        return finalClasses;
-        // return (Collection) removeIgnore((Collection)types);
+                    if (loopKey.matches(subTypeName))
+                    {
+                        collectionOfString.add(loopKey);
+                    }
+                }
+
+                Collection<Class<?>> types = null;
+
+                if (collectionOfString.size() > 0)
+                {
+                    types = toClasses(collectionOfString);
+                }
+                else
+                {
+                    types = Collections.emptySet();
+                }
+
+                // Then find subclasses of types
+                Collection<Class<?>> finalClasses = new HashSet<Class<?>>();
+                for (Class<?> subType : types)
+                {
+                    // Collection<Class<?>> scanClasspathForSubTypeClass =
+                    // scanClasspathForSubTypeClass(class1);
+                    // ///////////////////////////////
+                    Collection<?> typesAnnotatedWith = (Collection<?>) reflections.getSubTypesOf(subType);
+
+                    if (typesAnnotatedWith == null)
+                    {
+                        typesAnnotatedWith = Collections.emptySet();
+                    }
+                    // ///////////////////////////////
+                    finalClasses.addAll((Collection) postTreatment((Collection) typesAnnotatedWith));
+                }
+
+                // removed ignored already done
+                callback.callback(finalClasses);
+                // return (Collection) removeIgnore((Collection)types);
+
+            }
+
+            @Override
+            public Scanner scanner()
+            {
+                return new TypesScanner();
+
+            }
+        });
 
     }
+    
 
     @Override
-    public Collection<String> scanClasspathForResource(String pattern)
+    public void scanClasspathForResource(final String pattern , final CallbackResources callback)
     {
-        Reflections reflections = new Reflections(new ConfigurationBuilder().addUrls(computeUrls()).setScanners(new ResourcesScanner()));
-
-        return reflections.getResources(Pattern.compile(pattern));
-
+//        Reflections reflections = new Reflections(new ConfigurationBuilder().addUrls(computeUrls()).setScanners(new ResourcesScanner()));
+          queue(new ScannerCommand()
+          {
+              @Override
+              public void execute(Reflections reflections)
+              {
+                  Set<String> resources = reflections.getResources(Pattern.compile(pattern));
+                  callback.callback(resources);
+                  
+              }
+              
+              @Override
+              public Scanner scanner()
+              {
+                  return new ResourcesScanner();
+              }
+              
+          });
     }
+//  queue(new ScannerCommand()
+//  {
+//      @Override
+//      public void execute(Reflections reflections)
+//      {
+//          
+//      }
+//      
+//      @Override
+//      public Scanner scanner()
+//      {
+//          return
+//      }
+//      
+//  });
 
     @SuppressWarnings({
             "unchecked", "rawtypes"
     })
     @Override
-    public Collection<Class<?>> scanClasspathForSubTypeClass(Class<?> subType)
+    public void scanClasspathForSubTypeClass(final Class<?> subType , final Callback callback)
     {
-        Reflections reflections = new Reflections(configurationBuilder().addUrls(computeUrls()).setScanners(new SubTypesScanner()));
+//        Reflections reflections = new Reflections(configurationBuilder().addUrls(computeUrls()).setScanners(new SubTypesScanner()));
+      queue(new ScannerCommand()
+      {
+          @Override
+          public void execute(Reflections reflections)
+          {
+              Collection<?> typesAnnotatedWith = (Collection<?>) reflections.getSubTypesOf(subType);
+              
+              if (typesAnnotatedWith == null)
+              {
+                  typesAnnotatedWith = Collections.emptySet();
+              }
+              
+              callback.callback ( (Collection) postTreatment((Collection) typesAnnotatedWith));
+              
+          }
+          
+          @Override
+          public Scanner scanner()
+          {
+              return new SubTypesScanner();
+          }
+          
+      });
 
-        Collection<?> typesAnnotatedWith = (Collection<?>) reflections.getSubTypesOf(subType);
-
-        if (typesAnnotatedWith == null)
+    }
+    
+    /**
+     * Unique reflections object. Unique scan
+     */
+    @Override
+    public void doClasspathScan()
+    {
+        
+        Scanner[] scanners = getScanners();
+        
+        ConfigurationBuilder configurationBuilder = configurationBuilder().addUrls(computeUrls()).setScanners ( scanners ) ;
+        
+        Reflections reflections = new Reflections(configurationBuilder);
+        
+        for(  ScannerCommand command : commands)
         {
-            typesAnnotatedWith = Collections.emptySet();
+            command.execute(reflections);
         }
+    }
 
-        return (Collection) postTreatment((Collection) typesAnnotatedWith);
+    private Scanner[] getScanners()
+    {
+        Map<Class<?> , Scanner> scannersByClass = Maps.newHashMap();
+        for(  ScannerCommand command : commands)
+        {
+            Scanner scanner = command.scanner();
+            
+            if (!scannersByClass.containsKey(scanner.getClass()))
+            {
+                scannersByClass.put(scanner.getClass(), scanner);
+            }
+        }
+        
+        Collection<Scanner> scanners = scannersByClass.values();
+        int size = scanners.size();
+        
+        Scanner[] arrayOfScanners = new Scanner[size];
+        
+        scanners.toArray(arrayOfScanners);
+
+        return arrayOfScanners;
     }
 
     public void setAdditionalClasspath(Set<URL> additionalClasspath)
     {
         this.additionalClasspath = additionalClasspath;
-
     }
 
     private ConfigurationBuilder configurationBuilder()
@@ -406,6 +640,7 @@ class ClasspathScannerInternal implements ClasspathScanner
         {
             fb.include(prefix(packageRoot));
         }
+        
 
         cb.filterInputsBy(fb);
 
@@ -422,6 +657,8 @@ class ClasspathScannerInternal implements ClasspathScanner
             {
                 urls.addAll(this.additionalClasspath);
             }
+            
+//            if (StringUtils.isNotEmpty(prefix(qualifiedName)))
 
             urls.addAll(ClasspathHelper.forJavaClassPath());
             // urls.addAll(ClasspathHelper.forClassLoader(ClasspathHelper.classLoaders()));
@@ -453,5 +690,4 @@ class ClasspathScannerInternal implements ClasspathScanner
     {
         return ReflectionUtils.<T> forNames(names, this.getClass().getClassLoader());
     }
-
 }

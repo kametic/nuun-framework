@@ -46,14 +46,14 @@ public class DummyPlugin3 extends AbstractPlugin
     {
         Map<String, Collection<String>> mapResourcesByRegex = initContext.mapResourcesByRegex();
         
-	//        assertThat( mapResourcesByRegex.get(resourcesRegex1) ).isNotNull();
-	//        assertThat( mapResourcesByRegex.get(resourcesRegex1) ).hasSize(1);
-	//        assertThat( mapResourcesByRegex.get(resourcesRegex1) ).contains("resource-to-reach.json");
+        assertThat( mapResourcesByRegex.get(resourcesRegex1) ).isNotNull();
+        assertThat( mapResourcesByRegex.get(resourcesRegex1) ).hasSize(1);
+        assertThat( mapResourcesByRegex.get(resourcesRegex1) ).contains("org/nuunframework/kernel/resource-to-reach.json");
         
-	//        assertThat( mapResourcesByRegex.get(resourcesRegex2) ).isNotNull();
-	//        assertThat( mapResourcesByRegex.get(resourcesRegex2) ).hasSize(2);
-	//        assertThat( mapResourcesByRegex.get(resourcesRegex2) ).contains("internal/sample1-applicationContext-business.xml");
-	//        assertThat( mapResourcesByRegex.get(resourcesRegex2) ).contains("internal/sample2-applicationContext-persistence.xml");
+        assertThat( mapResourcesByRegex.get(resourcesRegex2) ).isNotNull();
+        assertThat( mapResourcesByRegex.get(resourcesRegex2) ).hasSize(2); // TODO FIX THE CASE OF THE properties
+        assertThat( mapResourcesByRegex.get(resourcesRegex2) ).contains("internal/sample1-applicationContext-business.xml");
+        assertThat( mapResourcesByRegex.get(resourcesRegex2) ).contains("internal/sample2-applicationContext-persistence.xml");
         
         NuunConfigurationPlugin confPlugin = (NuunConfigurationPlugin) initContext.pluginsRequired().iterator().next();
         
@@ -72,6 +72,8 @@ public class DummyPlugin3 extends AbstractPlugin
      public Collection<Class<? extends Plugin>> requiredPlugins()
      {
          return (Collection) collectionOf(NuunConfigurationPlugin.class);
-     }
+     }     
+     
+     
 
 }

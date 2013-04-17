@@ -1,7 +1,7 @@
 package org.nuunframework.kernel.internal.scanner.sample;
 
 
-@MarkerSample2
+@ScanMarkerSample2
 public class Bean2
 {
 

@@ -38,6 +38,7 @@ import org.nuunframework.kernel.plugin.dummy5.DescendantFromClass;
 import org.nuunframework.kernel.plugin.dummy5.DummyPlugin5;
 import org.nuunframework.kernel.plugin.dummy5.ParentClass;
 import org.nuunframework.kernel.plugin.dummy5.ToFind;
+import org.nuunframework.kernel.plugin.dummy5.ToFind2;
 import org.nuunframework.kernel.sample.Holder;
 import org.nuunframework.kernel.sample.HolderForBeanWithParentType;
 import org.nuunframework.kernel.sample.HolderForContext;
@@ -47,6 +48,8 @@ import org.nuunframework.kernel.sample.HolderForPrefixWithName;
 import org.nuunframework.kernel.sample.ModuleInError;
 import org.nuunframework.kernel.sample.ModuleInterface;
 import org.powermock.reflect.Whitebox;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.ConfigurationException;
@@ -60,17 +63,23 @@ import com.google.inject.Module;
  */
 public class KernelTest
 {
-
+    static Logger logger = LoggerFactory.getLogger(KernelTest.class);
+    
     Injector      injector;
 
     static Kernel underTest;
     static DummyPlugin4 plugin4 = new DummyPlugin4();
 
+    static long start;
+    static long end;
+    
     @SuppressWarnings("unchecked")
     @BeforeClass
     public static void init()
     {
-        underTest = Kernel.createKernel(DummyPlugin.ALIAS_DUMMY_PLUGIN1 , "WAZAAAA", DummyPlugin.NUUNROOTALIAS , KernelTest.class.getPackage().getName()).build();
+        start = System.currentTimeMillis();
+//        underTest = Kernel.createKernel(DummyPlugin.ALIAS_DUMMY_PLUGIN1 , "WAZAAAA", DummyPlugin.NUUNROOTALIAS , "").build();
+        underTest = Kernel.createKernel(DummyPlugin.ALIAS_DUMMY_PLUGIN1 , "WAZAAAA", DummyPlugin.NUUNROOTALIAS , "internal,"+KernelTest.class.getPackage().getName()).build();
         try
         {
             underTest.init();
@@ -237,6 +246,15 @@ public class KernelTest
         assertThat( tofind).isNotNull ();
         // singleton
         assertThat( tofind).isEqualTo(injector.getInstance(ToFind.class));
+    }
+
+    @Test
+    public void binding_by_metaannotationregex_should_work ()
+    {
+        ToFind2 tofind = injector.getInstance(ToFind2.class);
+        assertThat( tofind).isNotNull ();
+        // singleton
+        assertThat( tofind).isEqualTo(injector.getInstance(ToFind2.class));
     }
     
     @Test
@@ -542,6 +560,8 @@ public class KernelTest
     public static void clear()
     {
         underTest.stop();
+        end = System.currentTimeMillis();
+        logger.info("Test took " + (end - start) + " ms.");
     }
 
 }

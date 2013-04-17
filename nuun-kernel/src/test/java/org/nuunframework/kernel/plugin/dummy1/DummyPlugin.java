@@ -116,8 +116,8 @@ public class DummyPlugin extends AbstractPlugin
         assertThat(param).isEqualTo("WAZAAAA");
 
         String param2 = initContext.getKernelParam( Kernel.NUUN_ROOT_PACKAGE );
-        assertThat(param2).isNotEmpty();
-        assertThat(param2).isEqualTo(KernelTest.class.getPackage().getName());
+        assertThat(param2).isNotNull();
+        assertThat(param2).isEqualTo("internal,"+KernelTest.class.getPackage().getName());
         
         Map<Class<? extends Annotation>, Collection<Class<?>>> scannedClassesByAnnotationClass = initContext.scannedClassesByAnnotationClass();
         

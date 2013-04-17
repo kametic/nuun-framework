@@ -66,7 +66,7 @@ public final class Kernel
 
     private final InitContextInternal               initContext;
     private Injector                                mainInjector;
-    private final AliasMap                          kernelParams;
+    private final AliasMap                          kernelParamsAndAlias;
 
     private boolean                                 started                = false;
     private boolean                                 initialized            = false;
@@ -83,9 +83,9 @@ public final class Kernel
 
     private Kernel(String... keyValues)
     {
-        kernelParams = new AliasMap();
+        kernelParamsAndAlias = new AliasMap();
 
-        this.initContext = new InitContextInternal(NUUN_PROPERTIES_PREFIX, kernelParams);
+        this.initContext = new InitContextInternal(NUUN_PROPERTIES_PREFIX, kernelParamsAndAlias);
 
         @SuppressWarnings("unchecked")
         Iterator<String> it = new ArrayIterator(keyValues);
@@ -96,7 +96,7 @@ public final class Kernel
             if (it.hasNext())
                 value = it.next();
             logger.info("Adding {} = {} as param to kernel", key, value);
-            kernelParams.put(key, value);
+            kernelParamsAndAlias.put(key, value);
         }
 
     }
@@ -162,6 +162,7 @@ public final class Kernel
             
             String name = plugin.name();
             logger.info("Get additional classpath to scan from Plugin {}.", name);
+
             Set<URL> computeAdditionalClasspathScan = plugin.computeAdditionalClasspathScan();
             if (computeAdditionalClasspathScan != null && computeAdditionalClasspathScan.size() > 0)
             {
@@ -228,14 +229,14 @@ public final class Kernel
                 // entry.getKey() is the key to alias
                 
                 logger.info("Adding alias parameter \"{}\" to key \"{}\"." , entry.getKey() ,  entry.getValue());
-                kernelParams.putAlias(entry.getKey() , entry.getValue());
+                kernelParamsAndAlias.putAlias(entry.getKey() , entry.getValue());
             }
         }
 
         //
-        if (kernelParams.containsKey(NUUN_ROOT_PACKAGE))
+        if (kernelParamsAndAlias.containsKey(NUUN_ROOT_PACKAGE))
         {
-            String tmp = kernelParams.get(NUUN_ROOT_PACKAGE);
+            String tmp = kernelParamsAndAlias.get(NUUN_ROOT_PACKAGE);
 
             String[] packages = null;
             if (tmp != null)
@@ -245,7 +246,7 @@ public final class Kernel
                 for (String pack : packages)
                 {
                     logger.info("Adding {} as nuun.package.root", pack);
-                    this.initContext.addPackageRoot(pack);
+                    this.initContext.addPackageRoot(pack.trim());
                 }
             }
         }
@@ -287,7 +288,7 @@ public final class Kernel
                         }
                     }
 
-                    if (kernelParams.containsAllKeys(computedMandatoryParams))
+                    if (kernelParamsAndAlias.containsAllKeys(computedMandatoryParams))
                     // if (kernelParams.keySet().containsAll(computedMandatoryParams))
                     {
                         pluginClasses.add(plugin.getClass());
@@ -504,7 +505,7 @@ public final class Kernel
                                 this.initContext.addMetaAnnotationTypesToBind((Class<? extends Annotation>) request.requestedObject, request.requestedScope);
                                 break;
                             case META_ANNOTATION_REGEX_MATCH:
-                                this.initContext.addAnnotationRegexesToBind((String) request.requestedObject, request.requestedScope);
+                                this.initContext.addMetaAnnotationRegexesToBind((String) request.requestedObject, request.requestedScope);
                                 break;
                             case SUBTYPE_OF_BY_CLASS:
                                 this.initContext.addParentTypeClassToBind((Class<?>) request.requestedObject, request.requestedScope);

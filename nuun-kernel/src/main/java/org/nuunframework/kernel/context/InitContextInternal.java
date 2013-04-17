@@ -18,6 +18,8 @@ import org.nuunframework.kernel.annotations.KernelModule;
 import org.nuunframework.kernel.commons.specification.Specification;
 import org.nuunframework.kernel.commons.specification.reflect.DescendantOfSpecification;
 import org.nuunframework.kernel.internal.scanner.ClasspathScanner;
+import org.nuunframework.kernel.internal.scanner.ClasspathScanner.Callback;
+import org.nuunframework.kernel.internal.scanner.ClasspathScanner.CallbackResources;
 import org.nuunframework.kernel.internal.scanner.ClasspathScannerFactory;
 import org.nuunframework.kernel.plugin.Plugin;
 import org.nuunframework.kernel.plugin.request.RequestType;
@@ -176,28 +178,46 @@ public class InitContextInternal implements InitContext
     public void executeRequests()
     {
         initScanner();
-
-
         
         { // bind modules
-            Collection<Class<?>> scanClasspathForModules = this.classpathScanner.scanClasspathForAnnotation(KernelModule.class);
-            @SuppressWarnings("unchecked")
-            Collection<Module> modules = Collections2.transform((Collection) scanClasspathForModules, new Class2Instance());
-            this.childModules.addAll(modules);
-            // clässes.addAll(scanClasspathForModules);
+            Callback callback = new Callback()
+            { // executed only after the classpath scan occurs 
+                @Override
+                public void callback(Collection<Class<?>> scanResult)
+                {
+                    Collection<Module> modules = Collections2.transform((Collection) scanResult, new Class2Instance());
+                    childModules.addAll(modules);
+                }
+            };
+            this.classpathScanner.scanClasspathForAnnotation(KernelModule.class , callback); // OK
+
         }
 
         // CLASSES TO SCAN
-        for (Class<?> parentType : this.parentTypesClassesToScan)
+        for (final Class<?> parentType : this.parentTypesClassesToScan)
         {
-            scanClasspathForSubType = this.classpathScanner.scanClasspathForSubTypeClass(parentType);
-            // clässes.addAll(scanClasspathForSubType);
-            this.mapSubTypes.put(parentType, scanClasspathForSubType);
+            Callback callback = new Callback()
+            { // executed only after the classpath scan occurs 
+                @Override
+                public void callback(Collection<Class<?>> scanResult)
+                { 
+                    mapSubTypes.put(parentType, scanResult);
+                }
+            };
+            this.classpathScanner.scanClasspathForSubTypeClass(parentType , callback); // OK
         }
-        for (Class<?> parentType : this.ancestorTypesClassesToScan)
+
+        for (final Class<?> parentType : this.ancestorTypesClassesToScan)
         {
-            scanClasspathForAncestorType = this.classpathScanner.scanClasspathForSpecification(new DescendantOfSpecification(parentType));
-            this.mapAncestorTypes.put(parentType, scanClasspathForAncestorType);
+            Callback callback = new Callback()
+            { // executed only after the classpath scan occurs 
+                @Override
+                public void callback(Collection<Class<?>> scanResult)
+                { 
+                    mapAncestorTypes.put(parentType, scanResult);
+                }
+            };
+            this.classpathScanner.scanClasspathForSpecification(new DescendantOfSpecification(parentType) , callback); // ok
         }
 
         // for (Class<?> type : this.typesClassesToScan)
@@ -207,125 +227,230 @@ public class InitContextInternal implements InitContext
         // this.mapTypes.put(type, scanClasspathForSubType);
         // }
 
-        for (String typeName : this.parentTypesRegexToScan)
+        for (final String typeName : this.parentTypesRegexToScan)
         {
-            Collection<Class<?>> scanClasspathForTypeName = this.classpathScanner.scanClasspathForSubTypeRegex(typeName);
-            // clässes.addAll(scanClasspathForTypeName);
-            this.mapSubTypesByName.put(typeName, scanClasspathForTypeName);
+            Callback callback = new Callback()
+            { // executed only after the classpath scan occurs
+                @Override
+                public void callback(Collection<Class<?>> scanResult)
+                {
+                    mapSubTypesByName.put(typeName, scanResult);
+                }
+            };
+            this.classpathScanner.scanClasspathForSubTypeRegex(typeName, callback); // OK
         }
-        for (String typeName : this.typesRegexToScan)
+        
+        for (final String typeName : this.typesRegexToScan)
         {
-            Collection<Class<?>> scanClasspathForTypeName = this.classpathScanner.scanClasspathForTypeRegex(typeName);
-            // clässes.addAll(scanClasspathForTypeName);
-            this.mapTypesByName.put(typeName, scanClasspathForTypeName);
+            Callback callback = new Callback()
+            { // executed only after the classpath scan occurs
+                @Override
+                public void callback(Collection<Class<?>> scanResult)
+                {
+                    mapTypesByName.put(typeName, scanResult);
+                }
+            };
+            this.classpathScanner.scanClasspathForTypeRegex(typeName, callback); // OK
         }
-        for (Specification<Class<?>>  spec  : this.specificationsToScan)
+        
+        for (final Specification<Class<?>> spec : this.specificationsToScan)
         {
-            Collection<Class<?>> scanClasspathForSpecification = this.classpathScanner.scanClasspathForSpecification(spec);
-            mapTypesBySpecification.put( spec , scanClasspathForSpecification);
+            Callback callback = new Callback()
+            { // executed only after the classpath scan occurs
+                @Override
+                public void callback(Collection<Class<?>> scanResult)
+                {
+                    mapTypesBySpecification.put(spec, scanResult);
+                }
+            };
+            this.classpathScanner.scanClasspathForSpecification(spec, callback); // OK
+        }
+
+        for (final Class<? extends Annotation> annotationType : this.annotationTypesToScan)
+        {
+            Callback callback = new Callback()
+            { // executed only after the classpath scan occurs 
+                @Override
+                public void callback(Collection<Class<?>> scanResult)
+                { 
+                    mapAnnotationTypes.put(annotationType, scanResult);
+                }
+            };
+            this.classpathScanner.scanClasspathForAnnotation(annotationType , callback);// ok
+        }
+
+        for (final String annotationName : this.annotationRegexToScan)
+        {
+            Callback callback = new Callback()
+            { // executed only after the classpath scan occurs 
+                @Override
+                public void callback(Collection<Class<?>> scanResult)
+                { 
+                    mapAnnotationTypesByName.put(annotationName, scanResult);
+                }
+            };
+            this.classpathScanner.scanClasspathForAnnotationRegex(annotationName,callback); // ok
             
-        }
-
-        for (Class<? extends Annotation> annotationType : this.annotationTypesToScan)
-        {
-            Collection<Class<?>> scanClasspathForAnnotation = this.classpathScanner.scanClasspathForAnnotation(annotationType);
-            // clässes.addAll(scanClasspathForAnnotation);
-            this.mapAnnotationTypes.put(annotationType, scanClasspathForAnnotation);
-        }
-
-        for (String annotationName : this.annotationRegexToScan)
-        {
-            Collection<Class<?>> scanClasspathForAnnotation = this.classpathScanner.scanClasspathForAnnotationRegex(annotationName);
-            // clässes.addAll(scanClasspathForAnnotation);
-            this.mapAnnotationTypesByName.put(annotationName, scanClasspathForAnnotation);
         }
 
         // CLASSES TO BIND
         // ===============
-        for (Class<?> parentType : this.parentTypesClassesToBind)
+        for (final Class<?> parentType : this.parentTypesClassesToBind)
         {
-            bindClasspathForSubType = this.classpathScanner.scanClasspathForSubTypeClass(parentType);
+            Callback callback = new Callback()
+            { // executed only after the classpath scan occurs 
+                @Override
+                public void callback(Collection<Class<?>> scanResult)
+                { 
+                    RequestType requestType = RequestType.SUBTYPE_OF_BY_CLASS;
+                    addScopeToClasses( scanResult , scope(requestType , parentType ) , classesWithScopes);
+                    
+                    classesToBind.addAll(scanResult);
+                }
+            };
+            this.classpathScanner.scanClasspathForSubTypeClass(parentType , callback); // OK
             
-            RequestType requestType = RequestType.SUBTYPE_OF_BY_CLASS;
-            addScopeToClasses( bindClasspathForSubType , scope(requestType , parentType ) , classesWithScopes);
-            
-            classesToBind.addAll(bindClasspathForSubType);
         }
-        for (Class<?> ancestorType : this.ancestorTypesClassesToBind)
+        for (final Class<?> ancestorType : this.ancestorTypesClassesToBind)
         {
-            bindClasspathForAncestorType = this.classpathScanner.scanClasspathForSpecification(new DescendantOfSpecification(ancestorType));
-            RequestType requestType = RequestType.SUBTYPE_OF_BY_TYPE_DEEP;
-            addScopeToClasses( bindClasspathForAncestorType , scope(requestType , ancestorType ) , classesWithScopes);
-            classesToBind.addAll(bindClasspathForAncestorType);
+            Callback callback = new Callback()
+            { // executed only after the classpath scan occurs 
+                @Override
+                public void callback(Collection<Class<?>> scanResult)
+                { 
+                    RequestType requestType = RequestType.SUBTYPE_OF_BY_TYPE_DEEP;
+                    addScopeToClasses( scanResult , scope(requestType , ancestorType ) , classesWithScopes);
+                    classesToBind.addAll(scanResult);
+                }
+            };
+            this.classpathScanner.scanClasspathForSpecification(new DescendantOfSpecification(ancestorType) , callback); // OK
         }
 
         // TODO vérifier si ok parent types vs type. si ok changer de nom
-        for (String typeName : this.parentTypesRegexToBind)
+        for (final String typeName : this.parentTypesRegexToBind)
         {
-            Collection<Class<?>> scanClasspathForTypeName = this.classpathScanner.scanClasspathForTypeRegex(typeName);
-            RequestType requestType = RequestType.SUBTYPE_OF_BY_REGEX_MATCH;
-            addScopeToClasses( scanClasspathForTypeName , scope(requestType , typeName ) , classesWithScopes);
-            classesToBind.addAll(scanClasspathForTypeName);
+            Callback callback = new Callback()
+            { // executed only after the classpath scan occurs 
+                @Override
+                public void callback(Collection<Class<?>> scanResult)
+                { 
+                    RequestType requestType = RequestType.SUBTYPE_OF_BY_REGEX_MATCH;
+                    addScopeToClasses( scanResult , scope(requestType , typeName ) , classesWithScopes);
+                    classesToBind.addAll(scanResult);
+                }
+            };
+            this.classpathScanner.scanClasspathForTypeRegex(typeName,callback); // ok
         }
 
-        for (Specification<Class<?>>  spec : this.specificationsToBind)
+        for (final Specification<Class<?>>  spec : this.specificationsToBind)
         {
-            Collection<Class<?>> scanClasspathForTypeName = this.classpathScanner.scanClasspathForSpecification(spec);
-            
-            RequestType requestType = RequestType.VIA_SPECIFICATION;
-            addScopeToClasses(scanClasspathForTypeName, scope(requestType , spec ) , classesWithScopes);
-            
-            classesToBind.addAll(scanClasspathForTypeName);
+            Callback callback = new Callback()
+            { // executed only after the classpath scan occurs 
+                @Override
+                public void callback(Collection<Class<?>> scanResult)
+                { 
+                    RequestType requestType = RequestType.VIA_SPECIFICATION;
+                    addScopeToClasses(scanResult, scope(requestType , spec ) , classesWithScopes);
+                    
+                    classesToBind.addAll(scanResult);
+                }
+            };
+            this.classpathScanner.scanClasspathForSpecification(spec,callback); // ok
         }
 
-        for (Class<? extends Annotation> annotationType : this.annotationTypesToBind)
+        for (final Class<? extends Annotation> annotationType : this.annotationTypesToBind)
         {
-            Collection<Class<?>> scanClasspathForAnnotation = this.classpathScanner.scanClasspathForAnnotation(annotationType);
-            RequestType requestType = RequestType.ANNOTATION_TYPE;
-            addScopeToClasses( scanClasspathForAnnotation , scope(requestType , annotationType ) , classesWithScopes);
-            classesToBind.addAll(scanClasspathForAnnotation);
+            Callback callback = new Callback()
+            { // executed only after the classpath scan occurs 
+                @Override
+                public void callback(Collection<Class<?>> scanResult)
+                { 
+                    RequestType requestType = RequestType.ANNOTATION_TYPE;
+                    addScopeToClasses( scanResult , scope(requestType , annotationType ) , classesWithScopes);
+                    classesToBind.addAll(scanResult);
+                }
+            };
+            this.classpathScanner.scanClasspathForAnnotation(annotationType,callback); // OK
         }
 
-        for (Class<? extends Annotation> metaAnnotationType : this.metaAnnotationTypesToBind) 
+        for (final Class<? extends Annotation> metaAnnotationType : this.metaAnnotationTypesToBind) 
         {
-            Collection<Class<?>> scanClasspathForAnnotation = this.classpathScanner.scanClasspathForMetaAnnotation(metaAnnotationType);
-            RequestType requestType = RequestType.META_ANNOTATION_TYPE;
-            addScopeToClasses( scanClasspathForAnnotation , scope(requestType , metaAnnotationType ) , classesWithScopes);
-            classesToBind.addAll(scanClasspathForAnnotation);
+            Callback callback = new Callback()
+            { // executed only after the classpath scan occurs 
+                @Override
+                public void callback(Collection<Class<?>> scanResult)
+                { 
+                    RequestType requestType = RequestType.META_ANNOTATION_TYPE;
+                    addScopeToClasses( scanResult , scope(requestType , metaAnnotationType ) , classesWithScopes);
+                    classesToBind.addAll(scanResult);
+                }
+            };
+            this.classpathScanner.scanClasspathForMetaAnnotation(metaAnnotationType,callback); // ok
         }
 
-        for (String annotationNameRegex : this.annotationRegexToBind)
+        for (final String annotationNameRegex : this.annotationRegexToBind)
         {
-            Collection<Class<?>> scanClasspathForAnnotation = this.classpathScanner.scanClasspathForAnnotationRegex(annotationNameRegex);
-            RequestType requestType = RequestType.ANNOTATION_REGEX_MATCH;
-            addScopeToClasses( scanClasspathForAnnotation , scope(requestType , annotationNameRegex ) , classesWithScopes);
-            classesToBind.addAll(scanClasspathForAnnotation);
+            Callback callback = new Callback()
+            { // executed only after the classpath scan occurs 
+                @Override
+                public void callback(Collection<Class<?>> scanResult)
+                { 
+                    RequestType requestType = RequestType.ANNOTATION_REGEX_MATCH;
+                    addScopeToClasses( scanResult , scope(requestType , annotationNameRegex ) , classesWithScopes);
+                    classesToBind.addAll(scanResult);
+                }
+            };
+            this.classpathScanner.scanClasspathForAnnotationRegex(annotationNameRegex,callback); // ok
         }
 
-        for (String metaAnnotationNameRegex : this.metaAnnotationRegexToBind)
+        for (final String metaAnnotationNameRegex : this.metaAnnotationRegexToBind)
         {
-            Collection<Class<?>> scanClasspathForAnnotation = this.classpathScanner.scanClasspathForMetaAnnotationRegex(metaAnnotationNameRegex);
-            RequestType requestType = RequestType.META_ANNOTATION_REGEX_MATCH;
-            addScopeToClasses( scanClasspathForAnnotation , scope(requestType , metaAnnotationNameRegex ) , classesWithScopes);
-            classesToBind.addAll(scanClasspathForAnnotation);
+            Callback callback = new Callback()
+            { // executed only after the classpath scan occurs 
+                @Override
+                public void callback(Collection<Class<?>> scanResult)
+                { 
+                    RequestType requestType = RequestType.META_ANNOTATION_REGEX_MATCH;
+                    addScopeToClasses( scanResult , scope(requestType , metaAnnotationNameRegex ) , classesWithScopes);
+                    classesToBind.addAll(scanResult);
+                }
+            };
+            this.classpathScanner.scanClasspathForMetaAnnotationRegex(metaAnnotationNameRegex,callback); // ok
         }
 
         // Resources to scan
         
-        for (String regex : this.resourcesRegexToScan)
+        for (final String regex : this.resourcesRegexToScan)
         {
-            Collection<String> resourcesScanned = this.classpathScanner.scanClasspathForResource(regex);
-            this.mapResourcesByRegex.put(regex, resourcesScanned);
+            CallbackResources callback = new CallbackResources()
+            {
+                @Override
+                public void callback(Collection<String> scanResult)
+                {
+                    mapResourcesByRegex.put(regex, scanResult);
+                }
+            };
+            this.classpathScanner.scanClasspathForResource(regex , callback); // OK
         }
         
         // PROPERTIES TO FETCH
         propertiesFiles = new HashSet<String>();
-        for (String prefix : this.propertiesPrefix)
+        for (final String prefix : this.propertiesPrefix)
         {
-            Collection<String> propertiesFilesTmp = this.classpathScanner.scanClasspathForResource(prefix + ".*\\.properties");
-            propertiesFiles.addAll(propertiesFilesTmp);
-            this.mapPropertiesFiles.put(prefix, propertiesFilesTmp);
+            CallbackResources callback = new CallbackResources()
+            { // executed only after the classpath scan occurs 
+                @Override
+                public void callback(Collection<String> scanResult)
+                { 
+                    propertiesFiles.addAll(scanResult);
+                    mapPropertiesFiles.put(prefix, scanResult);
+                }
+            };
+            this.classpathScanner.scanClasspathForResource(prefix + ".*\\.properties" , callback); // OK
         }
+        
+        // ACTUALLY LAUNCH THE SEARCH 
+        this.classpathScanner.doClasspathScan();
     }
 
     private Object scope( RequestType requestType , Object spec)

@@ -7,7 +7,7 @@ import java.util.Map;
 
 import org.nuunframework.kernel.commons.specification.Specification;
 import org.nuunframework.kernel.context.InitContext;
-import org.nuunframework.kernel.internal.scanner.sample.MarkerSample;
+import org.nuunframework.kernel.internal.scanner.sample.ScanMarkerSample;
 import org.nuunframework.kernel.plugin.AbstractPlugin;
 import org.nuunframework.kernel.plugin.InitState;
 import org.nuunframework.kernel.plugin.request.BindingRequest;
@@ -48,7 +48,7 @@ public class DummyPlugin4 extends AbstractPlugin
     @Override
     public Collection<ClasspathScanRequest> classpathScanRequests()
     {
-        specification = and( classAnnotatedWith(MarkerSample.class) , classImplements(Interface1.class));
+        specification = and( classAnnotatedWith(MarkerSample5.class) , classImplements(Interface1.class));
 
         assertThat( specification.isSatisfiedBy(Pojo1.class) ).isTrue();
         assertThat( specification.isSatisfiedBy(Pojo2.class) ).isFalse();

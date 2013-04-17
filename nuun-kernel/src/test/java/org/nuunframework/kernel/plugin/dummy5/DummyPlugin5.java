@@ -39,6 +39,7 @@ public class DummyPlugin5 extends AbstractPlugin
         return bindingRequestsBuilder() //
                 .descendentTypeOf(GrandParentClass.class).withScope(Scopes.SINGLETON) //
                 .metaAnnotationType(MetaMarkerSample.class).withScope(Scopes.SINGLETON) //
+                .metaAnnotationRegex(".*YMetaMarker.*").withScope(Scopes.SINGLETON)
 //                .descendentTypeOf(GrandParentInterface.class) // 
                 .build();
     }

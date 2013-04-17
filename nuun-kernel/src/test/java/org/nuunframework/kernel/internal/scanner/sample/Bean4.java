@@ -2,7 +2,7 @@ package org.nuunframework.kernel.internal.scanner.sample;
 
 import org.nuunframework.kernel.annotations.Ignore;
 
-@MarkerSample2
+@ScanMarkerSample2
 @Ignore
 public class Bean4
 {

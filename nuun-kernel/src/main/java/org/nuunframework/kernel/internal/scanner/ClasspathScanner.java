@@ -8,21 +8,35 @@ import org.nuunframework.kernel.commons.specification.Specification;
 public interface ClasspathScanner
 {
 
-    Collection<Class<?>> scanClasspathForAnnotation(Class<? extends Annotation> annotationType);
+    void scanClasspathForAnnotation(Class<? extends Annotation> annotationType , Callback callback);
 
-    Collection<Class<?>> scanClasspathForAnnotationRegex(String annotationTypeName);
+    void scanClasspathForAnnotationRegex(String annotationTypeName, Callback callback);
 
-    Collection<Class<?>> scanClasspathForMetaAnnotationRegex(String annotationTypeName);
+    void scanClasspathForMetaAnnotationRegex(String annotationTypeName, Callback callback);
 
-    Collection<Class<?>> scanClasspathForSubTypeClass(Class<?> subType);
+    void scanClasspathForSubTypeClass(Class<?> subType, Callback callback);
 
-    Collection<Class<?>> scanClasspathForTypeRegex(String typeRegex);
+    void scanClasspathForTypeRegex(String typeRegex, Callback callback);
 
-    Collection<Class<?>> scanClasspathForSubTypeRegex(String typeRegex);
+    void scanClasspathForSubTypeRegex(String typeRegex, Callback callback);
 
-    Collection<String> scanClasspathForResource(String pattern);
+    void scanClasspathForResource(String pattern, CallbackResources callback);
 
-    Collection<Class<?>> scanClasspathForSpecification(Specification<Class<?>> specification);
+    void scanClasspathForSpecification(Specification<Class<?>> specification, Callback callback);
 
-    Collection<Class<?>> scanClasspathForMetaAnnotation(Class<? extends Annotation> annotationType);
+    void scanClasspathForMetaAnnotation(Class<? extends Annotation> annotationType, Callback callback);
+    
+    void doClasspathScan ();
+    
+    
+    public static interface Callback 
+    {
+        public void callback(Collection<Class<?>> scanResult);
+    }
+
+    public static interface CallbackResources
+    {
+        public void callback(Collection<String> scanResult);
+    }
+    
 }

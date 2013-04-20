@@ -1,5 +1,7 @@
 package org.nuunframework.kernel.context;
 
+import static com.google.common.base.Predicates.not;
+
 import java.lang.annotation.Annotation;
 import java.net.URL;
 import java.util.Collection;
@@ -10,6 +12,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import javax.annotation.Nullable;
 
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
@@ -27,7 +31,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Function;
+import com.google.common.base.Predicate;
+import com.google.common.base.Predicates;
 import com.google.common.collect.Collections2;
+import com.google.common.collect.FluentIterable;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
 @SuppressWarnings("rawtypes")
@@ -61,6 +68,7 @@ public class InitContextInternal implements InitContext
     private List<String>                                           propertiesPrefix;
 
     private List<Module>                                           childModules;
+    private List<Module>                                           childOverridingModules;
     private List<String>                                           packageRoots;
     private Set<URL>                                               additionalClasspathScan;
 
@@ -98,6 +106,7 @@ public class InitContextInternal implements InitContext
         this.initialPropertiesPrefix = initialPropertiesPrefix;
         this.kernelParams = kernelParams;
         this.childModules = new LinkedList<Module>();
+        this.childOverridingModules = new LinkedList<Module>();
         classesToBind = new HashSet<Class<?>>();
         classesWithScopes = new HashMap<Class<?>, Object>();
         reset();
@@ -147,8 +156,21 @@ public class InitContextInternal implements InitContext
         this.classpathScanner = new ClasspathScannerFactory().create( this.additionalClasspathScan , rawArrays);
         
     }
+    
+    class IsModuleOverriding implements Predicate<Class<? extends Module>>
+    {
 
-    class Class2Instance implements Function<Class<? extends Module>, Module>
+        @Override
+        public boolean apply(Class<? extends Module> input)
+        {
+            KernelModule annotation = input.getAnnotation(KernelModule.class);
+            
+            return annotation.overriding();
+        }
+        
+    }
+    
+    class ModuleClass2Instance implements Function<Class<? extends Module>, Module>
     {
 
         /*
@@ -183,10 +205,15 @@ public class InitContextInternal implements InitContext
             Callback callback = new Callback()
             { // executed only after the classpath scan occurs 
                 @Override
-                public void callback(Collection<Class<?>> scanResult)
+                public void callback(Collection<Class<? >> scanResult)
                 {
-                    Collection<Module> modules = Collections2.transform((Collection) scanResult, new Class2Instance());
-                    childModules.addAll(modules);
+                    
+                    Collection<Class<? extends Module>> scanResult2 = (Collection) scanResult;
+                    FluentIterable<Module> nominals = FluentIterable.from(scanResult2).filter( not(new IsModuleOverriding())  ).transform(new ModuleClass2Instance());
+                    FluentIterable<Module> overriders = FluentIterable.from(scanResult2).filter( new IsModuleOverriding() ).transform(new ModuleClass2Instance());
+                    
+                    childModules.addAll(nominals.toImmutableSet());
+                    childOverridingModules.addAll(overriders.toImmutableSet());
                 }
             };
             this.classpathScanner.scanClasspathForAnnotation(KernelModule.class , callback); // OK
@@ -685,6 +712,11 @@ public class InitContextInternal implements InitContext
         this.childModules.add(module);
     }
 
+    public void addChildOverridingModule(Module module)
+    {
+        this.childOverridingModules.add(module);
+    }
+
 //    public void setContainerContext(Object containerContext)
 //    {
 //        this.containerContext = containerContext;
@@ -725,6 +757,15 @@ public class InitContextInternal implements InitContext
     public List<Module> moduleResults()
     {
         return (List) Collections.unmodifiableList(this.childModules);
+    }
+
+    @Override
+    @SuppressWarnings({
+        "unchecked"
+    })
+    public List<Module> moduleOverridingResults()
+    {
+        return (List) Collections.unmodifiableList(this.childOverridingModules);
     }
 
     @SuppressWarnings({

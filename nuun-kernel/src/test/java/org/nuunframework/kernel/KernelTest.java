@@ -326,6 +326,10 @@ public class KernelTest
 
         assertThat(holder.user).isNotNull();
         assertThat(holder.user).isEqualTo("ejemba");
+        
+        assertThat(holder.moduleAnno).isNotNull();
+        assertThat(holder.moduleAnno).isEqualTo("Hi!");
+        
         assertThat(holder.id).isNotNull();
         assertThat(holder.id).isEqualTo(123l);
         assertThat(holder.password).isNotNull();

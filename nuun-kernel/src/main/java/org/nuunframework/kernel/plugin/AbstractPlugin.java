@@ -249,6 +249,12 @@ public abstract class AbstractPlugin implements Plugin
     {
         return null;
     }
+    
+    @Override
+    public Object dependencyInjectionOverridingDef()
+    {
+        return null;
+    }
 
     @Override
     public void provideContainerContext(Object containerContext){

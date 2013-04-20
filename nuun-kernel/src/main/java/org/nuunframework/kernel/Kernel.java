@@ -43,6 +43,9 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Sets;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Module;
+import com.google.inject.Stage;
+import com.google.inject.util.Modules;
 
 /**
  * @author Epo Jemba
@@ -342,12 +345,24 @@ public final class Kernel
         }
     }
 
+    
+    public synchronized void preStart()
+    {
+        
+    }
+    
     public synchronized void start()
     {
         if (initialized)
         {
             // All bindings will be computed
-            mainInjector = Guice.createInjector(new InternalKernelGuiceModule(initContext));
+            
+            InternalKernelGuiceModule internalKernelGuiceModule = new InternalKernelGuiceModule(initContext);
+            InternalKernelGuiceModule internalKernelGuiceModuleOverriding = new InternalKernelGuiceModule(initContext).overriding();
+            
+            Module mainFinalModule = Modules.override(internalKernelGuiceModule).with(internalKernelGuiceModuleOverriding);
+            
+            mainInjector = Guice.createInjector( Stage.PRODUCTION , mainFinalModule);
 
             // Here we can pass the mainInjector to the non guice modules
 
@@ -575,6 +590,7 @@ public final class Kernel
                 
                 if ( state == InitState.INITIALIZED )
                 {
+                    // Main // =====================================================================
                     Object pluginDependencyInjectionDef = plugin.dependencyInjectionDef();
                     if (pluginDependencyInjectionDef != null)
                     {
@@ -584,28 +600,25 @@ public final class Kernel
                         }
                         else
                         {
-                            DependencyInjectionProvider provider = null;
-                            providerLoop: for (DependencyInjectionProvider providerIt : globalDependencyInjectionProviders)
-                            {
-                                if (providerIt.canHandle(pluginDependencyInjectionDef.getClass()))
-                                {
-                                    provider = providerIt;
-                                    break providerLoop;
-                                }
-                            }
-                            if (provider != null)
-                            {
-                                this.initContext.addChildModule(provider.convert(pluginDependencyInjectionDef));
-                            }
-                            else
-                            {
-                                logger.error("Kernel did not recognize module {} of plugin {}", pluginDependencyInjectionDef, name);
-                                throw new KernelException(
-                                        "Kernel did not recognize module %s of plugin %s. Please provide a DependencyInjectionProvider.",
-                                        pluginDependencyInjectionDef.toString(), name);
-                            }
+                            addModuleViaProvider(name, pluginDependencyInjectionDef);
                         }
                     } //
+                    
+                    // Overrinding definition 
+                    
+                    Object dependencyInjectionOverridingDef = plugin.dependencyInjectionOverridingDef();                    
+                    
+                    if (dependencyInjectionOverridingDef != null)
+                    {
+                        if (dependencyInjectionOverridingDef instanceof com.google.inject.Module)
+                        {
+                            this.initContext.addChildOverridingModule(com.google.inject.Module.class.cast(dependencyInjectionOverridingDef));
+                        }
+                        else
+                        {
+                            addModuleViaProvider(name, dependencyInjectionOverridingDef);
+                        }
+                    }
                     
                 }
                 else
@@ -618,6 +631,43 @@ public final class Kernel
             // increment round number
             roundEnv.incrementRoundNumber();
         } while( ! roundOrderedPlugins .isEmpty()  &&  roundEnv.roundNumber() < MAXIMAL_ROUND_NUMBER );
+        
+        // 
+        
+        for(Plugin plugin : orderedPlugins)
+        {
+            
+        }
+    }
+
+    private void addModuleViaProvider(String name, Object pluginDependencyInjectionDef)
+    {
+        DependencyInjectionProvider provider = findDependencyInjectionProvider(pluginDependencyInjectionDef);
+        if (provider != null)
+        {
+            this.initContext.addChildModule(provider.convert(pluginDependencyInjectionDef));
+        }
+        else
+        {
+            logger.error("Kernel did not recognize module {} of plugin {}", pluginDependencyInjectionDef, name);
+            throw new KernelException(
+                    "Kernel did not recognize module %s of plugin %s. Please provide a DependencyInjectionProvider.",
+                    pluginDependencyInjectionDef.toString(), name);
+        }
+    }
+
+    private DependencyInjectionProvider findDependencyInjectionProvider(Object pluginDependencyInjectionDef)
+    {
+        DependencyInjectionProvider provider = null;
+        providerLoop: for (DependencyInjectionProvider providerIt : globalDependencyInjectionProviders)
+        {
+            if (providerIt.canHandle(pluginDependencyInjectionDef.getClass()))
+            {
+                provider = providerIt;
+                break providerLoop;
+            }
+        }
+        return provider;
     }
 
     private ArrayList<Plugin> sortPlugins(ArrayList<Plugin> unsortedPlugins)

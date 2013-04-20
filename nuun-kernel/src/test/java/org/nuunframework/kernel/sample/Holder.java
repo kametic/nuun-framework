@@ -1,5 +1,8 @@
 package org.nuunframework.kernel.sample;
 
+import javax.inject.Inject;
+import javax.inject.Named;
+
 import org.nuunframework.kernel.plugins.configuration.NuunConfigurationConverter;
 import org.nuunframework.kernel.plugins.configuration.NuunProperty;
 import org.nuunframework.kernel.plugins.logs.NuunLog;
@@ -15,6 +18,12 @@ public class Holder
     @AnnoCustomLog
     private Logger myLogger2;
 
+    
+    @Inject
+    @Named("kernelmodule")
+    public String moduleAnno;
+    
+    
     public Holder()
     {
     }

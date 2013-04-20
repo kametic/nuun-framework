@@ -123,6 +123,15 @@ public interface Plugin
     Object dependencyInjectionDef();
 
     /**
+     * This object will contains bindings definition that will override the main dependency ones.
+     * It can serve as test bindings replacement, environment definition. 
+     * Those can be also handled by a {@link DependencyInjectionProvider} if keys match.
+     * 
+     * @return
+     */
+    Object dependencyInjectionOverridingDef();
+
+    /**
      * Practical method to retrieve the container context as it is passed as argument.
      * @param containerContext the context of the container
      */

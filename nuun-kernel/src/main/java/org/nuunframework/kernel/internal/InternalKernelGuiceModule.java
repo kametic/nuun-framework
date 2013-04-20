@@ -36,6 +36,8 @@ public class InternalKernelGuiceModule extends AbstractModule
     private Logger                    logger = LoggerFactory.getLogger(InternalKernelGuiceModule.class);
 
     private final InitContextInternal currentContext;
+    
+    private boolean overriding = false;
 
     public InternalKernelGuiceModule(InitContextInternal kernelContext)
     {
@@ -43,6 +45,12 @@ public class InternalKernelGuiceModule extends AbstractModule
 
     }
 
+    public InternalKernelGuiceModule overriding()
+    {
+        overriding = true;
+        return this;
+    }
+    
     @Override
     protected final void configure()
     {
@@ -64,18 +72,31 @@ public class InternalKernelGuiceModule extends AbstractModule
     })
     private void bindFromClasspath()
     {
-        Collection<Class<?>> classes = this.currentContext.classesToBind();
+        List<Installable> installableList = new ArrayList<Installable>();
         Map<Class<?>, Object> classesWithScopes = this.currentContext.classesWithScopes();
         
-        List<Installable> installableList = new ArrayList<Installable>();
-        for (Object o : classes)
+        if (! overriding )
         {
-            installableList.add(new Installable(o));
+            Collection<Class<?>> classes = this.currentContext.classesToBind();
+            
+            for (Object o : classes)
+            {
+                installableList.add(new Installable(o));
+            }
+            for (Object o : currentContext.moduleResults())
+            {
+                installableList.add(new Installable(o));
+            }
         }
-        for (Object o : currentContext.moduleResults())
+        else
         {
-            installableList.add(new Installable(o));
+            logger.info("Installing overriding modules");
+            for (Object o : currentContext.moduleOverridingResults())
+            {
+                installableList.add(new Installable(o));
+            }
         }
+        
         
         Collections.sort(installableList , Collections.reverseOrder());
         

@@ -17,6 +17,7 @@ import org.nuunframework.kernel.internal.scanner.sample.ScanMarkerSample;
 import org.nuunframework.kernel.internal.scanner.sample.ScanMarkerSample2;
 import org.nuunframework.kernel.internal.scanner.sample.MyModule1;
 import org.nuunframework.kernel.internal.scanner.sample.MyModule4;
+import org.nuunframework.kernel.plugin.dummy7.Module7;
 
 
 
@@ -32,8 +33,8 @@ public class ClasspathScannerInternalTest
     @BeforeClass
     public static void init()
     {
-        underTest = new ClasspathScannerInternal("","META-INF.properties");
-        underTest2 = new ClasspathScannerInternal(true ,"", "META-INF.properties");
+        underTest = new ClasspathScannerInternal("","META-INF.properties,"+MyModule1.class.getPackage().getName());
+        underTest2 = new ClasspathScannerInternal(true ,"", "META-INF.properties,"+MyModule1.class.getPackage().getName());
         
         cb = new TestCallback();
         cbr = new TestCallbackResources();
@@ -107,8 +108,8 @@ public class ClasspathScannerInternalTest
         Collection<Class<? >> scanClasspathSubType = cb.scanResult;
         
         assertThat(scanClasspathSubType).isNotNull();
-        assertThat(scanClasspathSubType).hasSize(1);
-        assertThat(scanClasspathSubType).containsOnly( MyModule1.class );
+        assertThat(scanClasspathSubType).hasSize(2);
+        assertThat(scanClasspathSubType).containsOnly( MyModule1.class , Module7.class);
     }
     
     @Test
@@ -119,8 +120,8 @@ public class ClasspathScannerInternalTest
         Collection<Class<? >> scanClasspathSubType = cb.scanResult;
         
         assertThat(scanClasspathSubType).isNotNull();
-        assertThat(scanClasspathSubType).hasSize(2);
-        assertThat(scanClasspathSubType).containsOnly( MyModule1.class , MyModule4.class );
+        assertThat(scanClasspathSubType).hasSize(3);
+        assertThat(scanClasspathSubType).containsOnly( MyModule1.class , MyModule4.class , Module7.class);
     }
     
     @Test

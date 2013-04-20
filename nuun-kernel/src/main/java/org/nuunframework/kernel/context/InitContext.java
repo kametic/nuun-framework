@@ -39,6 +39,8 @@ public interface InitContext
     public abstract Collection<Class<?>> classesToBind();
 
     public abstract List<Module> moduleResults();
+    
+    public abstract List<Module> moduleOverridingResults();
 
     public abstract Collection<String> propertiesFiles();
 

@@ -40,7 +40,7 @@
 		<dependency>
 			<groupId>org.nuunframework</groupId>
 			<artifactId>nuun-web-plugin</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
+			<version>1.0.0</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
@@ -149,8 +149,8 @@
 
 	<scm>
 		<url>https://github.com/kametic/nuun-framework</url>
-		<connection>scm:git:git://github.com/kametic/nuun-framewok.git</connection>
-		<developerConnection>scm:git:git@github.com:kametic/nuun-framewok.git</developerConnection>
+		<connection>scm:git:git://github.com/kametic/nuun-framework.git</connection>
+		<developerConnection>scm:git:git@github.com:kametic/nuun-framework.git</developerConnection>
 		<tag>HEAD</tag>
 	</scm>
 

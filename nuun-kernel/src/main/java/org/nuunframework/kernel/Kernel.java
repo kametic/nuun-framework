@@ -241,17 +241,7 @@ public final class Kernel
         {
             String tmp = kernelParamsAndAlias.get(NUUN_ROOT_PACKAGE);
 
-            String[] packages = null;
-            if (tmp != null)
-            {
-                packages = tmp.split(",");
-
-                for (String pack : packages)
-                {
-                    logger.info("Adding {} as nuun.package.root", pack);
-                    this.initContext.addPackageRoot(pack.trim());
-                }
-            }
+            fillPackagesRoot(tmp);
         }
     }
 
@@ -450,19 +440,9 @@ public final class Kernel
                     this.initContext.addPropertiesPrefix(pluginPropertiesPrefix);
                 }
 		
-		// Configure package root
-		String pluginPackageRoot = plugin.pluginPackageRoot();
-		if (!Strings.isNullOrEmpty(pluginPackageRoot))
-		{
-		    String[] packages = null;
-		    
-		    packages = pluginPackageRoot.split(",");
-		    
-		    for (String pack : packages) {
-			logger.info("Adding {} from plugin package root", pack);
-			this.initContext.addPackageRoot(pack.trim());
-		    }
-		}
+        		// Configure package root
+        		String pluginPackageRoot = plugin.pluginPackageRoot();
+        		fillPackagesRoot(pluginPackageRoot);
 		
                 Collection<ClasspathScanRequest> classpathScanRequests = plugin.classpathScanRequests();
                 if (classpathScanRequests != null && classpathScanRequests.size() > 0)
@@ -630,13 +610,23 @@ public final class Kernel
             roundOrderedPlugins = nextRoundOrderedPlugins;
             // increment round number
             roundEnv.incrementRoundNumber();
-        } while( ! roundOrderedPlugins .isEmpty()  &&  roundEnv.roundNumber() < MAXIMAL_ROUND_NUMBER );
+        } 
+        while( ! roundOrderedPlugins .isEmpty()  &&  roundEnv.roundNumber() < MAXIMAL_ROUND_NUMBER );
         
-        // 
-        
-        for(Plugin plugin : orderedPlugins)
+    }
+
+    private void fillPackagesRoot(String pluginPackageRoot)
+    {
+        if (!Strings.isNullOrEmpty(pluginPackageRoot))
         {
+            String[] packages = null;
             
+            packages = pluginPackageRoot.split(",");
+            
+            for (String pack : packages) {
+                logger.info("Adding {} as package root", pack);
+                this.initContext.addPackageRoot(pack.trim());
+            }
         }
     }
 

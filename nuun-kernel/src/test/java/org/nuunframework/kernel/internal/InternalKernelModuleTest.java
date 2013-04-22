@@ -8,6 +8,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.nuunframework.kernel.context.InitContextInternal;
 import org.nuunframework.kernel.stereotype.ConcernTest;
+import org.nuunframework.kernel.stereotype.sample.BugPlugin;
 import org.nuunframework.kernel.stereotype.sample.CachePlugin;
 import org.nuunframework.kernel.stereotype.sample.LogPlugin;
 import org.nuunframework.kernel.stereotype.sample.SecurityPlugin;
@@ -62,7 +63,8 @@ public class InternalKernelModuleTest
     	Assertions.assertThat( underTest.computeOrder(SecurityPlugin.Module.class)).isEqualTo(2000);
     	Assertions.assertThat( underTest.computeOrder(LogPlugin.Module.class)).isEqualTo(-20);
     	Assertions.assertThat( underTest.computeOrder(CachePlugin.Module.class)).isEqualTo(1998);
-    	Assertions.assertThat( underTest.computeOrder(ConcernTest.Module.class)).isEqualTo(Integer.MIN_VALUE);
+    	Assertions.assertThat( underTest.computeOrder(ConcernTest.Module.class)).isEqualTo(0);
+    	Assertions.assertThat( underTest.computeOrder(BugPlugin.Module.class)).isEqualTo(Integer.MAX_VALUE + 2000);
     }
     
     @Test

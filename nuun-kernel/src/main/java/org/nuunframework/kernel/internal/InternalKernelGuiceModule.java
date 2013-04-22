@@ -198,9 +198,9 @@ public class InternalKernelGuiceModule extends AbstractModule
         }
     }
     
-    Integer computeOrder (Class<?> moduleCläss)    {
+    Long computeOrder (Class<?> moduleCläss)    {
         
-    	Integer finalOrder = 0;    	
+    	Long finalOrder = 0l;    	
     	boolean reachAtLeastOnce = false;
     	
         outer: for(Annotation annotation : moduleCläss.getAnnotations())
@@ -211,14 +211,17 @@ public class InternalKernelGuiceModule extends AbstractModule
             	Concern concern = annotation.annotationType().getAnnotation(Concern.class);
                 switch (concern.priority()) 
                 {
-                    case HIGH:
-                        finalOrder += ( 20 + concern.order() );
+                    case HIGHEST:
+                        finalOrder += ( 2000 + concern.order() );
                         break;
                     case HIGHER:
                         finalOrder += ( 200 + concern.order() );
                         break;
-                    case HIGHEST:
-                        finalOrder += ( 2000 + concern.order() );
+                    case HIGH:
+                        finalOrder += ( 20 + concern.order() );
+                        break;
+                    case NORMAL:
+                        finalOrder += ( 0 + concern.order() );
                         break;
                     case LOW:
                         finalOrder -= ( 20 + concern.order() );
@@ -229,9 +232,6 @@ public class InternalKernelGuiceModule extends AbstractModule
                     case LOWEST:
                         finalOrder -= ( 2000 + concern.order() );
                         break;
-                    case NORMAL:
-                        finalOrder += ( 0 + concern.order() );
-                        break;
                     default:
                         break;
                 }
@@ -240,7 +240,7 @@ public class InternalKernelGuiceModule extends AbstractModule
             }
         }
         
-    	if (! reachAtLeastOnce) finalOrder = Integer.MIN_VALUE;
+    	if (! reachAtLeastOnce) finalOrder = (long) 0;
     	
         return finalOrder;
     }

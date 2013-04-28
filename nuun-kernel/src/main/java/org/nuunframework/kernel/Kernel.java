@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.ServiceLoader;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.collections.iterators.ArrayIterator;
 import org.nuunframework.kernel.commons.graph.Graph;
@@ -66,39 +67,43 @@ import com.google.inject.util.Modules;
 public final class Kernel
 {
 
-    public static final String                      NUUN_ROOT_PACKAGE      = "nuun.root.package";
-    public static final String                      NUUN_NUM_CP_PATH       = "nuun.num.classpath.path";
-    public static final String                      NUUN_CP_PATH_PREFIX    = "nuun.classpath.path.prefix-";
-    private final int MAXIMAL_ROUND_NUMBER                                 = 50;
-    private Logger                                  logger                 = LoggerFactory.getLogger(Kernel.class);
-    private static Kernel                           kernel;
+    public static final String                       NUUN_ROOT_PACKAGE      = "nuun.root.package";
+    public static final String                       NUUN_NUM_CP_PATH       = "nuun.num.classpath.path";
+    public static final String                       NUUN_CP_PATH_PREFIX    = "nuun.classpath.path.prefix-";
+    public static final String                       KERNEL_PREFIX_NAME     = "NuuNKerneL";
+    private final int                                MAXIMAL_ROUND_NUMBER   = 50;
+    private final Logger                             logger;
+    private static ConcurrentHashMap<String, Kernel> kernels                = new ConcurrentHashMap<String, Kernel>();
+    private final String                             name;
 
-    private final String                            NUUN_PROPERTIES_PREFIX = "nuun-";
+    private final String                             NUUN_PROPERTIES_PREFIX = "nuun-";
 
-    private ServiceLoader<Plugin>                   pluginLoader;
-    private boolean                                 spiPluginEnabled       = true;
-    private Map<String, Plugin>                     plugins                = Collections.synchronizedMap(new HashMap<String, Plugin>()); //
-    private Map<String, Plugin>                     pluginsToAdd           = Collections.synchronizedMap(new HashMap<String, Plugin>()); //
+    private ServiceLoader<Plugin>                    pluginLoader;
+    private boolean                                  spiPluginEnabled       = true;
+    private Map<String, Plugin>                      plugins                = Collections.synchronizedMap(new HashMap<String, Plugin>()); //
+    private Map<String, Plugin>                      pluginsToAdd           = Collections.synchronizedMap(new HashMap<String, Plugin>()); //
 
-    private final InitContextInternal               initContext;
-    private Injector                                mainInjector;
-    private final AliasMap                          kernelParamsAndAlias;
+    private final InitContextInternal                initContext;
+    private Injector                                 mainInjector;
+    private final AliasMap                           kernelParamsAndAlias;
 
-    private boolean                                 started                = false;
-    private boolean                                 initialized            = false;
-    private Context                                 context;
-    private Collection<DependencyInjectionProvider> dependencyInjectionProviders;
-    private Object                                  containerContext;
-    private ArrayList<Plugin>                       orderedPlugins;
+    private boolean                                  started                = false;
+    private boolean                                  initialized            = false;
+    private Context                                  context;
+    private Collection<DependencyInjectionProvider>  dependencyInjectionProviders;
+    private Object                                   containerContext;
+    private ArrayList<Plugin>                        orderedPlugins;
 
-    private Collection<DependencyInjectionProvider> globalDependencyInjectionProviders;
-    private List<Iterator<Plugin>>                  pluginIterators;
-    private List<Plugin>                            fetchedPlugins;
-    private Set<URL>                                globalAdditionalClasspath;
-    private RoundEnvironementInternal roundEnv;
+    private Collection<DependencyInjectionProvider>  globalDependencyInjectionProviders;
+    private List<Iterator<Plugin>>                   pluginIterators;
+    private List<Plugin>                             fetchedPlugins;
+    private Set<URL>                                 globalAdditionalClasspath;
+    private RoundEnvironementInternal                roundEnv;
 
     private Kernel(String... keyValues)
     {
+        name = KERNEL_PREFIX_NAME+kernels.size();
+        logger                 = LoggerFactory.getLogger( Kernel.class.getPackage().getName() +'.' + name());
         kernelParamsAndAlias = new AliasMap();
 
         this.initContext = new InitContextInternal(NUUN_PROPERTIES_PREFIX, kernelParamsAndAlias);
@@ -115,6 +120,11 @@ public final class Kernel
             kernelParamsAndAlias.put(key, value);
         }
 
+    }
+    
+    public String name()
+    {
+        return name;
     }
 
     public boolean isStarted()
@@ -404,8 +414,6 @@ public final class Kernel
             plugin.stop();
         }
 
-        // remove singleton reference
-        kernel = null;
 
     }
 
@@ -851,17 +859,15 @@ public final class Kernel
         @Override
         public Kernel build()
         {
-
-            if (Kernel.kernel == null)
+            if (!kernels.contains(kernel.name))
             {
-                Kernel.kernel = kernel;
+                kernels.put(kernel.name, kernel);  
                 return kernel;
             }
             else
             {
-                throw new KernelException("Kernel cannot be created more than once");
+                throw new KernelException(String.format("A kernel named %s already exists" , kernel.name ));
             }
-
         }
 
         @Override
@@ -973,6 +979,7 @@ public final class Kernel
 
     static class AliasMap extends HashMap<String, String>
     {
+        private static final long serialVersionUID = 1L;
         Map<String, String> aliases = new HashMap<String, String>();
 
         /**

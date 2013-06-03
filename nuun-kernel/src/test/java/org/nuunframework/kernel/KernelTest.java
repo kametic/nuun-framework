@@ -28,6 +28,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.aopalliance.intercept.MethodInterceptor;
+import org.aopalliance.intercept.MethodInvocation;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -55,6 +57,7 @@ import org.nuunframework.kernel.plugin.dummy5.DummyPlugin5;
 import org.nuunframework.kernel.plugin.dummy5.ParentClass;
 import org.nuunframework.kernel.plugin.dummy5.ToFind;
 import org.nuunframework.kernel.plugin.dummy5.ToFind2;
+import org.nuunframework.kernel.sample.DummyMethod;
 import org.nuunframework.kernel.sample.Holder;
 import org.nuunframework.kernel.sample.HolderForBeanWithParentType;
 import org.nuunframework.kernel.sample.HolderForContext;
@@ -63,6 +66,7 @@ import org.nuunframework.kernel.sample.HolderForPlugin;
 import org.nuunframework.kernel.sample.HolderForPrefixWithName;
 import org.nuunframework.kernel.sample.ModuleInError;
 import org.nuunframework.kernel.sample.ModuleInterface;
+import org.nuunframework.kernel.sample.ProxifiedHolder;
 import org.powermock.reflect.Whitebox;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,6 +76,7 @@ import com.google.inject.ConfigurationException;
 import com.google.inject.CreationException;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import com.google.inject.matcher.Matchers;
 
 /**
  * @author Epo Jemba
@@ -122,6 +127,16 @@ public class KernelTest
         underTest.start();
     }
 
+    static class DummyInterceptor implements MethodInterceptor
+    {
+        @Override
+        public Object invoke(MethodInvocation invocation) throws Throwable
+        {
+            System.err.println("inside " + DummyInterceptor.class);
+            return invocation.proceed();
+        }
+    }
+    
     @Before
     public void before()
     {
@@ -137,6 +152,9 @@ public class KernelTest
                 bind(HolderForContext.class);
                 bind(HolderForPrefixWithName.class);
                 bind(HolderForBeanWithParentType.class);
+                bind(ProxifiedHolder.class);
+                
+                bindInterceptor(Matchers.any(), Matchers.annotatedWith(DummyMethod.class), new DummyInterceptor());
             }
         };
         injector = underTest.getMainInjector().createChildInjector(aggregationModule);
@@ -420,6 +438,26 @@ public class KernelTest
         
         assertThat(holder.__nothing).isNotNull();
         assertThat(holder.__nothing).isEqualTo("");
+
+        assertThat(holder.private1()).isNotNull();
+        assertThat(holder.private1()).isEqualTo("private1");
+        assertThat(holder.private2()).isNotNull();
+        assertThat(holder.private2()).isEqualTo("private2");
+        assertThat(holder.private1()).isNotNull();
+        assertThat(holder.private1()).isEqualTo("private1");
+        assertThat(holder.private2()).isNotNull();
+        assertThat(holder.private2()).isEqualTo("private2");
+    }
+    
+    @Test
+    public void property_should_be_reachable_via_annotation_on_a_proxified_class()
+    {
+        ProxifiedHolder holder = injector.getInstance(ProxifiedHolder.class);
+        System.err.println("holder = " + holder);
+        assertThat(holder.private1()).isNotNull();
+        assertThat(holder.private1()).isEqualTo("private1");
+        assertThat(holder.private2()).isNotNull();
+        assertThat(holder.private2()).isEqualTo("private1");
     }
     
     @Test

@@ -70,7 +70,7 @@ public final class Kernel
     public static final String                       NUUN_ROOT_PACKAGE      = "nuun.root.package";
     public static final String                       NUUN_NUM_CP_PATH       = "nuun.num.classpath.path";
     public static final String                       NUUN_CP_PATH_PREFIX    = "nuun.classpath.path.prefix-";
-    public static final String                       KERNEL_PREFIX_NAME     = "NuuNKerneL";
+    public static final String                       KERNEL_PREFIX_NAME     = "Kernel-";
     private final int                                MAXIMAL_ROUND_NUMBER   = 50;
     private final Logger                             logger;
     private static ConcurrentHashMap<String, Kernel> kernels                = new ConcurrentHashMap<String, Kernel>();

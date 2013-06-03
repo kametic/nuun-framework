@@ -50,7 +50,6 @@ public class ConfigurationMembersInjector<T> implements MembersInjector<T>
         this.field = field;
         this.configuration = configuration;
         this.clonedAnno = clonedAnno;
-        this.field.setAccessible(true);
     }
 
     @Override
@@ -83,6 +82,7 @@ public class ConfigurationMembersInjector<T> implements MembersInjector<T>
         
         try
         {
+            this.field.setAccessible(true);
             Class<?> type = field.getType();
             if (type == Integer.TYPE)
             {

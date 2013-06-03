@@ -51,6 +51,22 @@ public class Holder
     @NuunProperty("user.id")
     public Long      id;
 
+    @NuunProperty("private1")
+    private String    private1;
+    
+    @NuunProperty("private2")
+    private String    private2;
+    
+    public String private1()
+    {
+        return private1;
+    }
+    
+    public String private2()
+    {
+        return private2;
+    }
+
     @NuunProperty("user.password")
     public String    password;
 

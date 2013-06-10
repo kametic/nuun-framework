@@ -17,23 +17,28 @@
 package org.nuunframework.spring;
 
 import com.google.inject.Module;
+import org.nuunframework.kernel.plugin.PluginException;
 import org.nuunframework.kernel.plugin.provider.DependencyInjectionProvider;
-import org.springframework.context.ApplicationContext;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
+import org.springframework.context.ConfigurableApplicationContext;
 
 class InternalDependencyInjectionProvider implements DependencyInjectionProvider
 {
-
     @Override
     public boolean canHandle(Class<?> injectionDefinition)
     {
-        return (ApplicationContext.class.isAssignableFrom(injectionDefinition));
+        return ConfigurableListableBeanFactory.class.isAssignableFrom(injectionDefinition) || ConfigurableApplicationContext.class.isAssignableFrom(injectionDefinition);
     }
 
     @Override
     public Module convert(Object injectionDefinition)
     {
-        ApplicationContext context = ApplicationContext.class.cast(injectionDefinition);
-        return new SpringModule(context);
+        if (injectionDefinition instanceof ConfigurableListableBeanFactory)
+            return new SpringModule((ConfigurableListableBeanFactory)injectionDefinition);
+        else if (injectionDefinition instanceof ConfigurableApplicationContext)
+            return new SpringModule(((ConfigurableApplicationContext)injectionDefinition).getBeanFactory());
+        else
+            throw new PluginException("Only ConfigurableListableBeanFactory or ConfigurableApplicationContext types are handled");
     }
 
     @Override

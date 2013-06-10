@@ -93,9 +93,9 @@
 		</dependency>
 
 		<dependency>
-			<groupId>commons-configuration</groupId>
-			<artifactId>commons-configuration</artifactId>
-			<version>1.8</version>
+			<groupId>commons-lang</groupId>
+			<artifactId>commons-lang</artifactId>
+			<version>2.6</version>
 		</dependency>
 
 		<dependency>
@@ -146,12 +146,14 @@
 			<groupId>org.powermock</groupId>
 			<artifactId>powermock-core</artifactId>
 			<version>1.5</version>
+			<scope>test</scope>
 		</dependency>
 
 		<dependency>
 			<groupId>org.powermock</groupId>
 			<artifactId>powermock-api-mockito</artifactId>
 			<version>1.5</version>
+			<scope>test</scope>
 		</dependency>
 
 		<!-- <dependency> <groupId>com.google.inject.extensions</groupId> <artifactId>guice-multibindings</artifactId> 

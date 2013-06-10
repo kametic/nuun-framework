@@ -19,7 +19,8 @@
  */
 package org.nuunframework.kernel.plugin.dummy1;
 
-import org.nuunframework.kernel.plugins.configuration.NuunProperty;
+import javax.inject.Inject;
+import javax.inject.Named;
 
 
 /**
@@ -28,7 +29,7 @@ import org.nuunframework.kernel.plugins.configuration.NuunProperty;
  */
 public class BeanWithCustomSuffix
 {
-    @NuunProperty("custom.name")
+    @Inject @Named("custom.name")
     String name;
     
     public String name()

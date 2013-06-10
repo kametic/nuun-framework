@@ -19,7 +19,9 @@
  */
 package org.nuunframework.kernel.plugin.dummy1;
 
-import org.nuunframework.kernel.plugins.configuration.NuunProperty;
+import javax.inject.Inject;
+import javax.inject.Named;
+
 
 
 /**
@@ -28,7 +30,7 @@ import org.nuunframework.kernel.plugins.configuration.NuunProperty;
  */
 public class BeanWithParentType implements DummyMarker
 {
-    @NuunProperty("custom.name2")
+    @Inject @Named("custom.name2")
     String name;
     
     public String name()

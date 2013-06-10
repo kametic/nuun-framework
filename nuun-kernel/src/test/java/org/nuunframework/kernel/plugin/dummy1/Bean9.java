@@ -19,7 +19,8 @@
  */
 package org.nuunframework.kernel.plugin.dummy1;
 
-import org.nuunframework.kernel.plugins.configuration.NuunProperty;
+import javax.inject.Inject;
+import javax.inject.Named;
 
 
 /**
@@ -29,6 +30,6 @@ import org.nuunframework.kernel.plugins.configuration.NuunProperty;
 @MarkerSample3
 public class Bean9
 {
-    @NuunProperty("value1")
+    @Inject @Named("value1") 
     public String value;
 }

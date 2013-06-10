@@ -20,7 +20,7 @@
 package org.nuunframework.kernel.plugin.dummy1;
 
 import org.nuunframework.kernel.internal.scanner.sample.Ignore;
-import org.nuunframework.kernel.plugins.configuration.NuunProperty;
+import org.nuunframework.kernel.spi.configuration.NuunProperty;
 
 
 

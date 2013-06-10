@@ -16,16 +16,7 @@
  */
 package org.nuunframework.kernel.plugin.dummy7;
 
-import static org.fest.assertions.Assertions.assertThat;
-
-import java.util.Collection;
-
-import org.nuunframework.kernel.context.InitContext;
 import org.nuunframework.kernel.plugin.AbstractPlugin;
-import org.nuunframework.kernel.plugin.InitState;
-import org.nuunframework.kernel.plugin.Plugin;
-import org.nuunframework.kernel.plugin.request.BindingRequest;
-import org.nuunframework.kernel.plugin.request.ClasspathScanRequest;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.name.Names;

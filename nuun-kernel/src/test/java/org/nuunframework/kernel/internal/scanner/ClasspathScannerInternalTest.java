@@ -29,10 +29,11 @@ import org.nuunframework.kernel.internal.scanner.sample.Bean1;
 import org.nuunframework.kernel.internal.scanner.sample.Bean2;
 import org.nuunframework.kernel.internal.scanner.sample.Bean3;
 import org.nuunframework.kernel.internal.scanner.sample.Bean6;
+import org.nuunframework.kernel.internal.scanner.sample.MyModule1;
+import org.nuunframework.kernel.internal.scanner.sample.MyModule2;
+import org.nuunframework.kernel.internal.scanner.sample.MyModule4;
 import org.nuunframework.kernel.internal.scanner.sample.ScanMarkerSample;
 import org.nuunframework.kernel.internal.scanner.sample.ScanMarkerSample2;
-import org.nuunframework.kernel.internal.scanner.sample.MyModule1;
-import org.nuunframework.kernel.internal.scanner.sample.MyModule4;
 import org.nuunframework.kernel.plugin.dummy7.Module7;
 
 
@@ -49,8 +50,8 @@ public class ClasspathScannerInternalTest
     @BeforeClass
     public static void init()
     {
-        underTest = new ClasspathScannerInternal("","META-INF.properties,"+MyModule1.class.getPackage().getName());
-        underTest2 = new ClasspathScannerInternal(true ,"", "META-INF.properties,"+MyModule1.class.getPackage().getName());
+        underTest = new ClasspathScannerInternal("","META-INF.properties,"+MyModule2.class.getPackage().getName());
+        underTest2 = new ClasspathScannerInternal(true ,"", "META-INF.properties,"+MyModule2.class.getPackage().getName());
         
         cb = new TestCallback();
         cbr = new TestCallbackResources();

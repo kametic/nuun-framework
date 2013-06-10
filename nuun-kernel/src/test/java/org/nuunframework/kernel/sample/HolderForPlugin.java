@@ -21,14 +21,14 @@ import javax.inject.Inject;
 import org.nuunframework.kernel.plugin.dummy1.Bean6;
 import org.nuunframework.kernel.plugin.dummy1.Bean9;
 import org.nuunframework.kernel.plugin.dummy1.DummyService;
-import org.nuunframework.kernel.plugins.configuration.NuunProperty;
+import org.nuunframework.kernel.spi.configuration.NuunProperty;
 
 
 public class HolderForPlugin
 {
 
-    @NuunProperty("value1")
-    public String       value;
+//    @NuunProperty("value1")
+//    public String       value;
 
     @Inject
     public DummyService dummyService;

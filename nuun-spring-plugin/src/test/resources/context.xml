@@ -25,7 +25,7 @@
     
     <bean id="service1" class="org.nuunframework.spring.sample.Service1Internal" />
     <bean id="service2" class="org.nuunframework.spring.sample.Service2Internal"/>
-    
+
     
     
 </beans>

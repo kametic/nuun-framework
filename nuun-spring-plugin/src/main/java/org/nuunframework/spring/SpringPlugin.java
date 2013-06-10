@@ -21,6 +21,7 @@ import org.nuunframework.kernel.plugin.provider.DependencyInjectionProvider;
 
 public class SpringPlugin extends AbstractPlugin
 {
+
     @Override
     public String name()
     {
@@ -32,4 +33,5 @@ public class SpringPlugin extends AbstractPlugin
     {
         return new InternalDependencyInjectionProvider();
     }
+
 }

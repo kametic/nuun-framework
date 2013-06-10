@@ -20,10 +20,9 @@ import com.google.inject.AbstractModule;
 import com.google.inject.name.Names;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ConfigurableApplicationContext;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -33,12 +32,12 @@ class SpringModule extends AbstractModule
     class SpringBeanDefinition
     {
         private String             name;
-        private ApplicationContext context;
+        private ConfigurableListableBeanFactory beanFactory;
 
-        SpringBeanDefinition(String name, ApplicationContext context)
+        SpringBeanDefinition(String name, ConfigurableListableBeanFactory beanFactory)
         {
             this.name = name;
-            this.context = context;
+            this.beanFactory = beanFactory;
         }
 
         public String getName()
@@ -46,20 +45,20 @@ class SpringModule extends AbstractModule
             return name;
         }
 
-        public ApplicationContext getContext()
+        public ConfigurableListableBeanFactory getBeanFactory()
         {
-            return context;
+            return beanFactory;
         }
     }
 
     private Logger                                           logger = LoggerFactory.getLogger(InternalDependencyInjectionProvider.class);
 
-    private final ApplicationContext                         applicationContext;
+    private final ConfigurableListableBeanFactory            beanFactory;
     private Map<Class<?>, Map<String, SpringBeanDefinition>> beanDefinitions;
 
-    public SpringModule(ApplicationContext context)
+    public SpringModule(ConfigurableListableBeanFactory beanFactory)
     {
-        this.applicationContext = context;
+        this.beanFactory = beanFactory;
     }
 
     @Override
@@ -72,29 +71,14 @@ class SpringModule extends AbstractModule
     @SuppressWarnings("unchecked")
     private void bindFromApplicationContext()
     {
-        ApplicationContext currentApplicationContext = this.applicationContext;
         boolean debugEnabled = logger.isDebugEnabled();
 
+        ConfigurableListableBeanFactory currentBeanFactory = this.beanFactory;
         do
         {
-            if (!(currentApplicationContext instanceof ConfigurableApplicationContext))
+            for (String beanName : currentBeanFactory.getBeanDefinitionNames())
             {
-                logger.warn("Spring application context " + currentApplicationContext.getDisplayName()
-                        + " is not assignable to AbstractBeanFactory, spring beans will not be available");
-                continue;
-            }
-
-            ConfigurableListableBeanFactory beanFactory = ((ConfigurableApplicationContext) currentApplicationContext).getBeanFactory();
-            if (beanFactory == null)
-            {
-                logger.warn("Spring application context " + currentApplicationContext.getDisplayName()
-                        + " doesn't have a bean factory, spring beans will not be available");
-                continue;
-            }
-
-            for (String beanName : currentApplicationContext.getBeanDefinitionNames())
-            {
-                BeanDefinition beanDefinition = beanFactory.getMergedBeanDefinition(beanName);
+                BeanDefinition beanDefinition = currentBeanFactory.getMergedBeanDefinition(beanName);
                 if (!beanDefinition.isAbstract())
                 {
                     Class<?> beanClass = classFromString(beanDefinition.getBeanClassName());
@@ -104,7 +88,7 @@ class SpringModule extends AbstractModule
                         return;
                     }
 
-                    SpringBeanDefinition springBeanDefinition = new SpringBeanDefinition(beanName, currentApplicationContext);
+                    SpringBeanDefinition springBeanDefinition = new SpringBeanDefinition(beanName, currentBeanFactory);
 
                     // Adding bean with its base type
                     addBeanDefinition(beanClass, springBeanDefinition);
@@ -114,38 +98,37 @@ class SpringModule extends AbstractModule
                     if (parentClass != null && parentClass != Object.class)
                         addBeanDefinition(parentClass, springBeanDefinition);
 
-                    // Adding bean with its immediate interfaces
+                    // Adding bean with its immediate interfaces if enabled
                     for (Class<?> i : beanClass.getInterfaces())
                         addBeanDefinition(i, springBeanDefinition);
                 }
             }
-            currentApplicationContext = currentApplicationContext.getParent();
+            BeanFactory factory = currentBeanFactory.getParentBeanFactory();
+            if (factory != null) {
+                if (factory instanceof ConfigurableListableBeanFactory)
+                    currentBeanFactory = (ConfigurableListableBeanFactory)factory;
+                else {
+                    logger.info("Cannot go up further in the bean factory hierarchy, parent bean factory doesn't implement ConfigurableListableBeanFactory");
+                    currentBeanFactory = null;
+                }
+            } else
+                currentBeanFactory = null;
         }
-        while (currentApplicationContext != null);
+        while (currentBeanFactory != null);
 
         for (Map.Entry<Class<?>, Map<String, SpringBeanDefinition>> entry : this.beanDefinitions.entrySet())
         {
             Class<?> type = entry.getKey();
             Map<String, SpringBeanDefinition> definitions = entry.getValue();
 
-            // Bind by name for each bean of this type
-            boolean alreadyBoundByType = false;
+            // Bind by name for each bean of this type and by type if there is no ambiguity
             for (SpringBeanDefinition candidate : definitions.values())
             {
-                if (!alreadyBoundByType)
-                {
-                    if (debugEnabled)
-                        logger.debug("Binding spring bean " + candidate.getName() + " by type " + type.getCanonicalName());
-
-                    bind(type).toProvider(new ByTypeSpringContextProvider(type, candidate.getContext()));
-                    alreadyBoundByType = true;
-                }
-
                 if (debugEnabled)
-                    logger.debug("Binding spring bean " + candidate.getName() + " by name and type " + type.getCanonicalName());
+                    logger.info("Binding spring bean " + candidate.getName() + " by name and type " + type.getCanonicalName());
 
                 bind(type).annotatedWith(Names.named(candidate.getName())).toProvider(
-                        new ByNameSpringContextProvider(type, candidate.getName(), candidate.getContext()));
+                        new ByNameSpringContextProvider(type, candidate.getName(), candidate.getBeanFactory()));
             }
         }
     }
@@ -156,9 +139,7 @@ class SpringModule extends AbstractModule
         if (beansOfType == null)
             this.beanDefinitions.put(beanClass, beansOfType = new HashMap<String, SpringBeanDefinition>());
 
-        if (!beansOfType.containsKey(springBeanDefinition.getName())) // TODO determine which beans override
-                                                                      // which in spring semantics ? Here
-                                                                      // first discovered wins...
+        if (!beansOfType.containsKey(springBeanDefinition.getName())) // TODO determine which beans override which in spring semantics ? Here first discovered wins...
             beansOfType.put(springBeanDefinition.getName(), springBeanDefinition);
     }
 

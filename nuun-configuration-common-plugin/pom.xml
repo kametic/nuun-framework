@@ -9,7 +9,7 @@
 
 	<groupId>org.nuunframework</groupId>
 	<artifactId>nuun-configuration-common-plugin</artifactId>
-	<version>1.0.0.M3-SNAPSHOT</version>
+	<version>1.0.0.M3</version>
 	<packaging>jar</packaging>
 
 	<name>nuun-configuration-common-plugin</name>
@@ -39,7 +39,7 @@
 		<dependency>
 			<groupId>org.nuunframework</groupId>
 			<artifactId>nuun-kernel</artifactId>
-			<version>1.1.0.M3-SNAPSHOT</version>
+			<version>1.1.0.M3</version>
 		</dependency>
 
 		<dependency>

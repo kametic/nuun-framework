@@ -69,6 +69,11 @@ public class NuunPropsConfigurationPluginTest
         assertThat(props).isNotNull();
         assertThat(props.getValue("user.name")).isNotNull();
         assertThat(props.getValue("user.name")).isEqualTo("ejemba");
+        assertThat(props.getValue("value1")).isEqualTo("lorem ipsum");
+        assertThat(props.getValue("custom.name1")).isEqualTo("John");
+        assertThat(props.getValue("custom.name2")).isEqualTo("Jane");
+        assertThat(props.getValue("level1.sonic")).isEqualTo("hedgedog");
+        assertThat(props.getValue("result")).isEqualTo("Epo");
     }
     
     @Ignore

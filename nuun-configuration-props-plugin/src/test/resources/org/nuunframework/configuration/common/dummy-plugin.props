@@ -16,5 +16,13 @@
 #
 
 value1=lorem ipsum
-custom.name=John
+custom.name1=John
 custom.name2=Jane
+
+[level1]
+sonic=hedgedog
+
+[]
+custom.name3=Epo
+index=3
+result=${custom.name${index}}

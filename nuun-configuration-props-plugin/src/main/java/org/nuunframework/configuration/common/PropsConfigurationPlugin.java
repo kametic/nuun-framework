@@ -16,10 +16,11 @@
  */
 package org.nuunframework.configuration.common;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 
@@ -29,16 +30,22 @@ import org.nuunframework.kernel.context.InitContext;
 import org.nuunframework.kernel.plugin.AbstractPlugin;
 import org.nuunframework.kernel.plugin.InitState;
 import org.nuunframework.kernel.plugin.PluginException;
+import org.nuunframework.kernel.plugin.request.ClasspathScanRequest;
 import org.nuunframework.kernel.spi.configuration.NuunBaseConfigurationPlugin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.Sets;
 import com.google.inject.Module;
 
 public class PropsConfigurationPlugin extends AbstractPlugin implements NuunBaseConfigurationPlugin
 {
 
     Logger logger = LoggerFactory.getLogger(PropsConfigurationPlugin.class);
+    
+    
+    private String PROPS_REGEX = ".*\\.props";
+    
     
     private Module module = null;
 
@@ -83,14 +90,29 @@ public class PropsConfigurationPlugin extends AbstractPlugin implements NuunBase
     
     
     @Override
+    public Collection<ClasspathScanRequest> classpathScanRequests()
+    {
+        return classpathScanRequestBuilder().resourcesRegex(PROPS_REGEX).build();
+    }
+    
+    
+    @Override
     public InitState init(InitContext initContext)
     {
      // find all properties classes in the classpath
+        HashSet<String> allProperties = Sets.newHashSet();
+        
         Collection<String> propertiesFiles = initContext.propertiesFiles();
+        allProperties.addAll(propertiesFiles);
+        
+        // find all props
+        Map<String, Collection<String>> mapResourcesByRegex = initContext.mapResourcesByRegex();
+        Collection<String> propsFiles = mapResourcesByRegex.get(PROPS_REGEX);
+        allProperties.addAll(propsFiles);
 
         props = new Props();
         
-        for (String propertiesFile : propertiesFiles)
+        for (String propertiesFile : allProperties)
         {
             logger.info("adding {} to configuration", propertiesFile);
             

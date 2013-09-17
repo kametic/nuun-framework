@@ -60,7 +60,18 @@ public class NuunCliTypeListener implements TypeListener
                 {
                     if ( AssertUtils.isEquivalent(NuunOption.class, annotationPointer.annotation.annotationType()) )
                     {
-                        encounter.register(new NuunCliMembersInjector<I>(field, this.commandLine ,  annotationPointer.annotation));
+                        encounter.register(new NuunOptionMembersInjector<I>(field, this.commandLine ,  annotationPointer.annotation));
+                    }
+                    else 
+                    {
+                        throw new PluginException("Annotation class %s is not compatible with %s. Please check it.", annotationPointer.annotation.annotationType().getCanonicalName() , NuunOption.class.getCanonicalName());
+                    }
+                }
+                if (annotationPresent(field, NuunArgs.class, annotationPointer))
+                {
+                    if ( AssertUtils.isEquivalent(NuunArgs.class, annotationPointer.annotation.annotationType()) )
+                    {
+                        encounter.register(new NuunArgsMembersInjector<I>(field, this.commandLine ,  annotationPointer.annotation));
                     }
                     else 
                     {

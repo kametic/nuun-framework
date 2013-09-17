@@ -31,10 +31,10 @@ import com.google.inject.MembersInjector;
  * @author ejemba
  *
  */
-public class NuunCliMembersInjector<T> implements MembersInjector<T> 
+public class NuunOptionMembersInjector<T> implements MembersInjector<T> 
 {
     
-    Logger logger = LoggerFactory.getLogger(NuunCliMembersInjector.class);
+    Logger logger = LoggerFactory.getLogger(NuunOptionMembersInjector.class);
     
     private Field field;
     private Annotation clonedAnno;
@@ -43,7 +43,7 @@ public class NuunCliMembersInjector<T> implements MembersInjector<T>
     /**
      * 
      */
-    public NuunCliMembersInjector(Field field, CommandLine commandLine , Annotation clonedAnno)
+    public NuunOptionMembersInjector(Field field, CommandLine commandLine , Annotation clonedAnno)
     {
         this.field = field;
         this.commandLine = commandLine;
@@ -56,7 +56,7 @@ public class NuunCliMembersInjector<T> implements MembersInjector<T>
     @Override
     public void injectMembers(T instance)
     {
-        String value = null;
+        Object value = null;
         NuunOption optionAnno = null;
         
         if (clonedAnno.annotationType() == NuunOption.class)
@@ -74,8 +74,33 @@ public class NuunCliMembersInjector<T> implements MembersInjector<T>
         {
             if(commandLine.hasOption(opt))
             {
-                value = commandLine.getOptionValue(opt);
+                if (optionAnno.arg()  && ! optionAnno.args())
+                {
+                    value = commandLine.getOptionValue(opt);
+                    
+                    if (StringUtils.isEmpty((String) value));
+                    {
+                        if (! optionAnno.optionalArg())
+                        {
+                            // THROW ERRORS 
+                        }
+                    }
+                }
+                
+                if ( ! optionAnno.arg()  && ! optionAnno.args() )
+                {
+                    value = commandLine.hasOption(opt);
+                }
+                
+                if (optionAnno.args())
+                {
+                    value = commandLine.getOptionValues(opt);
+                }
             }
+        } 
+        else if ( ! StringUtils.isBlank(optionAnno.longOpt()))
+        {
+            
         }
         
         

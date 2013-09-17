@@ -22,6 +22,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import org.apache.commons.cli.Option;
+import org.nuunframework.kernel.spi.configuration.NuunConfigurationConverter;
+import org.nuunframework.kernel.spi.configuration.NuunDummyConverter;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target({
@@ -32,13 +34,13 @@ public @interface NuunOption
     /**
      * @return the identification string of the Option.
      */
-    String opt();
+    String opt() default "";
 
     /**
      * logOption is mandatory among all
      * @return an alias and more descriptive identification string
      */
-    String longOpt();
+    String longOpt() default "";
 
     /**
      * @return a description of the function of the option
@@ -53,7 +55,7 @@ public @interface NuunOption
     /**
      * @return a flag to say whether the option takes an argument
      */
-    boolean arg() default false;
+    boolean arg() default true;
 
     /**
      * @return a flag to say whether the option takes more than one argument
@@ -80,6 +82,15 @@ public @interface NuunOption
      *         multipleArgs e.g. if the separator is ',' and the argument string is 'a,b,c' then there are
      *         three argument values, 'a', 'b' and 'c'.
      */
-    char valueSeparator() default ',';
+    char valueSeparator() default '=';
+    
+    /**
+     * @return a converter that will allow transformation from String to Something else 
+     * 
+     * @return
+     */
+    Class<? extends NuunConfigurationConverter<?>> converter() default NuunDummyConverter.class;
+    
+    
 
 }

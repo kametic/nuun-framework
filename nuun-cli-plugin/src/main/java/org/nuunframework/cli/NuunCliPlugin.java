@@ -119,7 +119,6 @@ public class NuunCliPlugin extends AbstractPlugin
             exception("Error in the command line", e);
         }
         
-        
         return InitState.INITIALIZED;
     }
     
@@ -204,6 +203,9 @@ public class NuunCliPlugin extends AbstractPlugin
             {
                 OptionBuilder.hasOptionalArg()  ;
             }
+            
+            // nuun 
+            OptionBuilder.withValueSeparator(nuunOption.valueSeparator());
             
             // opt 
             if ( ! Strings.isNullOrEmpty(nuunOption.opt()))

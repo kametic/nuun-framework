@@ -18,6 +18,7 @@
  */
 package org.nuunframework.cli.samples;
 
+import org.nuunframework.cli.NuunArgs;
 import org.nuunframework.cli.NuunOption;
 
 /**
@@ -25,11 +26,21 @@ import org.nuunframework.cli.NuunOption;
  */
 public class Holder
 {
+    
+    @NuunArgs
+    private String[] arg;
+    
     @NuunOption(opt="o1",longOpt="option1",description="the long description of opt number 1",arg=true)
     private String option1;
     
     @NuunOption(opt="o2",longOpt="option2",description="the long description of opt number 2",arg=true,required=true)
     private String option2;
+
+    @NuunOption(opt="o3",longOpt="option3",description="the long description of opt number 3",arg=false,required=true)
+    private Boolean option3;
+
+    @NuunOption(opt="o4",longOpt="option4",description="the long description of opt number 4",arg=false , args=true ,  numArgs = 3  ,  required=true , valueSeparator='/')
+    private String[] option4;
     
     public String getOption1()
     {
@@ -40,10 +51,20 @@ public class Holder
     {
         return option2;
     }
+    
+    public Boolean getOption3()
+    {
+        return option3;
+    }
 
-    
-    
-    
-    
+    public String[] getOption4()
+    {
+        return option4;
+    }
+
+    public String[] getArg()
+    {
+        return arg;
+    }
     
 }

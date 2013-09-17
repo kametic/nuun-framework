@@ -21,7 +21,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import org.nuunframework.cli.MetaNuunOption;
+import org.nuunframework.cli.NuunOption;
 
 /**
  * 
@@ -29,9 +29,9 @@ import org.nuunframework.cli.MetaNuunOption;
  * @author epo.jemba@kametic.com
  *
  */
-@MetaNuunOption
+@NuunOption(longOpt = "", opt = "")
 @Retention(RetentionPolicy.RUNTIME)
-@Target( ElementType.ANNOTATION_TYPE  )
+@Target( ElementType.FIELD  )
 public @interface FwkOption
 {
     String opt();

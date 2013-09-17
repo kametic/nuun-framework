@@ -43,9 +43,15 @@ public class NuunCliPluginTest
     public void init () throws Exception
     {
         nuunCliService = new NuunCliService();
+
+        String[] argsStrings = new String[] { 
+                "-o1" , "cli1" , //  
+                "--option2" , "cli2" , // 
+                "-o3" ,  //
+                "--option4" , "1/2/3" , // 
+                "arg1" , "arg2" // 
+        };
         
-        List<String> list = Arrays.asList("-o1" , "cli1" , "--option2" , "cli2");
-        String[] argsStrings = (String[]) list.toArray(new String[list.size()]);
         nuunCliService.startSync(argsStrings );
         
     }
@@ -68,6 +74,15 @@ public class NuunCliPluginTest
 
         assertThat( holder.getOption2() ).isNotNull();
         assertThat( holder.getOption2() ).isEqualTo("cli2");
+
+        assertThat( holder.getOption3() ).isNotNull();
+        assertThat( holder.getOption3() ).isTrue();
+        
+        assertThat( holder.getOption4() ).isNotNull();
+        assertThat( holder.getOption4() ).isEqualTo(new String[]{ "1" , "2" , "3" });
+
+        assertThat( holder.getArg() ).isNotNull();
+        assertThat( holder.getArg() ).isEqualTo(new String[]{ "arg1" , "arg2" });
     }
     
     @Test
@@ -76,9 +91,8 @@ public class NuunCliPluginTest
         Kernel kernel = nuunCliService.getKernel();
         Options options = kernel.getMainInjector().getInstance(Options.class);
         
-        
         assertThat(options).isNotNull();
-        assertThat(options.getOptions().size()).isEqualTo(2);
+        assertThat(options.getOptions().size()).isEqualTo(4);
         
         assertThat(options.getOption("o1")).isNotNull();
         assertThat(options.getOption("o1").getDescription()).isEqualTo("the long description of opt number 1");
@@ -90,9 +104,7 @@ public class NuunCliPluginTest
         assertThat(options.getOption("o2").getLongOpt()).isEqualTo("option2");
         assertThat(options.getOption("o2").isRequired()).isTrue();
         
-        assertThat(options.getRequiredOptions().size()).isEqualTo(1);
-        
-        
+        assertThat(options.getRequiredOptions().size()).isEqualTo(3);
     }
 
 }

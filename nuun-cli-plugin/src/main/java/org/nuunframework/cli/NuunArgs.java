@@ -21,14 +21,32 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import org.nuunframework.kernel.spi.configuration.NuunConfigurationConverter;
+import org.nuunframework.kernel.spi.configuration.NuunDummyConverter;
 
+@Retention(RetentionPolicy.RUNTIME)
+@Target({
+    ElementType.FIELD , ElementType.ANNOTATION_TYPE
+})
 /**
  * 
+ * This annotation mark a field as the args of the commandline.
+ * <p>
+ * Type must be an array of String? If a converter is provided an array of the converted class. 
  * 
  * @author epo.jemba@kametic.com
  *
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target( { ElementType.ANNOTATION_TYPE })
-public @interface MetaNuunOption {
+public @interface NuunArgs
+{
+    
+    boolean mandatory () default false;
+    
+    /**
+     * @return a converter that will allow transformation from String to Something else 
+     * 
+     * @return
+     */
+    Class<? extends NuunConfigurationConverter<?>> converter() default NuunDummyConverter.class;
+
 }

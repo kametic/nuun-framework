@@ -22,13 +22,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Future;
 
-import org.apache.commons.cli.Options;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.nuunframework.cli.samples.DummyRunnable;
-import org.nuunframework.cli.samples.Holder;
-import org.nuunframework.kernel.Kernel;
 
 /**
  * @author ejemba

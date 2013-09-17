@@ -99,7 +99,7 @@
 							<goal>perform</goal>
 						</goals>
 						<configuration>
-							<pomFileName>nuun-cli-commons-plugin/pom.xml</pomFileName>
+							<pomFileName>nuun-cli-plugin/pom.xml</pomFileName>
 						</configuration>
 					</execution>
 				</executions>

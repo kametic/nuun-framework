@@ -262,9 +262,16 @@ public class NuunCliPlugin extends AbstractPlugin
                     {
     			        for (Field field : candidate.getDeclaredFields())
     			        {
-    			            if (   field.isAnnotationPresent(annotationClass)   ) 
+    			            if ( field.isAnnotationPresent(annotationClass) ) 
     			            {
     			                return true;
+    			            }
+    			            for (Annotation annotation : field.getAnnotations())
+    			            {
+    			                if ( hasAnnotationDeep(annotation.annotationType(), annotationClass))
+    			                {
+    			                    return true;
+    			                }
     			            }
     			        }
                     }
@@ -279,6 +286,25 @@ public class NuunCliPlugin extends AbstractPlugin
     	};
     }
     
+    boolean hasAnnotationDeep(   Class<? extends Annotation>   from ,  Class<? extends Annotation> toFind)
+    {
+        
+        if (from.equals(toFind))
+        {
+            return true;
+        }
+        
+        for (Annotation anno : from.getAnnotations())
+        {
+            Class<? extends Annotation> annoClass = anno.annotationType();
+            if (!annoClass.getPackage().getName().startsWith("java.lang") && hasAnnotationDeep(annoClass, toFind))
+            {
+                return true;
+            }
+        }
+        
+        return false;
+    }
     
 //    class OptionsDefSpecification extends AbstractSpecification<Class<?>>
 //    {

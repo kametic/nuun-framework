@@ -21,7 +21,10 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import org.apache.commons.cli.Option;
 import org.nuunframework.cli.NuunOption;
+import org.nuunframework.kernel.spi.configuration.NuunConfigurationConverter;
+import org.nuunframework.kernel.spi.configuration.NuunDummyConverter;
 
 /**
  * 
@@ -34,13 +37,24 @@ import org.nuunframework.cli.NuunOption;
 @Target( ElementType.FIELD  )
 public @interface FwkOption
 {
-    String opt();
-    String longOpt();
+    String opt() default "";
+
+    String longOpt() default "";
+
     String description() default "";
-    boolean required() default false; 
-    boolean arg() default false; 
-    boolean args() default false; 
-    boolean optionalArg() default false; 
+    boolean required() default false;
+
+    boolean arg() default true;
+
+    boolean args() default false;
+    
+    int numArgs() default Option.UNINITIALIZED;
+
+    boolean optionalArg() default false;
+
     String argName() default "";
-    char valueSeparator() default ',';
+
+    char valueSeparator() default '=';
+    
+    Class<? extends NuunConfigurationConverter<?>> converter() default NuunDummyConverter.class;
 }

@@ -54,7 +54,7 @@ public class NuunCliPluginCallableTest
     @Test
     public void startSync_works_as_expected () throws Exception
     {
-    	List<String> list = Arrays.asList("-o1" , "cli1" , "--option2" , "cli2");
+    	List<String> list = Arrays.asList("-o1" , "cli1" , "--option2" , "cli2" , "-o3" , "-o4" , "zob");
     	String[] args = (String[]) list.toArray(new String[list.size()]);
     	
     	DummyRunnable dummyRunnable = new DummyRunnable();
@@ -67,7 +67,7 @@ public class NuunCliPluginCallableTest
     @Test
     public void startAsync_works_as_expected () throws Exception
     {
-    	List<String> list = Arrays.asList("-o1" , "cli1" , "--option2" , "cli2");
+    	List<String> list = Arrays.asList("-o1" , "cli1" , "--option2" , "cli2" , "-o3" , "-o4" , "ezre");
     	String[] args = (String[]) list.toArray(new String[list.size()]);
     	
     	DummyRunnable dummyRunnable = new DummyRunnable();

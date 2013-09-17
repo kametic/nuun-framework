@@ -29,6 +29,7 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.nuunframework.kernel.commons.specification.AbstractSpecification;
 import org.nuunframework.kernel.commons.specification.Specification;
 import org.nuunframework.kernel.context.InitContext;
 import org.nuunframework.kernel.plugin.AbstractPlugin;
@@ -246,6 +247,37 @@ public class NuunCliPlugin extends AbstractPlugin
         return classpathScanRequestBuilder().specification(optionDefsSpecification).build();
     }
 
+    protected Specification<Class<?>> fieldAnnotatedWith (final Class<? extends Annotation> annotationClass)
+    {
+    	return new AbstractSpecification<Class<?>> ()
+    	{
+    		@Override
+    		public boolean isSatisfiedBy(Class<?> candidate) {
+    			
+    			if (candidate != null)
+    			{
+    			    try
+                    {
+    			        for (Field field : candidate.getDeclaredFields())
+    			        {
+    			            if (   field.isAnnotationPresent(annotationClass)   ) 
+    			            {
+    			                return true;
+    			            }
+    			        }
+                    }
+                    catch (Throwable throwable)
+                    {
+                        logger.debug("fieldAnnotatedWith : " +candidate +  " missing " + throwable );
+                    }
+    			}
+    			
+    			return false;
+    		}
+    	};
+    }
+    
+    
 //    class OptionsDefSpecification extends AbstractSpecification<Class<?>>
 //    {
 //        public OptionsDefSpecification()

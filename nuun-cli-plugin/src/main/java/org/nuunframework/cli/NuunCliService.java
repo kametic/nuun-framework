@@ -16,6 +16,11 @@
  */
 package org.nuunframework.cli;
 
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
 import org.nuunframework.kernel.Kernel;
 
 /**
@@ -27,15 +32,77 @@ public class NuunCliService
     
     Kernel kernel = null;
     
-    public void start(String[] args)
+    public int startSync(String[] args ) throws Exception
     {
-        if (kernel == null)
-        {
-            kernel = Kernel.createKernel().withContainerContext(args).build();
-            kernel.init();
-            kernel.start();
-        }
+    	return startSync(args,null);
     }
+    
+    public int startSync(String[] args , Callable<Integer> callable) throws Exception
+    {
+        int returnCode = 0;
+    	
+		if (kernelStart(args)) 
+		{
+			if (callable != null) 
+			{
+				kernel.getMainInjector().injectMembers(callable);
+				returnCode = callable.call();
+			}
+		}
+    	
+    	return returnCode;
+    }
+
+    public Future<Integer> startAsync(String[] args ) throws Exception
+    {
+    	return startAsync(args,null);
+    }
+    
+    public Future<Integer> startAsync(String[] args , Callable<Integer> callable) throws Exception
+    {
+    	Future<Integer> future = null;
+    	
+    	if (kernelStart(args)) 
+    	{
+    		if (callable != null) 
+    		{
+    			kernel.getMainInjector().injectMembers(callable);
+    			
+    			ExecutorService newSingleThreadExecutorService = Executors.newSingleThreadExecutor();
+    			
+				future = newSingleThreadExecutorService.submit(callable); 
+    		}
+    	} 
+    	else
+    	{
+			
+		}
+    	
+    	return future;
+    }
+
+	private boolean kernelStart(String[] args) {
+		if (kernel == null)		
+		{
+			kernel = Kernel.createKernel().withContainerContext(args).build();
+			kernel.init();
+			kernel.start();
+			
+			Runtime.getRuntime().addShutdownHook(new Thread()
+		        {
+		            @Override
+		            public void run()
+		            {
+		                NuunCliService.this.stop();
+		            }
+		        });
+			
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
     
     public void stop()
     {

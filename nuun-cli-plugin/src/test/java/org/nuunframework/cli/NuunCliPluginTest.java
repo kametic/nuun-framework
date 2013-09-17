@@ -40,13 +40,13 @@ public class NuunCliPluginTest
     
     
     @Before
-    public void init ()
+    public void init () throws Exception
     {
         nuunCliService = new NuunCliService();
         
         List<String> list = Arrays.asList("-o1" , "cli1" , "--option2" , "cli2");
         String[] argsStrings = (String[]) list.toArray(new String[list.size()]);
-        nuunCliService.start(argsStrings );
+        nuunCliService.startSync(argsStrings );
         
     }
     
@@ -73,8 +73,6 @@ public class NuunCliPluginTest
     @Test
     public void testOptions()
     {
-        
-        
         Kernel kernel = nuunCliService.getKernel();
         Options options = kernel.getMainInjector().getInstance(Options.class);
         

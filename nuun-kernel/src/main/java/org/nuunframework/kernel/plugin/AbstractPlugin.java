@@ -46,6 +46,8 @@ import org.nuunframework.kernel.plugin.request.ClasspathScanRequestBuilder;
 import org.nuunframework.kernel.plugin.request.KernelParamsRequest;
 import org.nuunframework.kernel.plugin.request.KernelParamsRequestBuilder;
 import org.nuunframework.kernel.plugin.request.builders.BindingRequestBuilderMain;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Epo Jemba
@@ -53,6 +55,10 @@ import org.nuunframework.kernel.plugin.request.builders.BindingRequestBuilderMai
 public abstract class AbstractPlugin implements Plugin
 {
 
+    
+    Logger logger = LoggerFactory.getLogger(AbstractPlugin.class);
+    
+    
     protected Context                         context = null;
     protected Object                          containerContext = null;
     protected RoundEnvironment roundEnvironment;
@@ -159,12 +165,22 @@ public abstract class AbstractPlugin implements Plugin
     		@Override
     		public boolean isSatisfiedBy(Class<?> candidate) {
     			
-    			for (Field field : candidate.getDeclaredFields())
+    			if (candidate != null)
     			{
-    				if (   field.isAnnotationPresent(annotationClass)   ) 
-    				{
-    					return true;
-    				}
+    			    try
+                    {
+    			        for (Field field : candidate.getDeclaredFields())
+    			        {
+    			            if (   field.isAnnotationPresent(annotationClass)   ) 
+    			            {
+    			                return true;
+    			            }
+    			        }
+                    }
+                    catch (Throwable throwable)
+                    {
+                        logger.debug("fieldAnnotatedWith : " +candidate +  " missing " + throwable );
+                    }
     			}
     			
     			return false;

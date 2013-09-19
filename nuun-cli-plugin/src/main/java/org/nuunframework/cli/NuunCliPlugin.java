@@ -29,6 +29,7 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.apache.commons.cli.PosixParser;
 import org.nuunframework.kernel.commons.specification.AbstractSpecification;
 import org.nuunframework.kernel.commons.specification.Specification;
 import org.nuunframework.kernel.context.InitContext;
@@ -50,6 +51,7 @@ public class NuunCliPlugin extends AbstractPlugin
     private Options options;
     private String[] lineArguments;
     private CommandLine commandLine;
+    private CommandLineParser providedParser;
 
     @Override
     public String name()
@@ -108,7 +110,15 @@ public class NuunCliPlugin extends AbstractPlugin
         
         
         // Parse Command Line
-        CommandLineParser parser = new BasicParser();
+        CommandLineParser parser = null;
+        if (providedParser == null)
+        {
+            parser = new PosixParser();
+        }
+        else {
+            parser = providedParser;
+        }
+        parser = new BasicParser();
         
         try
         {
@@ -122,6 +132,11 @@ public class NuunCliPlugin extends AbstractPlugin
         return InitState.INITIALIZED;
     }
     
+    public void provideParser(CommandLineParser parser)
+    {
+        this.providedParser = parser;
+        
+    }
     
     /* (non-Javadoc)
      * @see org.nuunframework.kernel.plugin.AbstractPlugin#provideContainerContext(java.lang.Object)

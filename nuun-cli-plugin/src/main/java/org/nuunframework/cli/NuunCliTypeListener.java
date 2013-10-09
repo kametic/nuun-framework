@@ -83,7 +83,7 @@ public class NuunCliTypeListener implements TypeListener
     }
     
     
-    private boolean annotationPresent(Field field , Class<? extends Annotation> annoClass, AnnotationPointer annotationPointer)
+    static boolean annotationPresent(Field field , Class<? extends Annotation> annoClass, AnnotationPointer annotationPointer)
     {
         for (Annotation anno : field.getAnnotations() )
         {

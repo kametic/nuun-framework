@@ -195,8 +195,11 @@ public final class Kernel
                 logger.info("Adding from Plugin {} start.", name);
                 for (URL url : computeAdditionalClasspathScan)
                 {
-                    globalAdditionalClasspath.add(url);
-                    logger.debug(url.toExternalForm());
+                    if (url != null)
+                    {
+                        globalAdditionalClasspath.add(url);
+                        logger.debug(url.toExternalForm());
+                    }
                 }
                 logger.info("Adding from Plugin {} end. {} elements.", name, "" + computeAdditionalClasspathScan.size());
             }

@@ -49,6 +49,7 @@ public class NuunCliPluginTest
                 "--option2" , "cli2" , // 
                 "-o3" ,  //
                 "--option4" , "1/2/3" , // 
+                "-o5" , "cli5" , //  
                 "arg1" , "arg2" // 
         };
         
@@ -81,6 +82,9 @@ public class NuunCliPluginTest
         assertThat( holder.getOption4() ).isNotNull();
         assertThat( holder.getOption4() ).isEqualTo(new String[]{ "1" , "2" , "3" });
 
+        assertThat( holder.getOption5() ).isNotNull();
+        assertThat( holder.getOption5() ).isEqualTo("cli5");
+        
         assertThat( holder.getArg() ).isNotNull();
         assertThat( holder.getArg() ).isEqualTo(new String[]{ "arg1" , "arg2" });
     }
@@ -92,7 +96,7 @@ public class NuunCliPluginTest
         Options options = kernel.getMainInjector().getInstance(Options.class);
         
         assertThat(options).isNotNull();
-        assertThat(options.getOptions().size()).isEqualTo(4);
+        assertThat(options.getOptions().size()).isEqualTo(5);
         
         assertThat(options.getOption("o1")).isNotNull();
         assertThat(options.getOption("o1").getDescription()).isEqualTo("the long description of opt number 1");
@@ -104,7 +108,7 @@ public class NuunCliPluginTest
         assertThat(options.getOption("o2").getLongOpt()).isEqualTo("option2");
         assertThat(options.getOption("o2").isRequired()).isTrue();
         
-        assertThat(options.getRequiredOptions().size()).isEqualTo(3);
+        assertThat(options.getRequiredOptions().size()).isEqualTo(4);
     }
 
 }

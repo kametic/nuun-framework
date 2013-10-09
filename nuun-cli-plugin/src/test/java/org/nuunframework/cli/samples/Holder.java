@@ -41,6 +41,9 @@ public class Holder
 
     @NuunOption(opt="o4",longOpt="option4",description="the long description of opt number 4",arg=false , args=true ,  numArgs = 3  ,  required=true , valueSeparator='/')
     private String[] option4;
+
+    @FwkOption(opt="o5",longOpt="option5",description="the long description of opt number 5",arg=true ,required=true)
+    private String option5;
     
     public String getOption1()
     {
@@ -60,6 +63,11 @@ public class Holder
     public String[] getOption4()
     {
         return option4;
+    }
+    
+    public String getOption5()
+    {
+        return option5;
     }
 
     public String[] getArg()

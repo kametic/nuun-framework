@@ -22,7 +22,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.Option;
@@ -30,6 +29,7 @@ import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
+import org.nuunframework.kernel.commons.AssertUtils;
 import org.nuunframework.kernel.commons.specification.AbstractSpecification;
 import org.nuunframework.kernel.commons.specification.Specification;
 import org.nuunframework.kernel.context.InitContext;
@@ -77,7 +77,6 @@ public class NuunCliPlugin extends AbstractPlugin
             Set<Field> fields = annotatedFields(class1, NuunOption.class);
             for(Field field : fields)
             {
-                logger.debug(">> " +  field);
                 
                 Option option = createOptionFromField(field);
                 
@@ -118,7 +117,6 @@ public class NuunCliPlugin extends AbstractPlugin
         else {
             parser = providedParser;
         }
-        parser = new BasicParser();
         
         try
         {
@@ -185,6 +183,19 @@ public class NuunCliPlugin extends AbstractPlugin
             // 
             NuunOption nuunOption = field.getAnnotation(NuunOption.class);
             
+            if (nuunOption == null) 
+            {
+                for (Annotation anno : field.getAnnotations() )
+                {
+                    if ( AssertUtils.hasAnnotationDeep(anno.annotationType(), NuunOption.class ) )
+                    {
+                        nuunOption = AssertUtils.annotationProxyOf(NuunOption.class, anno);
+                        break;
+                    }
+                }
+            }
+            
+            
             // longopt
             if ( ! Strings.isNullOrEmpty(nuunOption.longOpt()))
             {
@@ -247,6 +258,16 @@ public class NuunCliPlugin extends AbstractPlugin
             {
                 fields.add(field);
             }
+            else {
+                for (Annotation annotation : field.getAnnotations())
+                {
+                    if ( hasAnnotationDeep(annotation.annotationType(), annoClass))
+                    {
+//                        return true;
+                        fields.add(field);
+                    }
+                }
+            }
         }
         
         return fields;
@@ -292,7 +313,7 @@ public class NuunCliPlugin extends AbstractPlugin
                     }
                     catch (Throwable throwable)
                     {
-                        logger.debug("fieldAnnotatedWith : " +candidate +  " missing " + throwable );
+                        logger.trace("fieldAnnotatedWith : " +candidate +  " missing " + throwable );
                     }
     			}
     			

@@ -18,6 +18,7 @@ package org.nuunframework.cli;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.util.Map;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
@@ -35,14 +36,16 @@ import com.google.inject.spi.TypeListener;
 public class NuunCliTypeListener implements TypeListener
 {
 
-    private CommandLine commandLine;
+//    private CommandLine commandLine;
+    private Map<Class<?>, CommandLine> contextualCommandLineMap;
 
     /**
      * 
      */
-    public NuunCliTypeListener(CommandLine  commandLine)
+    public NuunCliTypeListener(Map<Class<?>, CommandLine>  contextualCommandLineMap)
     {
-        this.commandLine = commandLine;
+        this.contextualCommandLineMap = contextualCommandLineMap;
+        
     }
 
     /* (non-Javadoc)
@@ -60,7 +63,7 @@ public class NuunCliTypeListener implements TypeListener
                 {
                     if ( AssertUtils.isEquivalent(NuunOption.class, annotationPointer.annotation.annotationType()) )
                     {
-                        encounter.register(new NuunOptionMembersInjector<I>(field, this.commandLine ,  annotationPointer.annotation));
+                        encounter.register(new NuunOptionMembersInjector<I>(field, this.contextualCommandLineMap.get(c) ,  annotationPointer.annotation));
                     }
                     else 
                     {
@@ -71,7 +74,7 @@ public class NuunCliTypeListener implements TypeListener
                 {
                     if ( AssertUtils.isEquivalent(NuunArgs.class, annotationPointer.annotation.annotationType()) )
                     {
-                        encounter.register(new NuunArgsMembersInjector<I>(field, this.commandLine ,  annotationPointer.annotation));
+                        encounter.register(new NuunArgsMembersInjector<I>(field, this.contextualCommandLineMap.get(c) ,  annotationPointer.annotation));
                     }
                     else 
                     {

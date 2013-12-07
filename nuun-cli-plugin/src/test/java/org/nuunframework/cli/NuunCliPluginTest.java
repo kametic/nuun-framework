@@ -16,10 +16,11 @@
  */
 package org.nuunframework.cli;
 
-import static org.fest.assertions.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.cli.Options;
 import org.junit.After;
@@ -27,6 +28,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.nuunframework.cli.samples.Holder;
 import org.nuunframework.kernel.Kernel;
+
+import com.google.inject.Key;
+import com.google.inject.TypeLiteral;
 
 /**
  * @author ejemba
@@ -93,22 +97,25 @@ public class NuunCliPluginTest
     public void testOptions()
     {
         Kernel kernel = nuunCliService.getKernel();
-        Options options = kernel.getMainInjector().getInstance(Options.class);
+        Options globalOptions = kernel.getMainInjector().getInstance(Options.class);
+        Map<Class<?>, Options> optionsMap = kernel.getMainInjector().getInstance(Key.get(  new TypeLiteral<Map<Class<?>, Options>> () {} ));
+        Options holdersSpecificsOptions = optionsMap.get(Holder.class); 
         
-        assertThat(options).isNotNull();
-        assertThat(options.getOptions().size()).isEqualTo(5);
+        assertThat(globalOptions).isNotNull();
+        assertThat(holdersSpecificsOptions.getOptions().size()).isEqualTo(5);
+        assertThat(globalOptions.getOptions().size()).isGreaterThan(5);
         
-        assertThat(options.getOption("o1")).isNotNull();
-        assertThat(options.getOption("o1").getDescription()).isEqualTo("the long description of opt number 1");
-        assertThat(options.getOption("o1").getLongOpt()).isEqualTo("option1");
-        assertThat(options.getOption("o1").isRequired()).isFalse();
-        
-        assertThat(options.getOption("o2")).isNotNull();
-        assertThat(options.getOption("o2").getDescription()).isEqualTo("the long description of opt number 2");
-        assertThat(options.getOption("o2").getLongOpt()).isEqualTo("option2");
-        assertThat(options.getOption("o2").isRequired()).isTrue();
-        
-        assertThat(options.getRequiredOptions().size()).isEqualTo(4);
+        assertThat(holdersSpecificsOptions.getOption("o1")).isNotNull();
+        assertThat(holdersSpecificsOptions.getOption("o1").getDescription()).isEqualTo("the long description of opt number 1");
+        assertThat(holdersSpecificsOptions.getOption("o1").getLongOpt()).isEqualTo("option1");
+        assertThat(holdersSpecificsOptions.getOption("o1").isRequired()).isFalse();
+        assertThat(holdersSpecificsOptions.getOption("o2")).isNotNull();
+
+        assertThat(holdersSpecificsOptions.getOption("o2").getDescription()).isEqualTo("the long description of opt number 2");
+        assertThat(holdersSpecificsOptions.getOption("o2").getLongOpt()).isEqualTo("option2");
+        assertThat(holdersSpecificsOptions.getOption("o2").isRequired()).isTrue();
+
+        assertThat(holdersSpecificsOptions.getRequiredOptions().size()).isEqualTo(4);
     }
 
 }

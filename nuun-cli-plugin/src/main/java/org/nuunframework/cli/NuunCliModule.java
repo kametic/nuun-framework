@@ -16,10 +16,16 @@
  */
 package org.nuunframework.cli;
 
+import java.util.Map;
+import java.util.Map.Entry;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.TypeLiteral;
 import com.google.inject.matcher.Matchers;
 
 /**
@@ -28,17 +34,30 @@ import com.google.inject.matcher.Matchers;
  */
 public class NuunCliModule extends AbstractModule
 {
+    Logger logger = LoggerFactory.getLogger(NuunCliModule.class);
     
     private Options options;
     private CommandLine commandLine;
+    private Map<Class, Class> bindings;
+
+    private Map<Class<?>, CommandLine> contextualCommandLineMap;
+
+    private Map<Class<?>, Options> byClassOptions;
 
     /**
+     * @param contextualCommandLineMap 
+     * @param byClassOptions 
+     * @param bindings 
      * 
      */
-    public NuunCliModule(CommandLine commandLine, Options options)
+    @SuppressWarnings("rawtypes")
+    public NuunCliModule(CommandLine commandLine, Options options, Map<Class<?>, CommandLine> contextualCommandLineMap, Map<Class<?>, Options> byClassOptions, Map<Class, Class> bindings)
     {
         this.commandLine = commandLine;
         this.options = options;
+        this.contextualCommandLineMap = contextualCommandLineMap;
+        this.byClassOptions = byClassOptions;
+        this.bindings = bindings;
     }
     
     
@@ -49,7 +68,15 @@ public class NuunCliModule extends AbstractModule
     protected void configure()
     {
         bind(Options.class).toInstance(options);
-        bindListener(Matchers.any(), new NuunCliTypeListener(commandLine));
+        // Map<Class<?>, Options> byClassOptions
+//        TypeLiteral typeLiteral= ;
+        bind (new TypeLiteral<Map<Class<?>, Options>> () {} ).toInstance(this.byClassOptions);
+        bindListener(Matchers.any(), new NuunCliTypeListener(contextualCommandLineMap));
+        for( Entry<Class, Class> binding : bindings.entrySet()  )
+        {
+            logger.info(  String.format( "Binding %s to %s."   , binding.getKey() , binding.getValue()));
+            bind(binding.getKey()).to(binding.getValue());
+        }
     }
 
 }

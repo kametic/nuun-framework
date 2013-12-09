@@ -16,6 +16,8 @@
  */
 package org.nuunframework.cli;
 
+import java.util.concurrent.Future;
+
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,9 +31,9 @@ import com.google.inject.spi.Message;
  * @author epo.jemba@kametic.com
  *
  */
-public class NuunRunner
+public class NuunRunnerDaemon
 {
-    static Logger logger = LoggerFactory.getLogger(NuunRunner.class);
+    static Logger logger = LoggerFactory.getLogger(NuunRunnerDaemon.class);
     
     public static Injector injector;
     
@@ -39,15 +41,15 @@ public class NuunRunner
     
     public static void main(String[] args) 
     {
-        /* Debug mode activated ? */
-        boolean inDebugMode = ! StringUtils.isBlank(System.getProperty("debug"));
-        
+        logger.info("Started in async");
         NuunCliService nuunCliService = new NuunCliService();
         
         int returnCode = -1;
         
         try {
-            returnCode = nuunCliService.startSync(args, NUUN_CALLABLE  );
+            Future<Integer> startAsync = nuunCliService.startAsync(args, NUUN_CALLABLE  );
+            returnCode = startAsync.get();
+            logger.info("return code {}" , returnCode);
         } 
         catch (ConfigurationException e) 
         {
@@ -67,8 +69,7 @@ public class NuunRunner
         } finally {
             // We exit with the matching return code.
             logger.info("Exiting the application");
-            if (! inDebugMode)
-                System.exit(returnCode);
+            
         }
     }
     

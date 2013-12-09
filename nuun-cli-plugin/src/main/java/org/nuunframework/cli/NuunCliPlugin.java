@@ -93,8 +93,8 @@ public class NuunCliPlugin extends AbstractPlugin
     public InitState init(InitContext initContext)
     {
        // sanity check         
-        if (lineArguments == null || lineArguments.length == 0)
-            exception("Empty or Null command line has been provided to nuun-cli-plugin");
+//        if (lineArguments == null || lineArguments.length == 0)
+//            exception("Empty or Null command line has been provided to nuun-cli-plugin");
         
         
         // Parser initialization
@@ -152,6 +152,7 @@ public class NuunCliPlugin extends AbstractPlugin
                 logger.error("  message : " + entry.getValue().getMessage()); 
                 
             }
+            throw new PluginException("no command line context were fullfilled. see previous errors.");
         }
         
         

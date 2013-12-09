@@ -24,6 +24,8 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.nuunframework.kernel.commons.AssertUtils;
 import org.nuunframework.kernel.plugin.PluginException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.inject.TypeLiteral;
 import com.google.inject.spi.TypeEncounter;
@@ -35,6 +37,8 @@ import com.google.inject.spi.TypeListener;
  */
 public class NuunCliTypeListener implements TypeListener
 {
+    
+    Logger logger = LoggerFactory.getLogger(NuunCliTypeListener.class);
 
 //    private CommandLine commandLine;
     private Map<Class<?>, CommandLine> contextualCommandLineMap;
@@ -63,7 +67,10 @@ public class NuunCliTypeListener implements TypeListener
                 {
                     if ( AssertUtils.isEquivalent(NuunOption.class, annotationPointer.annotation.annotationType()) )
                     {
-                        encounter.register(new NuunOptionMembersInjector<I>(field, this.contextualCommandLineMap.get(c) ,  annotationPointer.annotation));
+                        if  (this.contextualCommandLineMap.get(c) != null )
+                           encounter.register(new NuunOptionMembersInjector<I>(field, this.contextualCommandLineMap.get(c) ,  annotationPointer.annotation));
+                        else
+                            logger.info("warning : no commandline for context " + c);
                     }
                     else 
                     {
@@ -74,7 +81,10 @@ public class NuunCliTypeListener implements TypeListener
                 {
                     if ( AssertUtils.isEquivalent(NuunArgs.class, annotationPointer.annotation.annotationType()) )
                     {
-                        encounter.register(new NuunArgsMembersInjector<I>(field, this.contextualCommandLineMap.get(c) ,  annotationPointer.annotation));
+                        if  (this.contextualCommandLineMap.get(c) != null )
+                           encounter.register(new NuunArgsMembersInjector<I>(field, this.contextualCommandLineMap.get(c) ,  annotationPointer.annotation));
+                        else
+                            logger.info("warning no commandline for context " + c);
                     }
                     else 
                     {

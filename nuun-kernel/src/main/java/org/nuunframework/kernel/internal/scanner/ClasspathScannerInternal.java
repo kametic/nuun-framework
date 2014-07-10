@@ -62,22 +62,23 @@ import com.google.common.collect.Sets;
 class ClasspathScannerInternal implements ClasspathScanner
 {
 
-    Logger                     logger = LoggerFactory.getLogger(ClasspathScannerInternal.class);
+    Logger                          logger = LoggerFactory.getLogger(ClasspathScannerInternal.class);
 
-    private final List<String> packageRoots;
-    private final boolean      reachAbstractClass;
-    private Set<URL>           additionalClasspath;
-    private Set<URL>           urls;
+    private final List<String>      packageRoots;
+    private final boolean           reachAbstractClass;
+    private final ClasspathStrategy classpathStrategy;
+    private Set<URL>                additionalClasspath;
+    private Set<URL>                urls;
 
     private final List<ScannerCommand> commands;
 
-    public ClasspathScannerInternal(String... packageRoots_)
+    public ClasspathScannerInternal(ClasspathStrategy classpathStrategy, String... packageRoots_)
     {
-        this(false, null, packageRoots_);
+        this(classpathStrategy, false, null, packageRoots_);
 
     }
 
-    public ClasspathScannerInternal(boolean reachAbstractClass, String packageRoot, String... packageRoots_)
+    public ClasspathScannerInternal(ClasspathStrategy classpathStrategy, boolean reachAbstractClass, String packageRoot, String... packageRoots_)
     {
         this.packageRoots = new LinkedList<String>();
 
@@ -91,6 +92,7 @@ class ClasspathScannerInternal implements ClasspathScanner
             this.packageRoots.add(packageRoot_);
         }
         this.reachAbstractClass = reachAbstractClass;
+        this.classpathStrategy = classpathStrategy;
         commands = new ArrayList<ClasspathScannerInternal.ScannerCommand>();
     }
 
@@ -669,15 +671,26 @@ class ClasspathScannerInternal implements ClasspathScanner
         {
             urls = new HashSet<URL>();
 
-            if (this.additionalClasspath != null)
-            {
-                urls.addAll(this.additionalClasspath);
+            switch(classpathStrategy) {
+                case SYSTEM:
+                    urls.addAll(ClasspathHelper.forJavaClassPath());
+                    break;
+                case CLASSLOADER:
+                    urls.addAll(ClasspathHelper.forClassLoader());
+                    break;
+                case AUTO:
+                    urls.addAll(ClasspathHelper.forJavaClassPath());
+                    urls.addAll(ClasspathHelper.forClassLoader());
+                    break;
+                case MANUAL:
+                    if (this.additionalClasspath != null)
+                    {
+                        urls.addAll(this.additionalClasspath);
+                    }
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unsupported classpath strategy " + classpathStrategy.toString());
             }
-            
-//            if (StringUtils.isNotEmpty(prefix(qualifiedName)))
-
-            urls.addAll(ClasspathHelper.forJavaClassPath());
-            // urls.addAll(ClasspathHelper.forClassLoader(ClasspathHelper.classLoaders()));
         }
 
         return urls;

@@ -33,6 +33,7 @@ import javax.annotation.Nullable;
 
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.nuunframework.kernel.Kernel;
 import org.nuunframework.kernel.KernelException;
 import org.nuunframework.kernel.annotations.KernelModule;
 import org.nuunframework.kernel.commons.specification.Specification;
@@ -41,6 +42,7 @@ import org.nuunframework.kernel.internal.scanner.ClasspathScanner;
 import org.nuunframework.kernel.internal.scanner.ClasspathScanner.Callback;
 import org.nuunframework.kernel.internal.scanner.ClasspathScanner.CallbackResources;
 import org.nuunframework.kernel.internal.scanner.ClasspathScannerFactory;
+import org.nuunframework.kernel.internal.scanner.ClasspathStrategy;
 import org.nuunframework.kernel.plugin.Plugin;
 import org.nuunframework.kernel.plugin.request.RequestType;
 import org.slf4j.Logger;
@@ -87,6 +89,7 @@ public class InitContextInternal implements InitContext
     private List<Module>                                           childOverridingModules;
     private List<String>                                           packageRoots;
     private Set<URL>                                               additionalClasspathScan;
+    private ClasspathStrategy                                      classpathStrategy;
 
     private Set<Class<?>>                                               classesToBind;
     private Map<Class<?> , Object>                                       classesWithScopes;
@@ -118,6 +121,16 @@ public class InitContextInternal implements InitContext
      */
     public InitContextInternal(String initialPropertiesPrefix, Map<String, String> kernelParams)
     {
+        String classpathStrategyParam = kernelParams.get(Kernel.NUUN_CP_STRATEGY);
+        if (classpathStrategyParam != null)
+        {
+            this.classpathStrategy = ClasspathStrategy.valueOf(classpathStrategyParam.toUpperCase());
+        }
+        else
+        {
+            this.classpathStrategy = ClasspathStrategy.AUTO;
+        }
+
         this.packageRoots = new LinkedList<String>();
         this.initialPropertiesPrefix = initialPropertiesPrefix;
         this.kernelParams = kernelParams;
@@ -169,7 +182,7 @@ public class InitContextInternal implements InitContext
     {
         String[] rawArrays = new String[this.packageRoots.size()];
         this.packageRoots.toArray(rawArrays);
-        this.classpathScanner = new ClasspathScannerFactory().create( this.additionalClasspathScan , rawArrays);
+        this.classpathScanner = new ClasspathScannerFactory().create(this.classpathStrategy, this.additionalClasspathScan , rawArrays);
         
     }
     

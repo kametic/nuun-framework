@@ -50,8 +50,8 @@ public class ClasspathScannerInternalTest
     @BeforeClass
     public static void init()
     {
-        underTest = new ClasspathScannerInternal("","META-INF.properties,"+MyModule2.class.getPackage().getName());
-        underTest2 = new ClasspathScannerInternal(true ,"", "META-INF.properties,"+MyModule2.class.getPackage().getName());
+        underTest = new ClasspathScannerInternal(ClasspathStrategy.AUTO, "","META-INF.properties,"+MyModule2.class.getPackage().getName());
+        underTest2 = new ClasspathScannerInternal(ClasspathStrategy.AUTO, true ,"", "META-INF.properties,"+MyModule2.class.getPackage().getName());
         
         cb = new TestCallback();
         cbr = new TestCallbackResources();

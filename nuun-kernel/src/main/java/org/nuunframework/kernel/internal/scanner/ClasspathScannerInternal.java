@@ -745,7 +745,7 @@ class ClasspathScannerInternal implements ClasspathScanner
 
             if (a.charAt(i) != b.charAt(j))
             {
-                return l > threshold ? a.substring(Math.max(i, k)) : null;
+                return l >= threshold ? a.substring(Math.max(i, k)) : null;
             }
 
             i--;

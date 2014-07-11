@@ -175,7 +175,7 @@ public class ClasspathScannerInternalTest
         Collection<URL> urlCollection = buildURLCollection(true, false);
         Collection<URL> deduplicateUrlCollection = underTest.deduplicate(urlCollection);
 
-        assertThat(deduplicateUrlCollection.size()).isEqualTo(urlCollection.size() / 2);
+        assertThat(deduplicateUrlCollection.size()).isEqualTo(urlCollection.size() / 2 - 1);
     }
 
     @Test
@@ -184,7 +184,7 @@ public class ClasspathScannerInternalTest
         Collection<URL> urlCollection = buildURLCollection(true, true);
         Collection<URL> deduplicateUrlCollection = underTest.deduplicate(urlCollection);
 
-        assertThat(deduplicateUrlCollection.size()).isEqualTo(urlCollection.size() / 3);
+        assertThat(deduplicateUrlCollection.size()).isEqualTo(urlCollection.size() / 3 - 1);
     }
 
     @Test
@@ -193,7 +193,7 @@ public class ClasspathScannerInternalTest
         Collection<URL> urlCollection = buildURLCollection(false, false);
         Collection<URL> deduplicateUrlCollection = underTest.deduplicate(urlCollection);
 
-        assertThat(deduplicateUrlCollection.size()).isEqualTo(urlCollection.size());
+        assertThat(deduplicateUrlCollection.size()).isEqualTo(urlCollection.size() - 1);
     }
 
     @Test

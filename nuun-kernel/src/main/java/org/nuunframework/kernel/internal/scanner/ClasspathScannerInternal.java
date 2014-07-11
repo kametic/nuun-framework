@@ -20,6 +20,7 @@ import static org.reflections.util.FilterBuilder.prefix;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Modifier;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -726,6 +727,10 @@ class ClasspathScannerInternal implements ClasspathScanner
 
     private String findLongestSuffix(String a, String b, int threshold)
     {
+        if (a.equals(b)) {
+            return a;
+        }
+
         int i = a.length() - 1;
         int j = b.length() - 1;
         int k = -1;
@@ -752,7 +757,21 @@ class ClasspathScannerInternal implements ClasspathScanner
 
     Set<URL> deduplicate(Collection<URL> urlCollection)
     {
-        List<URL> urlList = new ArrayList<URL>(urlCollection);
+        List<URL> urlList = new ArrayList<URL>();
+
+        for (URL url : urlCollection) {
+            if (classpathStrategy.isRemoveTrailingSlash()) {
+                String externalForm = url.toExternalForm();
+                try {
+                    urlList.add(externalForm.endsWith("/") ? new URL(externalForm.substring(0, externalForm.length() - 1)) : url);
+                } catch (MalformedURLException e) {
+                    logger.warn("Unable to remove trailing slash from URL " + externalForm);
+                }
+            } else {
+                urlList.add(url);
+            }
+        }
+
         Collections.sort(urlList, new Comparator<URL>()
         {
             @Override

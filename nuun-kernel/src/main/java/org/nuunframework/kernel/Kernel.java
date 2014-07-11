@@ -73,6 +73,7 @@ public final class Kernel
     public static final String                       NUUN_CP_STRATEGY_NAME  = "nuun.classpath.strategy.name";
     public static final String                       NUUN_CP_STRATEGY_DEDUP = "nuun.classpath.strategy.deduplicate";
     public static final String                       NUUN_CP_STRATEGY_ADD   = "nuun.classpath.strategy.additional";
+    public static final String                       NUUN_CP_STRATEGY_SLASH   = "nuun.classpath.strategy.remove-trailing-slash";
     public static final String                       NUUN_CP_STRATEGY_TH    = "nuun.classpath.strategy.threshold";
     public static final String                       KERNEL_PREFIX_NAME     = "Kernel-";
     private final int                                MAXIMAL_ROUND_NUMBER   = 50;

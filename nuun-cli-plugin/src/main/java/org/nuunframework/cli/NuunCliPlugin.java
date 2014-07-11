@@ -16,18 +16,9 @@
  */
 package org.nuunframework.cli;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
+import com.google.common.base.Strings;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.Option;
@@ -48,10 +39,17 @@ import org.nuunframework.kernel.plugin.request.ClasspathScanRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Strings;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 public class NuunCliPlugin extends AbstractPlugin
 {
@@ -92,11 +90,6 @@ public class NuunCliPlugin extends AbstractPlugin
     @Override
     public InitState init(InitContext initContext)
     {
-       // sanity check         
-//        if (lineArguments == null || lineArguments.length == 0)
-//            exception("Empty or Null command line has been provided to nuun-cli-plugin");
-        
-        
         // Parser initialization
         CommandLineParser parser = null;
         if (providedParser == null)
@@ -114,7 +107,7 @@ public class NuunCliPlugin extends AbstractPlugin
             for (Class<?> class1 : collection) {
                 bindings.put(NuunCliHandler.class, class1);
                 // for now only one CommandLineHandler
-                break; 
+                break;
             }
         }
         
@@ -125,37 +118,19 @@ public class NuunCliPlugin extends AbstractPlugin
         
         byClassOptions = createOptions(collection);
  
-        
-        boolean oneParsing = false;
-        Map<Class<?>, ParseException> parsingErrors = Maps.newHashMap();
-        for (Entry<Class<?>, Options> entry : byClassOptions.entrySet()) 
+        for (Entry<Class<?>, Options> entry : byClassOptions.entrySet())
         {
             try
             {
                 commandLine = parser.parse(  entry.getValue(), lineArguments);
-                oneParsing = true;
                 contextualCommandLineMap.put(entry.getKey(), commandLine);
             }
             catch (ParseException e)
             {
-                parsingErrors.put(entry.getKey(), e);
-//                logException("Error in the command line", e);
+                logger.debug("Error during option parse for class " + entry.getKey());
             }
         }
-        if (! oneParsing ) 
-        {
-            logger.error("Errors occurs when parsing. List by context :  *********************************" );
-            logger.error(" for commandLine : \""  + treat (lineArguments) + "\"");
-            for (Entry<Class<?>, ParseException> entry : parsingErrors.entrySet())
-            {
-                logger.error("Current context : " + entry.getKey()); 
-                logger.error("  message : " + entry.getValue().getMessage()); 
-                
-            }
-            throw new PluginException("no command line context were fullfilled. see previous errors.");
-        }
-        
-        
+
         return InitState.INITIALIZED;
     }
 
@@ -233,7 +208,14 @@ public class NuunCliPlugin extends AbstractPlugin
     @Override
     public void provideContainerContext(Object containerContext)
     {
-        lineArguments = (String[]) containerContext;
+        if (containerContext instanceof String[])
+        {
+            lineArguments = (String[]) containerContext;
+        }
+        else
+        {
+            lineArguments = new String[0];
+        }
     }
     
     /* (non-Javadoc)

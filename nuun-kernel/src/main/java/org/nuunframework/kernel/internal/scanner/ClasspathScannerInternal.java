@@ -22,9 +22,9 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -32,9 +32,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import javax.annotation.Nullable;
-
-import org.apache.commons.lang.StringUtils;
 import org.nuunframework.kernel.KernelException;
 import org.nuunframework.kernel.annotations.Ignore;
 import org.nuunframework.kernel.commons.AssertUtils;
@@ -325,7 +322,7 @@ class ClasspathScannerInternal implements ClasspathScanner
                       Collection<String> collectionOfString = multimap.get(k);
                       typesAnnotatedWith.addAll(toClasses(collectionOfString));
                   }
-                  callback .callback( (Collection) postTreatment((Collection) typesAnnotatedWith));
+                  callback .callback((Collection) postTreatment((Collection) typesAnnotatedWith));
               }
               
               @Override
@@ -671,26 +668,33 @@ class ClasspathScannerInternal implements ClasspathScanner
         {
             urls = new HashSet<URL>();
 
-            switch(classpathStrategy) {
+            switch (classpathStrategy.getStrategy())
+            {
                 case SYSTEM:
                     urls.addAll(ClasspathHelper.forJavaClassPath());
                     break;
                 case CLASSLOADER:
                     urls.addAll(ClasspathHelper.forClassLoader());
                     break;
-                case AUTO:
+                case ALL:
                     urls.addAll(ClasspathHelper.forJavaClassPath());
                     urls.addAll(ClasspathHelper.forClassLoader());
                     break;
-                case MANUAL:
-                    if (this.additionalClasspath != null)
-                    {
-                        urls.addAll(this.additionalClasspath);
-                    }
+                case NONE:
                     break;
                 default:
                     throw new IllegalArgumentException("Unsupported classpath strategy " + classpathStrategy.toString());
             }
+
+            if (classpathStrategy.isAdditional() && this.additionalClasspath != null)
+            {
+                urls.addAll(this.additionalClasspath);
+            }
+        }
+
+        if (classpathStrategy.isDeduplicate())
+        {
+            this.urls = deduplicate(urls);
         }
 
         return urls;
@@ -718,5 +722,60 @@ class ClasspathScannerInternal implements ClasspathScanner
     private <T> Collection<Class<? extends T>> toClasses(Collection<String> names)
     {
         return ReflectionUtils.<T> forNames(names, this.getClass().getClassLoader());
+    }
+
+    private String findLongestSuffix(String a, String b, int threshold)
+    {
+        int i = a.length() - 1;
+        int j = b.length() - 1;
+        int k = -1;
+        int l = 0;
+
+        while (i >= 0 && j >= 0) {
+            if (a.charAt(i) == '/')
+            {
+                k = i;
+                l++;
+            }
+
+            if (a.charAt(i) != b.charAt(j))
+            {
+                return l > threshold ? a.substring(Math.max(i, k)) : null;
+            }
+
+            i--;
+            j--;
+        }
+
+        return null;
+    }
+
+    Set<URL> deduplicate(Collection<URL> urlCollection)
+    {
+        List<URL> urlList = new ArrayList<URL>(urlCollection);
+        Collections.sort(urlList, new Comparator<URL>()
+        {
+            @Override
+            public int compare(URL url1, URL url2) {
+                return new StringBuilder(url1.toExternalForm()).reverse().toString().compareTo(new StringBuilder(url2.toExternalForm()).reverse().toString());
+            }
+        });
+
+        Set<URL> result = new HashSet<URL>();
+        URL previous = null;
+
+        for (URL current : urlList)
+        {
+            String longestSuffix = previous == null ? null : findLongestSuffix(current.toExternalForm(), previous.toExternalForm(), classpathStrategy.getThreshold());
+
+            if (longestSuffix == null)
+            {
+                result.add(current);
+            }
+
+            previous = current;
+        }
+
+        return result;
     }
 }

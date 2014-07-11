@@ -29,8 +29,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.annotation.Nullable;
-
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.nuunframework.kernel.Kernel;
@@ -50,8 +48,6 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
-import com.google.common.base.Predicates;
-import com.google.common.collect.Collections2;
 import com.google.common.collect.FluentIterable;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
@@ -121,16 +117,17 @@ public class InitContextInternal implements InitContext
      */
     public InitContextInternal(String initialPropertiesPrefix, Map<String, String> kernelParams)
     {
-        String classpathStrategyParam = kernelParams.get(Kernel.NUUN_CP_STRATEGY);
-        if (classpathStrategyParam != null)
-        {
-            this.classpathStrategy = ClasspathStrategy.valueOf(classpathStrategyParam.toUpperCase());
-        }
-        else
-        {
-            this.classpathStrategy = ClasspathStrategy.AUTO;
-        }
+        String classpathStrategyNameParam = kernelParams.get(Kernel.NUUN_CP_STRATEGY_NAME);
+        String classpathStrategyAdditionalParam = kernelParams.get(Kernel.NUUN_CP_STRATEGY_ADD);
+        String classpathStrategyDeduplicateParam = kernelParams.get(Kernel.NUUN_CP_STRATEGY_DEDUP);
+        String classpathStrategyThresholdParam = kernelParams.get(Kernel.NUUN_CP_STRATEGY_TH);
 
+        this.classpathStrategy = new ClasspathStrategy(
+                classpathStrategyNameParam == null ? ClasspathStrategy.Strategy.ALL : ClasspathStrategy.Strategy.valueOf(classpathStrategyNameParam.toUpperCase()),
+                classpathStrategyAdditionalParam == null ? true : Boolean.parseBoolean(classpathStrategyAdditionalParam),
+                classpathStrategyDeduplicateParam == null ? true : Boolean.parseBoolean(classpathStrategyDeduplicateParam),
+                classpathStrategyThresholdParam == null ? ClasspathStrategy.DEFAULT_THRESHOLD : Integer.parseInt(classpathStrategyThresholdParam)
+        );
         this.packageRoots = new LinkedList<String>();
         this.initialPropertiesPrefix = initialPropertiesPrefix;
         this.kernelParams = kernelParams;

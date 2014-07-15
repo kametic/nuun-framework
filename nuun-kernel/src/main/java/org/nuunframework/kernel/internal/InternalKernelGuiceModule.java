@@ -219,40 +219,40 @@ public class InternalKernelGuiceModule extends AbstractModule
     	Long finalOrder = 0l;    	
     	boolean reachAtLeastOnce = false;
     	
-        outer: for(Annotation annotation : moduleCläss.getAnnotations())
+        for(Annotation annotation : moduleCläss.getAnnotations())
         {
             if ( Matchers.annotatedWith(Concern.class).matches(annotation.annotationType()) )
             {
                 reachAtLeastOnce = true;
             	Concern concern = annotation.annotationType().getAnnotation(Concern.class);
-                switch (concern.priority()) 
+                switch (concern.priority())
                 {
                     case HIGHEST:
-                        finalOrder += ( 2000 + concern.order() );
+                        finalOrder +=  (3L << 32)  + concern.order();
                         break;
                     case HIGHER:
-                        finalOrder += ( 200 + concern.order() );
+                        finalOrder +=  (2L << 32) + concern.order();
                         break;
                     case HIGH:
-                        finalOrder += ( 20 + concern.order() );
+                        finalOrder +=  (1L << 32) + concern.order();
                         break;
                     case NORMAL:
-                        finalOrder += ( 0 + concern.order() );
+                        finalOrder =   (long)concern.order();
                         break;
                     case LOW:
-                        finalOrder -= ( 20 + concern.order() );
+                        finalOrder -=  (1L << 32) + concern.order();
                         break;
                     case LOWER:
-                        finalOrder -= ( 200 + concern.order() );
+                        finalOrder -=  (2L << 32) + concern.order();
                         break;
                     case LOWEST:
-                        finalOrder -= ( 2000 + concern.order() );
+                        finalOrder -=  (3L << 32) + concern.order();
                         break;
                     default:
                         break;
                 }
                 
-                break outer;
+                break;
             }
         }
         

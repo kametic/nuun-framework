@@ -240,8 +240,8 @@ public class InitContextInternal implements InitContext
                     FluentIterable<Module> nominals = FluentIterable.from(scanResult2).filter( not(new IsModuleOverriding())  ).transform(new ModuleClass2Instance());
                     FluentIterable<Module> overriders = FluentIterable.from(scanResult2).filter( new IsModuleOverriding() ).transform(new ModuleClass2Instance());
                     
-                    childModules.addAll(nominals.toImmutableSet());
-                    childOverridingModules.addAll(overriders.toImmutableSet());
+                    childModules.addAll(nominals.toSet());
+                    childOverridingModules.addAll(overriders.toSet());
                 }
             };
             this.classpathScanner.scanClasspathForAnnotation(KernelModule.class , callback); // OK

@@ -22,21 +22,21 @@ import java.util.Set;
 
 public class ClasspathScannerFactory
 {
-    public ClasspathScanner create(Set<URL> additionalClasspath , String... packageRoot)
+    public ClasspathScanner create(ClasspathStrategy classpathStrategy, Set<URL> additionalClasspath , String... packageRoot)
     {
-        ClasspathScannerInternal classpathScannerInternal = new ClasspathScannerInternal(packageRoot);
+        ClasspathScannerInternal classpathScannerInternal = new ClasspathScannerInternal(classpathStrategy, packageRoot);
         classpathScannerInternal.setAdditionalClasspath(additionalClasspath);
         return classpathScannerInternal;
     }
 
-    public ClasspathScanner create(String... packageRoot)
+    public ClasspathScanner create(ClasspathStrategy classpathStrategy, String... packageRoot)
     {
-        return new ClasspathScannerInternal(packageRoot);
+        return new ClasspathScannerInternal(classpathStrategy, packageRoot);
     }
 
-    public ClasspathScanner create( boolean reachAbstractClass ,  String packageRoot,String... packageRoots )
+    public ClasspathScanner create(ClasspathStrategy classpathStrategy, boolean reachAbstractClass ,  String packageRoot,String... packageRoots )
     {
-        return new ClasspathScannerInternal(reachAbstractClass , packageRoot ,packageRoots);
+        return new ClasspathScannerInternal(classpathStrategy, reachAbstractClass , packageRoot ,packageRoots);
     }
 
 }

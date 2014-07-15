@@ -76,11 +76,11 @@ public class InternalKernelModuleTest
     @Test
     public void computeOrder_should_works ()
     {
-    	Assertions.assertThat( underTest.computeOrder(SecurityPlugin.Module.class)).isEqualTo(2000);
-    	Assertions.assertThat( underTest.computeOrder(LogPlugin.Module.class)).isEqualTo(-20);
-    	Assertions.assertThat( underTest.computeOrder(CachePlugin.Module.class)).isEqualTo(1998);
+    	Assertions.assertThat( underTest.computeOrder(SecurityPlugin.Module.class)).isEqualTo(12884901888L);
+    	Assertions.assertThat( underTest.computeOrder(LogPlugin.Module.class)).isEqualTo(-4294967296L);
+    	Assertions.assertThat( underTest.computeOrder(CachePlugin.Module.class)).isEqualTo(12884901886L);
     	Assertions.assertThat( underTest.computeOrder(ConcernTest.Module.class)).isEqualTo(0);
-    	Assertions.assertThat( underTest.computeOrder(BugPlugin.Module.class)).isEqualTo(Integer.MAX_VALUE + 2000);
+    	Assertions.assertThat( underTest.computeOrder(BugPlugin.Module.class)).isEqualTo(15032385535L);
     }
     
     @Test

@@ -18,7 +18,11 @@ package org.nuunframework.kernel.internal.scanner;
 
 import static org.fest.assertions.Assertions.assertThat;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -50,8 +54,8 @@ public class ClasspathScannerInternalTest
     @BeforeClass
     public static void init()
     {
-        underTest = new ClasspathScannerInternal("","META-INF.properties,"+MyModule2.class.getPackage().getName());
-        underTest2 = new ClasspathScannerInternal(true ,"", "META-INF.properties,"+MyModule2.class.getPackage().getName());
+        underTest = new ClasspathScannerInternal(new ClasspathStrategy(), "","META-INF.properties,"+MyModule2.class.getPackage().getName());
+        underTest2 = new ClasspathScannerInternal(new ClasspathStrategy(), true ,"", "META-INF.properties,"+MyModule2.class.getPackage().getName());
         
         cb = new TestCallback();
         cbr = new TestCallbackResources();
@@ -166,28 +170,68 @@ public class ClasspathScannerInternalTest
     }
     
     @Test
+    public void deduplicate_is_working_on_duplicate_lists() throws Exception
+    {
+        Collection<URL> urlCollection = buildURLCollection(true, false);
+        Collection<URL> deduplicateUrlCollection = underTest.deduplicate(urlCollection);
+
+        assertThat(deduplicateUrlCollection.size()).isEqualTo(urlCollection.size() / 2 - 1);
+    }
+
+    @Test
+    public void deduplicate_is_working_on_multiduplicate_lists() throws Exception
+    {
+        Collection<URL> urlCollection = buildURLCollection(true, true);
+        Collection<URL> deduplicateUrlCollection = underTest.deduplicate(urlCollection);
+
+        assertThat(deduplicateUrlCollection.size()).isEqualTo(urlCollection.size() / 3 - 1);
+    }
+
+    @Test
+    public void deduplicate_is_working_on_non_duplicate_lists() throws Exception
+    {
+        Collection<URL> urlCollection = buildURLCollection(false, false);
+        Collection<URL> deduplicateUrlCollection = underTest.deduplicate(urlCollection);
+
+        assertThat(deduplicateUrlCollection.size()).isEqualTo(urlCollection.size() - 1);
+    }
+
+    @Test
     public void testAdd() {
-     
+
         int i;
         int j;
         int result;
-     
+
         Given: // Two numbers 1 and 4
         {
             i = 1;
             j = 4;
         }
-     
+
         When: // I add the two numbers
         {
             result = i + j;
         }
-     
+
         Then: // The result should be 5
         {
             assertThat(result).isEqualTo(5);
         }
-     
+
+    }
+
+    private Collection<URL> buildURLCollection(boolean duplicate, boolean again) throws MalformedURLException {
+        Set<URL> result = new HashSet<URL>();
+        for (String s : new String[]{ "toto", "titi", "tata", "tutu", "classes", "classes/", "test-classes/" }) {
+            result.add(new URL("http://localhost/common/prefix/" + s));
+            if (duplicate)
+                result.add(new URL("file:///directory/subdirectory/common/prefix/" + s));
+            if (again)
+                result.add(new URL("file:///directory/other/subdirectory/common/prefix/" + s));
+        }
+
+        return result;
     }
 
 }

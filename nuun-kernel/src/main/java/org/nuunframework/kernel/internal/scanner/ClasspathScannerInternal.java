@@ -20,11 +20,12 @@ import static org.reflections.util.FilterBuilder.prefix;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Modifier;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -32,9 +33,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import javax.annotation.Nullable;
-
-import org.apache.commons.lang.StringUtils;
 import org.nuunframework.kernel.KernelException;
 import org.nuunframework.kernel.annotations.Ignore;
 import org.nuunframework.kernel.commons.AssertUtils;
@@ -62,22 +60,23 @@ import com.google.common.collect.Sets;
 class ClasspathScannerInternal implements ClasspathScanner
 {
 
-    Logger                     logger = LoggerFactory.getLogger(ClasspathScannerInternal.class);
+    Logger                          logger = LoggerFactory.getLogger(ClasspathScannerInternal.class);
 
-    private final List<String> packageRoots;
-    private final boolean      reachAbstractClass;
-    private Set<URL>           additionalClasspath;
-    private Set<URL>           urls;
+    private final List<String>      packageRoots;
+    private final boolean           reachAbstractClass;
+    private final ClasspathStrategy classpathStrategy;
+    private Set<URL>                additionalClasspath;
+    private Set<URL>                urls;
 
     private final List<ScannerCommand> commands;
 
-    public ClasspathScannerInternal(String... packageRoots_)
+    public ClasspathScannerInternal(ClasspathStrategy classpathStrategy, String... packageRoots_)
     {
-        this(false, null, packageRoots_);
+        this(classpathStrategy, false, null, packageRoots_);
 
     }
 
-    public ClasspathScannerInternal(boolean reachAbstractClass, String packageRoot, String... packageRoots_)
+    public ClasspathScannerInternal(ClasspathStrategy classpathStrategy, boolean reachAbstractClass, String packageRoot, String... packageRoots_)
     {
         this.packageRoots = new LinkedList<String>();
 
@@ -91,6 +90,7 @@ class ClasspathScannerInternal implements ClasspathScanner
             this.packageRoots.add(packageRoot_);
         }
         this.reachAbstractClass = reachAbstractClass;
+        this.classpathStrategy = classpathStrategy;
         commands = new ArrayList<ClasspathScannerInternal.ScannerCommand>();
     }
 
@@ -323,7 +323,7 @@ class ClasspathScannerInternal implements ClasspathScanner
                       Collection<String> collectionOfString = multimap.get(k);
                       typesAnnotatedWith.addAll(toClasses(collectionOfString));
                   }
-                  callback .callback( (Collection) postTreatment((Collection) typesAnnotatedWith));
+                  callback .callback((Collection) postTreatment((Collection) typesAnnotatedWith));
               }
               
               @Override
@@ -669,15 +669,33 @@ class ClasspathScannerInternal implements ClasspathScanner
         {
             urls = new HashSet<URL>();
 
-            if (this.additionalClasspath != null)
+            switch (classpathStrategy.getStrategy())
+            {
+                case SYSTEM:
+                    urls.addAll(ClasspathHelper.forJavaClassPath());
+                    break;
+                case CLASSLOADER:
+                    urls.addAll(ClasspathHelper.forClassLoader());
+                    break;
+                case ALL:
+                    urls.addAll(ClasspathHelper.forJavaClassPath());
+                    urls.addAll(ClasspathHelper.forClassLoader());
+                    break;
+                case NONE:
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unsupported classpath strategy " + classpathStrategy.toString());
+            }
+
+            if (classpathStrategy.isAdditional() && this.additionalClasspath != null)
             {
                 urls.addAll(this.additionalClasspath);
             }
-            
-//            if (StringUtils.isNotEmpty(prefix(qualifiedName)))
+        }
 
-            urls.addAll(ClasspathHelper.forJavaClassPath());
-            // urls.addAll(ClasspathHelper.forClassLoader(ClasspathHelper.classLoaders()));
+        if (classpathStrategy.isDeduplicate())
+        {
+            this.urls = deduplicate(urls);
         }
 
         return urls;
@@ -705,5 +723,78 @@ class ClasspathScannerInternal implements ClasspathScanner
     private <T> Collection<Class<? extends T>> toClasses(Collection<String> names)
     {
         return ReflectionUtils.<T> forNames(names, this.getClass().getClassLoader());
+    }
+
+    private String findLongestSuffix(String a, String b, int threshold)
+    {
+        if (a.equals(b)) {
+            return a;
+        }
+
+        int i = a.length() - 1;
+        int j = b.length() - 1;
+        int k = -1;
+        int l = 0;
+
+        while (i >= 0 && j >= 0) {
+            if (a.charAt(i) == '/')
+            {
+                k = i;
+                l++;
+            }
+
+            if (a.charAt(i) != b.charAt(j))
+            {
+                return l >= threshold ? a.substring(Math.max(i, k)) : null;
+            }
+
+            i--;
+            j--;
+        }
+
+        return null;
+    }
+
+    Set<URL> deduplicate(Collection<URL> urlCollection)
+    {
+        List<URL> urlList = new ArrayList<URL>();
+
+        for (URL url : urlCollection) {
+            if (classpathStrategy.isRemoveTrailingSlash()) {
+                String externalForm = url.toExternalForm();
+                try {
+                    urlList.add(externalForm.endsWith("/") ? new URL(externalForm.substring(0, externalForm.length() - 1)) : url);
+                } catch (MalformedURLException e) {
+                    logger.warn("Unable to remove trailing slash from URL " + externalForm);
+                }
+            } else {
+                urlList.add(url);
+            }
+        }
+
+        Collections.sort(urlList, new Comparator<URL>()
+        {
+            @Override
+            public int compare(URL url1, URL url2) {
+                return new StringBuilder(url1.toExternalForm()).reverse().toString().compareTo(new StringBuilder(url2.toExternalForm()).reverse().toString());
+            }
+        });
+
+        Set<URL> result = new HashSet<URL>();
+        URL previous = null;
+
+        for (URL current : urlList)
+        {
+            String longestSuffix = previous == null ? null : findLongestSuffix(current.toExternalForm(), previous.toExternalForm(), classpathStrategy.getThreshold());
+
+            if (longestSuffix == null)
+            {
+                result.add(current);
+            }
+
+            previous = current;
+        }
+
+        return result;
     }
 }

@@ -9,7 +9,7 @@
 
 	<groupId>org.nuunframework</groupId>
 	<artifactId>nuun-cli-plugin</artifactId>
-	<version>1.0.5-SNAPSHOT</version>
+	<version>1.0.5</version>
 	<packaging>jar</packaging>
 
 	<name>nuun-cli-commons-plugin</name>

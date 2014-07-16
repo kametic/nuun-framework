@@ -119,17 +119,11 @@ public class InitContextInternal implements InitContext
     {
         String classpathStrategyNameParam = kernelParams.get(Kernel.NUUN_CP_STRATEGY_NAME);
         String classpathStrategyAdditionalParam = kernelParams.get(Kernel.NUUN_CP_STRATEGY_ADD);
-        String classpathStrategyDeduplicateParam = kernelParams.get(Kernel.NUUN_CP_STRATEGY_DEDUP);
-        String classpathStrategyTrailingSlashParam = kernelParams.get(Kernel.NUUN_CP_STRATEGY_SLASH);
-        String classpathStrategyThresholdParam = kernelParams.get(Kernel.NUUN_CP_STRATEGY_TH);
 
         this.classpathStrategy = new ClasspathStrategy(
                 classpathStrategyNameParam == null ? ClasspathStrategy.Strategy.ALL : ClasspathStrategy.Strategy.valueOf(classpathStrategyNameParam.toUpperCase()),
-                classpathStrategyAdditionalParam == null ? true : Boolean.parseBoolean(classpathStrategyAdditionalParam),
-                classpathStrategyDeduplicateParam == null ? true : Boolean.parseBoolean(classpathStrategyDeduplicateParam),
-                classpathStrategyTrailingSlashParam == null ? true : Boolean.parseBoolean(classpathStrategyTrailingSlashParam),
-                classpathStrategyThresholdParam == null ? ClasspathStrategy.DEFAULT_THRESHOLD : Integer.parseInt(classpathStrategyThresholdParam)
-        );
+                classpathStrategyAdditionalParam == null ? true : Boolean.parseBoolean(classpathStrategyAdditionalParam));
+
         this.packageRoots = new LinkedList<String>();
         this.initialPropertiesPrefix = initialPropertiesPrefix;
         this.kernelParams = kernelParams;
@@ -240,8 +234,8 @@ public class InitContextInternal implements InitContext
                     FluentIterable<Module> nominals = FluentIterable.from(scanResult2).filter( not(new IsModuleOverriding())  ).transform(new ModuleClass2Instance());
                     FluentIterable<Module> overriders = FluentIterable.from(scanResult2).filter( new IsModuleOverriding() ).transform(new ModuleClass2Instance());
                     
-                    childModules.addAll(nominals.toSet());
-                    childOverridingModules.addAll(overriders.toSet());
+                    childModules.addAll(nominals.toImmutableSet());
+                    childOverridingModules.addAll(overriders.toImmutableSet());
                 }
             };
             this.classpathScanner.scanClasspathForAnnotation(KernelModule.class , callback); // OK

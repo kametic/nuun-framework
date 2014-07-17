@@ -71,10 +71,7 @@ public final class Kernel
     public static final String                       NUUN_NUM_CP_PATH       = "nuun.num.classpath.path";
     public static final String                       NUUN_CP_PATH_PREFIX    = "nuun.classpath.path.prefix-";
     public static final String                       NUUN_CP_STRATEGY_NAME  = "nuun.classpath.strategy.name";
-    public static final String                       NUUN_CP_STRATEGY_DEDUP = "nuun.classpath.strategy.deduplicate";
     public static final String                       NUUN_CP_STRATEGY_ADD   = "nuun.classpath.strategy.additional";
-    public static final String                       NUUN_CP_STRATEGY_SLASH   = "nuun.classpath.strategy.remove-trailing-slash";
-    public static final String                       NUUN_CP_STRATEGY_TH    = "nuun.classpath.strategy.threshold";
     public static final String                       KERNEL_PREFIX_NAME     = "Kernel-";
     private final int                                MAXIMAL_ROUND_NUMBER   = 50;
     private final Logger                             logger;
@@ -111,8 +108,6 @@ public final class Kernel
         logger                 = LoggerFactory.getLogger( Kernel.class.getPackage().getName() +'.' + name());
         kernelParamsAndAlias = new AliasMap();
 
-        this.initContext = new InitContextInternal(NUUN_PROPERTIES_PREFIX, kernelParamsAndAlias);
-
         @SuppressWarnings("unchecked")
         Iterator<String> it = new ArrayIterator(keyValues);
         while (it.hasNext())
@@ -125,6 +120,7 @@ public final class Kernel
             kernelParamsAndAlias.put(key, value);
         }
 
+        this.initContext = new InitContextInternal(NUUN_PROPERTIES_PREFIX, kernelParamsAndAlias);
     }
     
     public String name()

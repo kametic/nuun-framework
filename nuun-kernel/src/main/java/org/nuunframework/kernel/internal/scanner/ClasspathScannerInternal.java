@@ -693,11 +693,6 @@ class ClasspathScannerInternal implements ClasspathScanner
             }
         }
 
-        if (classpathStrategy.isDeduplicate())
-        {
-            this.urls = deduplicate(urls);
-        }
-
         return urls;
     }
 
@@ -723,78 +718,5 @@ class ClasspathScannerInternal implements ClasspathScanner
     private <T> Collection<Class<? extends T>> toClasses(Collection<String> names)
     {
         return ReflectionUtils.<T> forNames(names, this.getClass().getClassLoader());
-    }
-
-    private String findLongestSuffix(String a, String b, int threshold)
-    {
-        if (a.equals(b)) {
-            return a;
-        }
-
-        int i = a.length() - 1;
-        int j = b.length() - 1;
-        int k = -1;
-        int l = 0;
-
-        while (i >= 0 && j >= 0) {
-            if (a.charAt(i) == '/')
-            {
-                k = i;
-                l++;
-            }
-
-            if (a.charAt(i) != b.charAt(j))
-            {
-                return l >= threshold ? a.substring(Math.max(i, k)) : null;
-            }
-
-            i--;
-            j--;
-        }
-
-        return null;
-    }
-
-    Set<URL> deduplicate(Collection<URL> urlCollection)
-    {
-        List<URL> urlList = new ArrayList<URL>();
-
-        for (URL url : urlCollection) {
-            if (classpathStrategy.isRemoveTrailingSlash()) {
-                String externalForm = url.toExternalForm();
-                try {
-                    urlList.add(externalForm.endsWith("/") ? new URL(externalForm.substring(0, externalForm.length() - 1)) : url);
-                } catch (MalformedURLException e) {
-                    logger.warn("Unable to remove trailing slash from URL " + externalForm);
-                }
-            } else {
-                urlList.add(url);
-            }
-        }
-
-        Collections.sort(urlList, new Comparator<URL>()
-        {
-            @Override
-            public int compare(URL url1, URL url2) {
-                return new StringBuilder(url1.toExternalForm()).reverse().toString().compareTo(new StringBuilder(url2.toExternalForm()).reverse().toString());
-            }
-        });
-
-        Set<URL> result = new HashSet<URL>();
-        URL previous = null;
-
-        for (URL current : urlList)
-        {
-            String longestSuffix = previous == null ? null : findLongestSuffix(current.toExternalForm(), previous.toExternalForm(), classpathStrategy.getThreshold());
-
-            if (longestSuffix == null)
-            {
-                result.add(current);
-            }
-
-            previous = current;
-        }
-
-        return result;
     }
 }

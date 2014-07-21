@@ -44,6 +44,10 @@ public  class Node {
 		this.accessibleObject = accessibleObject;
 	}
 	
-	
+	@Override
+	public String toString() {
+		return "Node [instance=" + instance + ", accessibleObject="
+				+ accessibleObject + ", level=" + level + "]";
+	}
 
 }

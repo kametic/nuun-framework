@@ -1,7 +1,6 @@
 package org.nuunframework.universalvisitor;
 
 /**
- *
  * 
  * @author Epo Jemba
  * @author Pierre Thirouin

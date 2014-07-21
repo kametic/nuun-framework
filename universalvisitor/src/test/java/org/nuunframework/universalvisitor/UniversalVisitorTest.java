@@ -5,6 +5,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -13,10 +16,17 @@ import org.nuunframework.universalvisitor.Node;
 import org.nuunframework.universalvisitor.Predicate;
 import org.nuunframework.universalvisitor.Reducer;
 import org.nuunframework.universalvisitor.UniversalVisitor;
+import org.nuunframework.universalvisitor.sample.Alphabet;
+import org.nuunframework.universalvisitor.sample.collections.H;
+import org.nuunframework.universalvisitor.sample.collections.I;
+import org.nuunframework.universalvisitor.sample.collections.J;
+import org.nuunframework.universalvisitor.sample.collections.K;
+import org.nuunframework.universalvisitor.sample.collections.L;
 import org.nuunframework.universalvisitor.sample.multiplereducers.D;
 import org.nuunframework.universalvisitor.sample.multiplereducers.E;
 import org.nuunframework.universalvisitor.sample.multiplereducers.F;
 import org.nuunframework.universalvisitor.sample.multiplereducers.G;
+import org.nuunframework.universalvisitor.sample.mutatormapper.M;
 import org.nuunframework.universalvisitor.sample.simple.A;
 import org.nuunframework.universalvisitor.sample.simple.B;
 import org.nuunframework.universalvisitor.sample.simple.C;
@@ -24,8 +34,6 @@ import org.nuunframework.universalvisitor.sample.simple.C;
 /**
  *
  * 
- * @author epo.jemba@ext.mpsa.com
- *
  */
 public class UniversalVisitorTest {
 
@@ -35,13 +43,18 @@ public class UniversalVisitorTest {
 	
 	D d;
 	
+	H h;
+	
+	M m;
+	
+	@SuppressWarnings("serial")
 	@Before
 	public void init () {
 		underTest = new UniversalVisitor<Integer>();
 		a = new A();
 		B b = new B();
 		C c = new C();
-		a.name = "a";
+		a.name = "zob";
 		a.b = b;
 		b.c = c;
 		c.a = a;
@@ -50,7 +63,7 @@ public class UniversalVisitorTest {
 		D dNew = new D();
 		E e = new E();
 		F f = new F();
-		G g =new G();
+		G g = new G();
 		
 		d.e = e;
 		d.dValue = 10;
@@ -63,34 +76,135 @@ public class UniversalVisitorTest {
 		g.dNew = dNew;
 		g.gValue = 10000;
 		
+		///////////////////
+		h = new H();
+		
+		h.is = new ArrayList<I>(){{
+			add(new I());
+			add(new I());
+			add(new I());
+		}};
+		h.js = new HashMap<String, J>(){{
+			put("k0", new J());
+			put("k1", new J());
+			put("k2", new J());
+		}};
+		h.ks = new K[]{new K() , new K() , new K()};
+		h.ls = new ArrayList<L>() {{
+			L l = new L();
+			l.ks = new HashSet<K>(){{
+				add(new K());
+				add(new K());
+				add(new K());
+			}};
+			add(l);
+			l = new L();
+			l.ks = new HashSet<K>(){{
+				add(new K());
+				add(new K());
+				add(new K());
+			}};
+			add(l);
+			l = new L();
+			l.ks = new HashSet<K>(){{
+				add(new K());
+				add(new K());
+				add(new K());
+			}};
+			add(l);
+			
+		}};
+		/////
+		
+		m = new M();
+		
 	}
 	
 	@Test
 	public void simple_case() {
 		
-		MyMapper mapper = new MyMapper();
-		MyReducer reducer = new MyReducer();
 		MyPredicate predicate = new MyPredicate();
+		MyMapper mapper = new MyMapper();
+		SumReducer reducer = new SumReducer();
 		
 		underTest.visit(a,predicate, mapper , reducer);
 		
-		assertThat(mapper.getCount()).isEqualTo(4);
-		assertThat(reducer.reduce()).isEqualTo(4);
+		assertThat(mapper.getCount()).isEqualTo(3);
+		assertThat(reducer.reduce()).isEqualTo(3);
 		
 		assertThat(mapper.getMaxLevel()).isEqualTo(2);
 	}
 	
+
 	@Test
 	public void multiple_reducer () {
 		
 		MyMapper2 mapper = new MyMapper2();
-		MyReducer sumReducer = new MyReducer();
+		SumReducer sumReducer = new SumReducer();
+		MeanReducer meanReducer = new MeanReducer();
 		MyPredicate2 predicate = new MyPredicate2();
 		
 		
-		underTest.visitn(d, predicate , mapper, sumReducer);
+		underTest.visitn(d, predicate , mapper, sumReducer, meanReducer);
 		
 		assertThat(sumReducer.reduce()).isEqualTo(111110);
+		assertThat(meanReducer.reduce()).isEqualTo(22222);
+		
+	}
+	
+	@Test
+	public void collections_reducers () {
+		MyPredicate predicate = new MyPredicate();
+		MyMapper2 mapper = new MyMapper2();
+		SumReducer sumReducer = new SumReducer();
+		
+		underTest.visit(h,predicate, mapper , sumReducer);
+		
+		assertThat(sumReducer.reduce()).isEqualTo(1233);
+		
+	}
+	
+	@Test
+	public void mutator_mapper () {
+		UniversalVisitor<Void> underTest2 = new UniversalVisitor<Void>();
+		MyPredicate predicate = new MyPredicate();
+		MutatorMapper mapper = new MutatorMapper();
+		
+		assertThat(m.getSalary()).isEqualTo(10000);
+		
+		underTest2.visit(m,predicate, mapper );
+		
+		assertThat(m.getSalary()).isEqualTo(100000);
+		
+		
+		
+	}
+	
+	static class MutatorMapper implements Mapper<Void> {
+
+		@Override
+		public boolean handle(AccessibleObject object) {
+			return object instanceof Field && ((Field) object).getType().equals(Integer.class);
+		}
+
+		@Override
+		public Void map(Node node) {
+			
+			Field f = (Field) node.accessibleObject();
+			
+			Integer value = null;
+			try {
+				value = (Integer) f.get(node.instance());
+				System.out.println("value " + value);
+				f.set(node.instance(), value * 10);
+			} catch (IllegalArgumentException e) {
+				e.printStackTrace();
+			} catch (IllegalAccessException e) {
+				e.printStackTrace();
+			}
+			
+			return null;
+		}
 		
 	}
 	
@@ -111,6 +225,11 @@ public class UniversalVisitorTest {
 			
 			return value;
 		}
+
+		@Override
+		public boolean handle(AccessibleObject object) {
+			return object instanceof Field && ((Field) object).getType().equals(Integer.class);
+		}
 		
 	}
 	
@@ -121,6 +240,8 @@ public class UniversalVisitorTest {
 
 		@Override
 		public Integer map(Node node) {
+			System.out.println("node " + node.accessibleObject() +   " -> " + node.instance() + " type = " + node.instance().getClass());
+			
 			counter ++;
 			maxLevel = Math.max(maxLevel, node.level);
 			return new Integer(1);
@@ -134,10 +255,14 @@ public class UniversalVisitorTest {
 			return maxLevel;
 		}
 		
+		@Override
+		public boolean handle(AccessibleObject object) {
+			return object instanceof Field &&  ((Field)   object) .getType(). getAnnotation(Alphabet.class) != null;
+		}
 		
 	}
 	
-	static class MyReducer implements Reducer<Integer, Integer> {
+	static class SumReducer implements Reducer<Integer, Integer> {
 		int counter = 0;
 		@Override
 		public void collect(Integer input) {
@@ -149,14 +274,28 @@ public class UniversalVisitorTest {
 		}
 	}
 	
+	static class MeanReducer implements Reducer<Integer, Integer> {
+		int counter = 0;
+		int sum =0;
+		@Override
+		public void collect(Integer input) {
+			counter++;
+			sum +=  input;
+		}
+		@Override
+		public Integer reduce() {
+			return sum / counter;
+		}
+	}
+	
 	
 	
 	static class MyPredicate implements Predicate {
 
 		@Override
-		public boolean apply(AccessibleObject input) {
+		public boolean apply(Field input) {
 			
-			return input instanceof Field  ;
+			return true  ;
 		}
 		
 	}
@@ -164,9 +303,9 @@ public class UniversalVisitorTest {
 	static class MyPredicate2 implements Predicate {
 
 		@Override
-		public boolean apply(AccessibleObject input) {
+		public boolean apply(Field input) {
 			
-			return input instanceof Field && ! ((Field) input).getType().equals(Integer.class) ;
+			return input.getType().getAnnotation(Alphabet.class) != null;
 		}
 		
 	}

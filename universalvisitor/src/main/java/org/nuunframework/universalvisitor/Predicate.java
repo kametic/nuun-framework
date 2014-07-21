@@ -1,6 +1,6 @@
 package org.nuunframework.universalvisitor;
 
-import java.lang.reflect.AccessibleObject;
+import java.lang.reflect.Field;
 
 
 
@@ -27,11 +27,11 @@ public interface Predicate {
 	 *             if {@code input} is null and this predicate does not accept
 	 *             null arguments
 	 */
-	boolean apply( AccessibleObject input);
+	boolean apply( Field input);
 
 	Predicate TRUE = new Predicate() {
 		@Override
-		public boolean apply(AccessibleObject input) {
+		public boolean apply(Field input) {
 			return true;
 		}
 	};

@@ -81,6 +81,43 @@ public class UniversalVisitor<T> {
 		}
 		return reducedResult.toArray();
 	}
+	
+	
+	@SuppressWarnings("unchecked")
+	public Object[] visitReflectionN(Class<?> o, Predicate predicate, Mapper<T> mapper, @SuppressWarnings("rawtypes") Reducer... reducers) {
+		
+		Set<Object> cache = new HashSet<Object>();
+
+		ChainedNode node = ChainedNode.createRoot();
+
+		if (predicate == null) {
+			predicate = Predicate.TRUE;
+		}
+
+		recursiveVisit(o, cache, node, predicate);
+
+		if (reducers == null) {
+			reducers = new Reducer[0];
+		}
+
+		for (node = node.next; node != null; node = node.next) {
+			if (mapper.handle(node.accessibleObject())) {
+				T t = mapper.map(node);
+
+				for (Reducer<T, ?> reducer : reducers) {
+					reducer.collect(t);
+				}
+			}
+		}
+
+		List<Object> reducedResult = new ArrayList<Object>(reducers.length);
+
+		for (int i = 0; i < reducers.length; i++) {
+			reducedResult.add(i, reducers[i].reduce());
+		}
+		return reducedResult.toArray();
+		
+	}
 
 	private static class ChainedNode extends Node {
 		ChainedNode next;
@@ -134,6 +171,29 @@ public class UniversalVisitor<T> {
 
 	}
 
+	private void recursiveVisitReflection(Class<?> klass, Set<Object> cache, ChainedNode node, Predicate predicate) { 
+	int currentLevel = node.level + 1;
+		
+		if (!cache.contains(klass)) {
+
+			cache.add(klass);
+
+			if (klass == null) {
+				// ignore nulls
+			} else if (Collection.class.isAssignableFrom(klass.getClass())) {
+				visitAll((Collection<?>) klass, cache, node, currentLevel,predicate);
+			} else if (klass.getClass().isArray()) {
+				visitAll(Arrays.asList((Object[]) klass), cache, node,currentLevel,
+						predicate);
+			} else if (Map.class.isAssignableFrom(klass.getClass())) {
+				visitMap((Map<?, ?>) klass, cache, node,currentLevel, predicate);
+			} else {
+				visitObject(klass, cache, node, currentLevel,predicate);
+			}
+		}
+	}
+	
+	
 	private void recursiveVisit(Object object, Set<Object> cache, ChainedNode node, Predicate predicate) {
 
 		int currentLevel = node.level + 1;

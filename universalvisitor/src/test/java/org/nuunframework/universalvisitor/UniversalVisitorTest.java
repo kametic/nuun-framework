@@ -11,11 +11,6 @@ import java.util.HashSet;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.nuunframework.universalvisitor.Mapper;
-import org.nuunframework.universalvisitor.Node;
-import org.nuunframework.universalvisitor.Predicate;
-import org.nuunframework.universalvisitor.Reducer;
-import org.nuunframework.universalvisitor.UniversalVisitor;
 import org.nuunframework.universalvisitor.sample.Alphabet;
 import org.nuunframework.universalvisitor.sample.collections.H;
 import org.nuunframework.universalvisitor.sample.collections.I;
@@ -27,6 +22,7 @@ import org.nuunframework.universalvisitor.sample.multiplereducers.E;
 import org.nuunframework.universalvisitor.sample.multiplereducers.F;
 import org.nuunframework.universalvisitor.sample.multiplereducers.G;
 import org.nuunframework.universalvisitor.sample.mutatormapper.M;
+import org.nuunframework.universalvisitor.sample.nulls.N;
 import org.nuunframework.universalvisitor.sample.simple.A;
 import org.nuunframework.universalvisitor.sample.simple.B;
 import org.nuunframework.universalvisitor.sample.simple.C;
@@ -46,6 +42,8 @@ public class UniversalVisitorTest {
 	H h;
 	
 	M m;
+	
+	N n;
 	
 	@SuppressWarnings("serial")
 	@Before
@@ -117,6 +115,8 @@ public class UniversalVisitorTest {
 		/////
 		
 		m = new M();
+		//
+		n = new N();
 		
 	}
 	
@@ -133,6 +133,17 @@ public class UniversalVisitorTest {
 		assertThat(reducer.reduce()).isEqualTo(3);
 		
 		assertThat(mapper.getMaxLevel()).isEqualTo(2);
+	}
+	
+	@Test
+	public void nullity_case() {
+		
+		MyPredicate predicate = new MyPredicate();
+		MyMapper mapper = new MyMapper();
+		
+		
+		underTest.visit(n,predicate, mapper);
+		
 	}
 	
 

@@ -1,4 +1,4 @@
-package org.nuunframework.universalvisitor;
+package org.nuunframework.universalvisitor.api;
 
 import java.lang.reflect.AccessibleObject;
 

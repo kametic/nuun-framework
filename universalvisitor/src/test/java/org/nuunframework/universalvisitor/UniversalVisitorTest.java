@@ -11,6 +11,11 @@ import java.util.HashSet;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.nuunframework.universalvisitor.api.MapReduce;
+import org.nuunframework.universalvisitor.api.Mapper;
+import org.nuunframework.universalvisitor.api.Node;
+import org.nuunframework.universalvisitor.api.Predicate;
+import org.nuunframework.universalvisitor.api.Reducer;
 import org.nuunframework.universalvisitor.sample.Alphabet;
 import org.nuunframework.universalvisitor.sample.collections.H;
 import org.nuunframework.universalvisitor.sample.collections.I;
@@ -33,7 +38,7 @@ import org.nuunframework.universalvisitor.sample.simple.C;
  */
 public class UniversalVisitorTest {
 
-	UniversalVisitor<Integer> underTest;
+	UniversalVisitor underTest;
 	
 	A a;
 	
@@ -48,7 +53,7 @@ public class UniversalVisitorTest {
 	@SuppressWarnings("serial")
 	@Before
 	public void init () {
-		underTest = new UniversalVisitor<Integer>();
+		underTest = new UniversalVisitor();
 		a = new A();
 		B b = new B();
 		C c = new C();
@@ -156,7 +161,7 @@ public class UniversalVisitorTest {
 		MyPredicate2 predicate = new MyPredicate2();
 		
 		
-		underTest.visitn(d, predicate , mapper, sumReducer, meanReducer);
+		underTest.visit(d, predicate ,  new MapReduce <Integer>(mapper ,sumReducer, meanReducer));
 		
 		assertThat(sumReducer.reduce()).isEqualTo(111110);
 		assertThat(meanReducer.reduce()).isEqualTo(22222);
@@ -177,7 +182,7 @@ public class UniversalVisitorTest {
 	
 	@Test
 	public void mutator_mapper () {
-		UniversalVisitor<Void> underTest2 = new UniversalVisitor<Void>();
+		UniversalVisitor underTest2 = new UniversalVisitor();
 		MyPredicate predicate = new MyPredicate();
 		MutatorMapper mapper = new MutatorMapper();
 		
@@ -186,9 +191,6 @@ public class UniversalVisitorTest {
 		underTest2.visit(m,predicate, mapper );
 		
 		assertThat(m.getSalary()).isEqualTo(100000);
-		
-		
-		
 	}
 	
 	static class MutatorMapper implements Mapper<Void> {
@@ -254,7 +256,7 @@ public class UniversalVisitorTest {
 			System.out.println("node " + node.accessibleObject() +   " -> " + node.instance() + " type = " + node.instance().getClass());
 			
 			counter ++;
-			maxLevel = Math.max(maxLevel, node.level);
+			maxLevel = Math.max(maxLevel, node.level());
 			return new Integer(1);
 		}
 		

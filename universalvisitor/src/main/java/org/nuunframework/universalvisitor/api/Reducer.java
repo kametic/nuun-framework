@@ -6,10 +6,10 @@ package org.nuunframework.universalvisitor.api;
  * @author Pierre Thirouin
  *
  */
-public interface Reducer <T,R>{
+public interface Reducer <I,O>{
 	
-	void collect (T input);
+	void collect (I input);
 	
-	R reduce();
+	O reduce();
 
 }

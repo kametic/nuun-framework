@@ -161,7 +161,8 @@ public class UniversalVisitorTest {
 		MyPredicate2 predicate = new MyPredicate2();
 		
 		
-		underTest.visit(d, predicate ,  new MapReduce <Integer>(mapper ,sumReducer, meanReducer));
+		MapReduce<Integer> mapReduce = new MapReduce <Integer>(mapper ,sumReducer, meanReducer);
+		underTest.visit(d, predicate ,  mapReduce);
 		
 		assertThat(sumReducer.reduce()).isEqualTo(111110);
 		assertThat(meanReducer.reduce()).isEqualTo(22222);

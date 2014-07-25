@@ -10,10 +10,10 @@ import java.lang.reflect.AccessibleObject;
  * @author Pierre Thirouin
  *
  */
-public interface Mapper<T> {
+public interface Mapper<O> {
 	
 	boolean handle (AccessibleObject object);
 	
-	T map (Node node);
+	O map (Node node);
 
 }

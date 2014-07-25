@@ -1,6 +1,18 @@
 # Overview
 UniversalVisitor is a tiny but powerful library allowing to easily navigate an object graph and extracting useful information with a simple Map/Reduce API.
 
+# Usage
+
+You can use this library via maven using this coordinate
+
+    <dependency>
+        <groupId>org.nuunframework</groupId>
+        <artifactId>universalvisitor</artifactId>
+        <version>0.0.1</version>
+    </dependency>
+
+Note : for the future version we may change the groupId, stay tuned.
+
 # API
 
 UniversalVisitor's API is simple :

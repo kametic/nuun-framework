@@ -1,23 +1,12 @@
 package org.nuunframework.universalvisitor.api;
 
 
-public class MapReduce<T>  {
-
+public interface MapReduce<T> {
 	
-	private Mapper<T> mapper;
-	private Reducer<T, ?>[] reducers;
+	public Mapper<T> getMapper();
 
-	public MapReduce(Mapper<T> mapper , Reducer<T,?> ...reducers) {
-		this.mapper = mapper;
-		this.reducers = reducers;
-	}
-
-	public Mapper<T> getMapper() {
-		return mapper;
-	}
-
-	public Reducer<T, ?>[] getReducers() {
-		return reducers;
-	}
+	public Reducer<T, ?>[] getReducers();
+	
+	public Object aggregate ();
 	
 }

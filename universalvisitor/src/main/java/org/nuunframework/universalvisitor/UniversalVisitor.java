@@ -16,6 +16,7 @@ import org.nuunframework.universalvisitor.api.Mapper;
 import org.nuunframework.universalvisitor.api.Node;
 import org.nuunframework.universalvisitor.api.Predicate;
 import org.nuunframework.universalvisitor.api.Reducer;
+import org.nuunframework.universalvisitor.core.MapReduceDefault;
 
 /**
  * UniversalVisitor is the main entrypoint. With it you can visit any object
@@ -28,29 +29,42 @@ import org.nuunframework.universalvisitor.api.Reducer;
  */
 public class UniversalVisitor {
 
-	@SuppressWarnings("unchecked")
-	public <T> void visit(Object o, Mapper<T> mapper) {
-		visit(o, (Predicate) null, new MapReduce<T>(mapper));
-	}
+//	@SuppressWarnings("unchecked")
+//	public <T> void visit(Class<?> o, Mapper<T> mapper) {
+////		visit(o, (Predicate) null, new MapReduceDefault<T>(mapper));
+//	}
+//	
+//	@SuppressWarnings("unchecked")
+//	public <T> void visit(Object o, Mapper<T> mapper) {
+//		visit(o, (Predicate) null, new MapReduceDefault<T>(mapper));
+//	}
 	
 	@SuppressWarnings("unchecked")
+	public <T> void visit(Class<?> o, Predicate predicate, Mapper<T> mapper) {
+		visit(o, predicate, new MapReduceDefault<T>(mapper));
+	}
+	@SuppressWarnings("unchecked")
 	public <T> void visit(Object o, Predicate predicate, Mapper<T> mapper) {
-		visit(o, predicate, new MapReduce<T>(mapper));
+		visit(o, predicate, new MapReduceDefault<T>(mapper));
 	}
 
 	public <T> void visit(Object o, Mapper<T> mapper, Reducer<T, ?>... reducers) {
-		visit(o, (Predicate) null, new MapReduce<T>(mapper , reducers));
+		visit(o, (Predicate) null, new MapReduceDefault<T>(mapper , reducers));
 	}
 
 	@SuppressWarnings("unchecked")
 	public <T> void visit(Object o, Predicate predicate, Mapper<T> mapper, Reducer<T, ?> reducer) {
-		
-		visit(o, predicate, new MapReduce<T>(mapper , reducer));
+		visit(o, predicate, new MapReduceDefault<T>(mapper , reducer));
 	}
 
 	public void visit(Object o,  MapReduce<?> ...mapReduces) {
 		visit(o, null, mapReduces);
 	}
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	public void visit(Class<?> o, Predicate predicate, MapReduce<?> ...mapReduces) {
+		
+	}
+	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public void visit(Object o, Predicate predicate, MapReduce<?> ...mapReduces) {
 
@@ -206,9 +220,8 @@ public class UniversalVisitor {
 				// ignore nulls
 			} else if (Collection.class.isAssignableFrom(object.getClass())) {
 				visitAll((Collection<?>) object, cache, node, currentLevel,predicate);
-			} else if (object.getClass().isArray()) {
-				visitAll(Arrays.asList((Object[]) object), cache, node,currentLevel,
-						predicate);
+			} else if (object.getClass().isArray()  && ! object.getClass().getComponentType().isPrimitive() ) {
+				visitAll(Arrays.asList((Object[]) object), cache, node,currentLevel, predicate);
 			} else if (Map.class.isAssignableFrom(object.getClass())) {
 				visitMap((Map<?, ?>) object, cache, node,currentLevel, predicate);
 			} else {
@@ -248,8 +261,8 @@ public class UniversalVisitor {
 		}
 	}
 
-	private void visitAll(Collection<?> values, Set<Object> cache, ChainedNode pair, int currentLevel, Predicate predicate) {
-		ChainedNode current = pair;
+	private void visitAll(Collection<?> values, Set<Object> cache, ChainedNode node, int currentLevel, Predicate predicate) {
+		ChainedNode current = node;
 		
 		Object[] valArray = values.toArray();
 		for (int i = 0; i < valArray.length; i++) {

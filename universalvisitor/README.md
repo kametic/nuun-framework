@@ -22,8 +22,8 @@ UniversalVisitor's API is simple :
      - Level in the tree
      -  kind Array/Set/Hash
      - then the data associated with (index or key) 
-   - Mapper<T> : the mapper have to choose which kind of Node it can map, then map it.
-   - Reducer<T,R>
+   - Mapper<T> : the mapper have to choose which kind of Node it can map (its input) , then map it and outputs the results.
+   - Reducer<T,R> : the reducer take as inputs the many results of the Mapper, then reduce it to provide a usefull information.
    - MapReduce<T> : merely a composition of one Mapper and 0..n Reducer.
 
 # Examples

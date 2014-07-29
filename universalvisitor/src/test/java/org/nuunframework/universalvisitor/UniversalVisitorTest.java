@@ -16,12 +16,14 @@ import org.nuunframework.universalvisitor.api.Mapper;
 import org.nuunframework.universalvisitor.api.Node;
 import org.nuunframework.universalvisitor.api.Predicate;
 import org.nuunframework.universalvisitor.api.Reducer;
+import org.nuunframework.universalvisitor.core.MapReduceDefault;
 import org.nuunframework.universalvisitor.sample.Alphabet;
 import org.nuunframework.universalvisitor.sample.collections.H;
 import org.nuunframework.universalvisitor.sample.collections.I;
 import org.nuunframework.universalvisitor.sample.collections.J;
 import org.nuunframework.universalvisitor.sample.collections.K;
 import org.nuunframework.universalvisitor.sample.collections.L;
+import org.nuunframework.universalvisitor.sample.issues.Issue1;
 import org.nuunframework.universalvisitor.sample.multiplereducers.D;
 import org.nuunframework.universalvisitor.sample.multiplereducers.E;
 import org.nuunframework.universalvisitor.sample.multiplereducers.F;
@@ -49,6 +51,8 @@ public class UniversalVisitorTest {
 	M m;
 	
 	N n;
+	
+	Issue1 issue1;
 	
 	@SuppressWarnings("serial")
 	@Before
@@ -122,6 +126,8 @@ public class UniversalVisitorTest {
 		m = new M();
 		//
 		n = new N();
+		// 
+		issue1 = new Issue1();
 		
 	}
 	
@@ -147,6 +153,7 @@ public class UniversalVisitorTest {
 		MyMapper mapper = new MyMapper();
 		
 		
+		underTest.visit(String.class,predicate, mapper);
 		underTest.visit(n,predicate, mapper);
 		
 	}
@@ -161,7 +168,7 @@ public class UniversalVisitorTest {
 		MyPredicate2 predicate = new MyPredicate2();
 		
 		
-		MapReduce<Integer> mapReduce = new MapReduce <Integer>(mapper ,sumReducer, meanReducer);
+		MapReduce<Integer> mapReduce = new MapReduceDefault <Integer>(mapper ,sumReducer, meanReducer);
 		underTest.visit(d, predicate ,  mapReduce);
 		
 		assertThat(sumReducer.reduce()).isEqualTo(111110);
@@ -192,6 +199,27 @@ public class UniversalVisitorTest {
 		underTest2.visit(m,predicate, mapper );
 		
 		assertThat(m.getSalary()).isEqualTo(100000);
+	}
+	
+	@Test
+	public void issue1 () {
+		NopMap nopMap = new NopMap();
+		
+		underTest.visit(issue1, nopMap);
+	}
+	
+	static class NopMap implements Mapper<Void> {
+
+		@Override
+		public boolean handle(AccessibleObject object) {
+			return true;
+		}
+
+		@Override
+		public Void map(Node node) {
+			return null;
+		}
+		
 	}
 	
 	static class MutatorMapper implements Mapper<Void> {

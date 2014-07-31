@@ -12,6 +12,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 
 import org.nuunframework.universalvisitor.api.MapReduce;
@@ -258,27 +259,22 @@ public class UniversalVisitor {
 			for (Class<?> elementClass : family)
 			{ // We iterate over all the family tree of the current class
 				//
-				System.out.println("===============================");
-				System.out.println(" => " + elementClass.getSimpleName());
 				if  (elementClass != null &&  !isJdkMember(elementClass)) {
 					
 					for (Constructor<?> c : elementClass.getDeclaredConstructors()) {
 						if (!isJdkMember(c)  && ! c.isSynthetic()) {
-							System.out.println("   => " + c.getName());
 							current = current.append(object, c, currentLevel);
 						}
 					}
 					//
 					for (Method m : elementClass.getDeclaredMethods()) {
 						if (!isJdkMember(m) && ! m.isSynthetic()  ) {
-							System.out.println("   => " + m.getName());
 							current = current.append(object, m, currentLevel);
 						}
 					}
 					
 					for (Field f : elementClass.getDeclaredFields()) {
 						if (!isJdkMember(f) && ! f.isSynthetic()  ) {
-							System.out.println("   => " + f.getName());
 							
 							current = current.append(object, f, currentLevel);
 							
@@ -297,10 +293,12 @@ public class UniversalVisitor {
 		}
 	}
 
-	private void visitAllCollection(Collection<?> values, Set<Object> cache, ChainedNode node, int currentLevel, Filter filter) {
+	private void visitAllCollection(Collection<?> collection, Set<Object> cache, ChainedNode node, int currentLevel, Filter filter) {
 		ChainedNode current = node;
 		
-		Object[] valArray = values.toArray();
+		boolean indexable = collection instanceof List  || collection instanceof Queue;
+		
+		Object[] valArray = collection.toArray();
 		for (int i = 0; i < valArray.length; i++) {
 			Object value = valArray[i];
 			if (value != null) {

@@ -10,13 +10,13 @@ import java.lang.reflect.Field;
  * @author Pierre Thirouin
  *
  */
-public interface Predicate {
+public interface Filter {
 
-	boolean apply( Field input);
+	boolean retains( Field input);
 
-	Predicate TRUE = new Predicate() {
+	Filter TRUE = new Filter() {
 		@Override
-		public boolean apply(Field input) {
+		public boolean retains(Field input) {
 			return true;
 		}
 	};

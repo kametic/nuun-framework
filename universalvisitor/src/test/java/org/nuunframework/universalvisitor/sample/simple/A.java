@@ -12,5 +12,11 @@ public class A {
 	
 	public B b;
 	public String name;
+	
+	public A() {
+	}
+	public A(String name) {
+		this.name = name;
+	}
 
 }

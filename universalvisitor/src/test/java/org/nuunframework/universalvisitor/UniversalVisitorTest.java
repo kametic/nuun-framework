@@ -4,17 +4,20 @@ package org.nuunframework.universalvisitor;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.lang.reflect.AccessibleObject;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.nuunframework.universalvisitor.api.MapReduce;
 import org.nuunframework.universalvisitor.api.Mapper;
 import org.nuunframework.universalvisitor.api.Node;
-import org.nuunframework.universalvisitor.api.Predicate;
+import org.nuunframework.universalvisitor.api.Filter;
 import org.nuunframework.universalvisitor.api.Reducer;
 import org.nuunframework.universalvisitor.core.MapReduceDefault;
 import org.nuunframework.universalvisitor.sample.Alphabet;
@@ -24,6 +27,7 @@ import org.nuunframework.universalvisitor.sample.collections.J;
 import org.nuunframework.universalvisitor.sample.collections.K;
 import org.nuunframework.universalvisitor.sample.collections.L;
 import org.nuunframework.universalvisitor.sample.issues.Issue1;
+import org.nuunframework.universalvisitor.sample.issues.Issue2;
 import org.nuunframework.universalvisitor.sample.multiplereducers.D;
 import org.nuunframework.universalvisitor.sample.multiplereducers.E;
 import org.nuunframework.universalvisitor.sample.multiplereducers.F;
@@ -53,6 +57,8 @@ public class UniversalVisitorTest {
 	N n;
 	
 	Issue1 issue1;
+	
+	Issue2 issue2;
 	
 	@SuppressWarnings("serial")
 	@Before
@@ -126,8 +132,10 @@ public class UniversalVisitorTest {
 		m = new M();
 		//
 		n = new N();
-		// 
+		//
 		issue1 = new Issue1();
+		//
+		issue2 = new Issue2();
 		
 	}
 	
@@ -208,6 +216,18 @@ public class UniversalVisitorTest {
 		underTest.visit(issue1, nopMap);
 	}
 	
+	@Test
+	public void issue2 () {
+		CountMapper nopMap = new CountMapper();
+//		System.out.println("============================== ISSUE2 ===================================");
+		underTest.visit(issue2, nopMap);
+		
+		assertThat(nopMap.methods).contains("interface1M","interface2M","interface3M","issue2Private" , "issue2Package", "issue2Protected" , "issue2Public" , "parentPrivate" , "parentProtected", "parentPackage" , "parentPublic");
+//		System.out.println(nopMap.methods);
+		assertThat(nopMap.fields).contains("interface1F","interface2F","interface3F", "issue2Private" , "issue2Package", "issue2Protected" , "issue2Public" , "parentPrivate" , "parentProtected", "parentPackage" , "parentPublic");
+//		System.out.println(nopMap.fields);
+	}
+	
 	static class NopMap implements Mapper<Void> {
 
 		@Override
@@ -217,6 +237,37 @@ public class UniversalVisitorTest {
 
 		@Override
 		public Void map(Node node) {
+			System.out.println("Current Node : " + node.accessibleObject());
+			return null;
+		}
+		
+	}
+	
+	static class CountMapper implements Mapper<Void> {
+		
+		List<String> fields = new ArrayList<String>();
+		List<String> methods = new ArrayList<String>();
+		List<String> constructors = new ArrayList<String>();
+		
+		@Override
+		public boolean handle(AccessibleObject object) {
+			return true;
+		}
+		
+		@Override
+		public Void map(Node node) {
+			
+			if (node.accessibleObject() instanceof Field) {
+				fields.add(((Field) node.accessibleObject()).getName() );
+			}
+			if (node.accessibleObject() instanceof Method) {
+				methods.add(((Method) node.accessibleObject()).getName() );
+			}
+			if (node.accessibleObject() instanceof Constructor) {
+				constructors.add(((Constructor) node.accessibleObject()).getName() );
+			}
+			
+			
 			return null;
 		}
 		
@@ -332,20 +383,20 @@ public class UniversalVisitorTest {
 	
 	
 	
-	static class MyPredicate implements Predicate {
+	static class MyPredicate implements Filter {
 
 		@Override
-		public boolean apply(Field input) {
+		public boolean retains(Field input) {
 			
 			return true  ;
 		}
 		
 	}
 	
-	static class MyPredicate2 implements Predicate {
+	static class MyPredicate2 implements Filter {
 
 		@Override
-		public boolean apply(Field input) {
+		public boolean retains(Field input) {
 			
 			return input.getType().getAnnotation(Alphabet.class) != null;
 		}

@@ -11,16 +11,12 @@ import java.lang.reflect.AccessibleObject;
 public  class Node {
 
 	
-	public class Metadata {
+	public static class Metadata {
 		
-		private int index;
-		private Object key;
-		
-		
+		private int index=-1;
+		private Object key=null;
 		
 		public Metadata() {
-			index = -1;
-			key = null;
 		}
 		public Metadata(Object key) {
 			this.key = key;
@@ -38,11 +34,29 @@ public  class Node {
 			return key;
 		}
 		
+		@Override
+		public String toString() {
+			String metadata = "";
+			
+			if (index > -1) {
+				metadata = "["+index+"]";
+			}
+			
+			if (key != null) {
+				metadata += "["+key+"]";
+			}
+			
+			
+			return metadata;
+		}
+		
+		
+		
 		
 	}
 	
 	private Object instance;
-	private Metadata metadata = new Metadata();
+	private Metadata metadata =null;
 	private AccessibleObject accessibleObject;
 	protected int level = 0;
 
@@ -76,6 +90,7 @@ public  class Node {
 		this.level = level;
 		metadata  = new Metadata(key);
 	}
+	
 
 	public Object instance() {
 		return instance;
@@ -87,6 +102,26 @@ public  class Node {
 	
 	public Metadata metadata() {
 		return metadata;
+	}
+	
+	public Metadata metadata (int index) {
+		if (metadata == null) {
+			metadata = new Metadata(index);
+		}
+		
+		return metadata;
+	}
+	
+	public Metadata metadata (Object key) {
+		if (metadata == null) {
+			metadata = new Metadata(key);
+		}
+		return metadata;
+	}
+	
+	public Node metadata (Metadata metadata) {
+		this.metadata = metadata;
+		return this;
 	}
 	
 	public AccessibleObject accessibleObject() {

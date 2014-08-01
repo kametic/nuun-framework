@@ -20,6 +20,7 @@ import org.nuunframework.universalvisitor.api.Mapper;
 import org.nuunframework.universalvisitor.api.Node;
 import org.nuunframework.universalvisitor.api.Filter;
 import org.nuunframework.universalvisitor.api.Reducer;
+import org.nuunframework.universalvisitor.api.Node.Metadata;
 import org.nuunframework.universalvisitor.core.MapReduceDefault;
 
 /**
@@ -155,11 +156,17 @@ public class UniversalVisitor {
 			return new ChainedNode(new Object(), null, -1, null);
 		}
 
-		public ChainedNode append(Object o, AccessibleObject ao, int level) {
+		public ChainedNode append(Object o, AccessibleObject ao, int level,Metadata metadata) {
 
-			next(new ChainedNode(o, ao, level, null));
+			next(new ChainedNode(o, ao, level, null).metadata(metadata));
 
 			return next;
+		}
+		
+
+		@Override
+		public ChainedNode metadata(Metadata metadata) {
+			return (ChainedNode) super.metadata(metadata);
 		}
 
 		public ChainedNode last() {
@@ -229,14 +236,10 @@ public class UniversalVisitor {
 			{
 				visitAllCollection((Collection<?>) object, cache, node, currentLevel,filter);
 			}
-			else if (object.getClass().isArray() /* && ! object.getClass().getComponentType().isPrimitive() */)
+			else if (object.getClass().isArray())
 			{
 				visitAllArray( object, cache, node,currentLevel, filter);
 			}
-//			else if (object.getClass().isArray()  &&   object.getClass().getComponentType().isPrimitive() )
-//			{
-//				visitAllArrayPrimitives( object, cache, node,currentLevel, predicate);
-//			}
 			else if (Map.class.isAssignableFrom(object.getClass()))
 			{
 				visitAllMap((Map<?, ?>) object, cache, node,currentLevel, filter);
@@ -249,6 +252,9 @@ public class UniversalVisitor {
 	}
 
 	private void visitObject(Object object, Set<Object> cache, ChainedNode node, int currentLevel,  Filter filter) {
+		visitObject(object, cache, node, currentLevel, filter, null);
+	}
+	private void visitObject(Object object, Set<Object> cache, ChainedNode node, int currentLevel,  Filter filter , Metadata metadata) {
 
 		Class<? extends Object> currentClass = object.getClass();
 		
@@ -263,26 +269,25 @@ public class UniversalVisitor {
 					
 					for (Constructor<?> c : elementClass.getDeclaredConstructors()) {
 						if (!isJdkMember(c)  && ! c.isSynthetic()) {
-							current = current.append(object, c, currentLevel);
+							current = current.append(object, c, currentLevel,metadata);
 						}
 					}
 					//
 					for (Method m : elementClass.getDeclaredMethods()) {
 						if (!isJdkMember(m) && ! m.isSynthetic()  ) {
-							current = current.append(object, m, currentLevel);
+							current = current.append(object, m, currentLevel,metadata);
 						}
 					}
 					
 					for (Field f : elementClass.getDeclaredFields()) {
 						if (!isJdkMember(f) && ! f.isSynthetic()  ) {
 							
-							current = current.append(object, f, currentLevel);
+							current = current.append(object, f, currentLevel,metadata);
 							
 							if (filter != null && filter.retains(f)) {
 								Object deeperObject = readField(f, object);
 								
-								recursiveVisit(deeperObject, cache, current,
-										filter);
+								recursiveVisit(deeperObject, cache, current, filter);
 								current = current.last();
 							}
 						}
@@ -302,11 +307,16 @@ public class UniversalVisitor {
 		for (int i = 0; i < valArray.length; i++) {
 			Object value = valArray[i];
 			if (value != null) {
-				visitObject(value, cache, current, currentLevel,filter);
+				if (indexable) {
+					visitObject(value, cache, current, currentLevel,filter,new Metadata(i));
+				} else {
+					visitObject(value, cache, current, currentLevel,filter);
+				}
 				current = current.last();
 			}
 		}
 	}
+	
 	private void visitAllArray(Object arrayObject, Set<Object> cache, ChainedNode node, int currentLevel, Filter filter) {
 		ChainedNode current = node;
 		
@@ -314,30 +324,20 @@ public class UniversalVisitor {
 		for (int i = 0; i < l; i++) {
 			Object value = Array.get(arrayObject, i);
 			if (value != null) {
-				visitObject(value, cache, current, currentLevel,filter);
+				visitObject(value, cache, current, currentLevel,filter,new Metadata(i));
 				current = current.last();
 			}
 		}
 	}
-//	private void visitAllArrayPrimitives(Object arrayObject, Set<Object> cache, ChainedNode node, int currentLevel, Predicate predicate) {
-//		ChainedNode current = node;
-//
-//		int l = Array.getLength(arrayObject);
-//		for (int i = 0; i < l; i++) {
-//			Object value = Array.get(arrayObject, i);
-//			if (value != null) {
-//				visitObject(value, cache, current, currentLevel,predicate);
-//				current = current.last();
-//			}
-//		}
-//	}
 
 	private void visitAllMap(Map<?, ?> values, Set<Object> cache, ChainedNode pair, int currentLevel, Filter filter) {
 		ChainedNode current = pair;
 		for (Object thisKey : values.keySet()) {
 			Object value = values.get(thisKey);
 			if (value != null) {
-				visitObject(value, cache, current, currentLevel , filter);
+				visitObject(thisKey, cache, current, currentLevel , filter );
+				current = current.last();
+				visitObject(value, cache, current, currentLevel , filter , new Metadata(thisKey));
 				current = current.last();
 			}
 		}

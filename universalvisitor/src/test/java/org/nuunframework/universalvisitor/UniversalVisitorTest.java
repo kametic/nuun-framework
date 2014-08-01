@@ -14,10 +14,10 @@ import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.nuunframework.universalvisitor.api.Filter;
 import org.nuunframework.universalvisitor.api.MapReduce;
 import org.nuunframework.universalvisitor.api.Mapper;
 import org.nuunframework.universalvisitor.api.Node;
-import org.nuunframework.universalvisitor.api.Filter;
 import org.nuunframework.universalvisitor.api.Reducer;
 import org.nuunframework.universalvisitor.core.MapReduceDefault;
 import org.nuunframework.universalvisitor.sample.Alphabet;
@@ -28,6 +28,7 @@ import org.nuunframework.universalvisitor.sample.collections.K;
 import org.nuunframework.universalvisitor.sample.collections.L;
 import org.nuunframework.universalvisitor.sample.issues.Issue1;
 import org.nuunframework.universalvisitor.sample.issues.Issue2;
+import org.nuunframework.universalvisitor.sample.levels.L1;
 import org.nuunframework.universalvisitor.sample.multiplereducers.D;
 import org.nuunframework.universalvisitor.sample.multiplereducers.E;
 import org.nuunframework.universalvisitor.sample.multiplereducers.F;
@@ -59,6 +60,8 @@ public class UniversalVisitorTest {
 	Issue1 issue1;
 	
 	Issue2 issue2;
+	
+	L1 l1;
 	
 	@SuppressWarnings("serial")
 	@Before
@@ -136,6 +139,8 @@ public class UniversalVisitorTest {
 		issue1 = new Issue1();
 		//
 		issue2 = new Issue2();
+		//
+		l1 = new L1();
 		
 	}
 	
@@ -229,6 +234,47 @@ public class UniversalVisitorTest {
 		System.out.println(nopMap.node);
 	}
 	
+	
+	@Test
+	public void checkLevel () {
+		CheckLevelMap mapper = new CheckLevelMap();
+		underTest.visit(l1, mapper);
+	}
+	
+	class CheckLevelMap implements Mapper<Void> {
+
+		@Override
+		public boolean handle(AccessibleObject object) {
+			return object instanceof Field  /*|| object instanceof Constructor*/;
+		}
+
+		@Override
+		public Void map(Node node) {
+			
+			String indentation = "";
+			for (int i = 0; i < node.level(); i++) {
+				indentation += "\t";
+			}
+			
+			if (node.accessibleObject() instanceof Field) {
+				Field f = (Field) node.accessibleObject();
+				
+				String value = "";
+				if (f.getType().equals(String.class)  || f.getType().equals(Integer.class)) {
+					value = " = \"" + readField(f, node.instance()) + "\"";
+				}
+				
+				System.out.println(indentation + "|" +node.level() +  "|"+"  "    +f.getName() + node.metadata() + value);
+			}
+			if (node.accessibleObject() instanceof Constructor) {
+				Constructor c = (Constructor) node.accessibleObject();
+				System.out.println(indentation + "|" + node.level() +  "|"+ node.metadata()+" "    +c.getDeclaringClass().getSimpleName() + "()");
+			}
+
+			return null;
+		}
+	}
+	
 	static class NopMap implements Mapper<Void> {
 
 		@Override
@@ -259,7 +305,9 @@ public class UniversalVisitorTest {
 		
 		@Override
 		public Void map(Node node) {
-			if (this.node == null) this.node = node;
+			if (this.node == null) {
+				this.node = node;
+			}
 			if (node.accessibleObject() instanceof Field) {
 				fields.add(((Field) node.accessibleObject()).getName() );
 			}
@@ -405,7 +453,20 @@ public class UniversalVisitorTest {
 		}
 		
 	}
-	
+
+	public Object readField(Field f, Object instance) {
+		Object o = null;
+		try {
+			f.setAccessible(true);
+			o = f.get(instance);
+		} catch (IllegalArgumentException e) {
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			e.printStackTrace();
+		}
+
+		return o;
+	}
 	
 
 }

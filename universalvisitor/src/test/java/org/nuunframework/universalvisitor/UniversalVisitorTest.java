@@ -226,6 +226,7 @@ public class UniversalVisitorTest {
 //		System.out.println(nopMap.methods);
 		assertThat(nopMap.fields).contains("interface1F","interface2F","interface3F", "issue2Private" , "issue2Package", "issue2Protected" , "issue2Public" , "parentPrivate" , "parentProtected", "parentPackage" , "parentPublic");
 //		System.out.println(nopMap.fields);
+		System.out.println(nopMap.node);
 	}
 	
 	static class NopMap implements Mapper<Void> {
@@ -249,6 +250,8 @@ public class UniversalVisitorTest {
 		List<String> methods = new ArrayList<String>();
 		List<String> constructors = new ArrayList<String>();
 		
+		Node node = null;
+		
 		@Override
 		public boolean handle(AccessibleObject object) {
 			return true;
@@ -256,7 +259,7 @@ public class UniversalVisitorTest {
 		
 		@Override
 		public Void map(Node node) {
-			
+			if (this.node == null) this.node = node;
 			if (node.accessibleObject() instanceof Field) {
 				fields.add(((Field) node.accessibleObject()).getName() );
 			}

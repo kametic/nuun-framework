@@ -8,6 +8,7 @@ import org.nuunframework.universalvisitor.core.MapReduceDefault;
 
 public class MapReduceTest {
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void test() {
 		Assertions.assertThat(new MapReduceDefault<String>(new MyMapper()).getReducers()).isNotNull();

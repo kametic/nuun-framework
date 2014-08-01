@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 by PSA Peugeot Citroën. All rights reserved
+ *  
  */
 package org.nuunframework.universalvisitor.sample.levels;
 
@@ -10,7 +10,7 @@ import java.util.Map;
 /**
  *
  * 
- * @author epo.jemba@ext.mpsa.com
+ * @author epo.jemba@kametic.com
  *
  */
 public class L3 {

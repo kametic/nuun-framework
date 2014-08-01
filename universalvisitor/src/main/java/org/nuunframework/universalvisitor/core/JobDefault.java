@@ -10,7 +10,12 @@ public class JobDefault<R> implements Job<R>{
 	private MapReduce<?>[] mapReduces;
 	private Reducer<Object, R> resultReducer;
 
-	public JobDefault(Reducer<Object, R> resultReducer , MapReduce<?> ...mapReduces  ) {
+	@SuppressWarnings("rawtypes")
+	public JobDefault(MapReduce ...mapReduces  ) {
+		this.mapReduces = mapReduces;
+	}
+	@SuppressWarnings("rawtypes")
+	public JobDefault(Reducer<Object, R> resultReducer , MapReduce ...mapReduces  ) {
 		this.resultReducer = resultReducer;
 		this.mapReduces = mapReduces;
 	}

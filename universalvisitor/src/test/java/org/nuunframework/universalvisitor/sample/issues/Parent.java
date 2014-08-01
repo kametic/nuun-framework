@@ -1,12 +1,12 @@
 /*
- * Copyright (c) 2013 by PSA Peugeot Citroën. All rights reserved
+ *  
  */
 package org.nuunframework.universalvisitor.sample.issues;
 
 /**
  *
  * 
- * @author epo.jemba@ext.mpsa.com
+ * @author epo.jemba@kametic.com
  *
  */
 public abstract class Parent implements Interface{

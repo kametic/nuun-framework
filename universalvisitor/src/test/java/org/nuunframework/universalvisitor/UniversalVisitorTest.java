@@ -17,6 +17,7 @@ import org.junit.Test;
 import org.nuunframework.universalvisitor.api.Filter;
 import org.nuunframework.universalvisitor.api.MapReduce;
 import org.nuunframework.universalvisitor.api.Mapper;
+import org.nuunframework.universalvisitor.api.Metadata;
 import org.nuunframework.universalvisitor.api.Node;
 import org.nuunframework.universalvisitor.api.Reducer;
 import org.nuunframework.universalvisitor.core.MapReduceDefault;
@@ -250,7 +251,7 @@ public class UniversalVisitorTest {
 
 		@Override
 		public Void map(Node node) {
-			
+
 			String indentation = "";
 			for (int i = 0; i < node.level(); i++) {
 				indentation += "\t";
@@ -264,7 +265,11 @@ public class UniversalVisitorTest {
 					value = " = \"" + readField(f, node.instance()) + "\"";
 				}
 				
-				System.out.println(indentation + "|" +node.level() +  "|"+"  "    +f.getName() + node.metadata() + value);
+				Metadata metadata = node.metadata();
+				if (metadata == null) {
+					metadata = new Metadata();
+				}
+				System.out.println(indentation + "|" +node.level() +  "|"+"  "    +f.getName() + metadata + value + " from " + f.getDeclaringClass().getSimpleName()) ;
 			}
 			if (node.accessibleObject() instanceof Constructor) {
 				Constructor c = (Constructor) node.accessibleObject();

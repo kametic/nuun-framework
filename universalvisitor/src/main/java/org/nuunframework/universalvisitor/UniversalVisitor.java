@@ -15,13 +15,15 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 
+import org.nuunframework.universalvisitor.api.Filter;
+import org.nuunframework.universalvisitor.api.Job;
 import org.nuunframework.universalvisitor.api.MapReduce;
 import org.nuunframework.universalvisitor.api.Mapper;
-import org.nuunframework.universalvisitor.api.Node;
-import org.nuunframework.universalvisitor.api.Filter;
+import org.nuunframework.universalvisitor.api.Metadata;
 import org.nuunframework.universalvisitor.api.Reducer;
-import org.nuunframework.universalvisitor.api.Node.Metadata;
+import org.nuunframework.universalvisitor.core.JobDefault;
 import org.nuunframework.universalvisitor.core.MapReduceDefault;
+import org.nuunframework.universalvisitor.core.NodeDefault;
 
 /**
  * UniversalVisitor is the main entrypoint. With it you can visit any object
@@ -66,13 +68,19 @@ public class UniversalVisitor {
 	public void visit(Object o,  MapReduce<?> ...mapReduces) {
 		visit(o, null, mapReduces);
 	}
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public void visit(Class<?> o, Filter filter, MapReduce<?> ...mapReduces) {
-		
+	
+//	@SuppressWarnings({ "rawtypes", "unchecked" })
+//	public void visit(Class<?> o, Filter filter, MapReduce<?> ...mapReduces) {
+//
+//	}
+	
+	@SuppressWarnings({ "rawtypes" })
+	public void visit(Object o, Filter filter, MapReduce ...mapReduces) {
+		visit(o,filter,new JobDefault( mapReduces));
 	}
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public void visit(Object o, Filter filter, MapReduce ...mapReduces) {
+	public void visit(Object o, Filter filter, Job job) {
 
 		Set<Object> cache = new HashSet<Object>();
 
@@ -85,7 +93,7 @@ public class UniversalVisitor {
 		recursiveVisit(o, cache, node, filter);
 
 		for (node = node.next; node != null; node = node.next) {
-			for ( MapReduce mapReduce : mapReduces) {
+			for ( MapReduce mapReduce : job.mapReduces()) {
 				if (mapReduce.getMapper().handle(node.accessibleObject())) {
 					Object t = mapReduce.getMapper().map(node);
 					
@@ -136,7 +144,7 @@ public class UniversalVisitor {
 //
 //	}
 
-	private static class ChainedNode extends Node {
+	private static class ChainedNode extends NodeDefault {
 		ChainedNode next;
 
 		protected ChainedNode(Object instance, AccessibleObject accessibleObject, int level, ChainedNode next) {

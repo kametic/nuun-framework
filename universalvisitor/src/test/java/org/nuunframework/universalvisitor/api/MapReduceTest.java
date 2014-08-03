@@ -1,6 +1,6 @@
 package org.nuunframework.universalvisitor.api;
 
-import java.lang.reflect.AccessibleObject;
+import java.lang.reflect.AnnotatedElement;
 
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
@@ -19,7 +19,7 @@ public class MapReduceTest {
 	static class MyMapper implements Mapper<String> {
 
 		@Override
-		public boolean handle(AccessibleObject object) {
+		public boolean handle(AnnotatedElement object) {
 			return false;
 		}
 

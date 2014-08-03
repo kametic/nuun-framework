@@ -1,6 +1,6 @@
 package org.nuunframework.universalvisitor.core;
 
-import java.lang.reflect.AccessibleObject;
+import java.lang.reflect.AnnotatedElement;
 
 import org.nuunframework.universalvisitor.api.Metadata;
 import org.nuunframework.universalvisitor.api.Node;
@@ -15,36 +15,35 @@ public  class NodeDefault implements Node{
 
 	private Object instance;
 	private Metadata metadata =null;
-	private AccessibleObject accessibleObject;
+	private AnnotatedElement annotatedElement;
 	protected int level = 0;
 
 
-	protected NodeDefault(Object instance, AccessibleObject accessibleObject ) {
+	protected NodeDefault(Object instance, AnnotatedElement annotatedElement ) {
 		super();
 		this.instance = instance;
-		this.accessibleObject = accessibleObject;
-
+		this.annotatedElement = annotatedElement;
 	}
 	
-	protected NodeDefault(Object instance, AccessibleObject accessibleObject, int level ) {
-		this(instance, accessibleObject);
+	protected NodeDefault(Object instance, AnnotatedElement annotatedElement, int level ) {
+		this(instance, annotatedElement);
 		this.level = level;
 	}
 	
-	protected NodeDefault(Object instance, AccessibleObject accessibleObject, int level , Metadata metadata) {
-		this(instance, accessibleObject);
+	protected NodeDefault(Object instance, AnnotatedElement annotatedElement, int level , Metadata metadata) {
+		this(instance, annotatedElement);
 		this.level = level;
 		this.metadata  = metadata;
 	}
 	
-	protected NodeDefault(Object instance, AccessibleObject accessibleObject, int level , int index) {
-		this(instance, accessibleObject);
+	protected NodeDefault(Object instance, AnnotatedElement annotatedElement, int level , int index) {
+		this(instance, annotatedElement);
 		this.level = level;
 		metadata  = new Metadata(index);
 	}
 	
-	protected NodeDefault(Object instance, AccessibleObject accessibleObject, int level , Object key) {
-		this(instance, accessibleObject);
+	protected NodeDefault(Object instance, AnnotatedElement annotatedElement, int level , Object key) {
+		this(instance, annotatedElement);
 		this.level = level;
 		metadata  = new Metadata(key);
 	}
@@ -65,8 +64,8 @@ public  class NodeDefault implements Node{
 	}
 	
     @Override
-    public AccessibleObject accessibleObject() {
-    	return accessibleObject;
+    public AnnotatedElement annotatedElement() {
+    	return annotatedElement;
     }
 
     public Metadata metadata (int index) {
@@ -91,16 +90,16 @@ public  class NodeDefault implements Node{
 	
 
 
-	public void accessibleObject(AccessibleObject accessibleObject) {
-		this.accessibleObject = accessibleObject;
+	public void annotatedElement(AnnotatedElement annotatedElement) {
+		this.annotatedElement = annotatedElement;
 	}
 	
 	
 	
 	@Override
 	public String toString() {
-		return "Node [instance=" + instance + ", accessibleObject="
-				+ accessibleObject + ", level=" + level + "]";
+		return "Node [instance=" + instance + ", annotatedElement="
+				+ annotatedElement + ", level=" + level + "]";
 	}
 
 }

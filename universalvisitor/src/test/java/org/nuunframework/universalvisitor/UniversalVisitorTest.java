@@ -3,7 +3,7 @@ package org.nuunframework.universalvisitor;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.lang.reflect.AccessibleObject;
+import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -245,7 +245,7 @@ public class UniversalVisitorTest {
 	class CheckLevelMap implements Mapper<Void> {
 
 		@Override
-		public boolean handle(AccessibleObject object) {
+		public boolean handle(AnnotatedElement object) {
 			return object instanceof Field  /*|| object instanceof Constructor*/;
 		}
 
@@ -257,8 +257,8 @@ public class UniversalVisitorTest {
 				indentation += "\t";
 			}
 			
-			if (node.accessibleObject() instanceof Field) {
-				Field f = (Field) node.accessibleObject();
+			if (node.annotatedElement() instanceof Field) {
+				Field f = (Field) node.annotatedElement();
 				
 				String value = "";
 				if (f.getType().equals(String.class)  || f.getType().equals(Integer.class)) {
@@ -271,8 +271,8 @@ public class UniversalVisitorTest {
 				}
 				System.out.println(indentation + "|" +node.level() +  "|"+"  "    +f.getName() + metadata + value + " from " + f.getDeclaringClass().getSimpleName()) ;
 			}
-			if (node.accessibleObject() instanceof Constructor) {
-				Constructor c = (Constructor) node.accessibleObject();
+			if (node.annotatedElement() instanceof Constructor) {
+				Constructor c = (Constructor) node.annotatedElement();
 				System.out.println(indentation + "|" + node.level() +  "|"+ node.metadata()+" "    +c.getDeclaringClass().getSimpleName() + "()");
 			}
 
@@ -283,13 +283,13 @@ public class UniversalVisitorTest {
 	static class NopMap implements Mapper<Void> {
 
 		@Override
-		public boolean handle(AccessibleObject object) {
+		public boolean handle(AnnotatedElement object) {
 			return true;
 		}
 
 		@Override
 		public Void map(Node node) {
-			System.out.println("Current Node : " + node.accessibleObject());
+			System.out.println("Current Node : " + node.annotatedElement());
 			return null;
 		}
 		
@@ -304,7 +304,7 @@ public class UniversalVisitorTest {
 		Node node = null;
 		
 		@Override
-		public boolean handle(AccessibleObject object) {
+		public boolean handle(AnnotatedElement object) {
 			return true;
 		}
 		
@@ -313,14 +313,14 @@ public class UniversalVisitorTest {
 			if (this.node == null) {
 				this.node = node;
 			}
-			if (node.accessibleObject() instanceof Field) {
-				fields.add(((Field) node.accessibleObject()).getName() );
+			if (node.annotatedElement() instanceof Field) {
+				fields.add(((Field) node.annotatedElement()).getName() );
 			}
-			if (node.accessibleObject() instanceof Method) {
-				methods.add(((Method) node.accessibleObject()).getName() );
+			if (node.annotatedElement() instanceof Method) {
+				methods.add(((Method) node.annotatedElement()).getName() );
 			}
-			if (node.accessibleObject() instanceof Constructor) {
-				constructors.add(((Constructor) node.accessibleObject()).getName() );
+			if (node.annotatedElement() instanceof Constructor) {
+				constructors.add(((Constructor) node.annotatedElement()).getName() );
 			}
 			
 			
@@ -332,14 +332,14 @@ public class UniversalVisitorTest {
 	static class MutatorMapper implements Mapper<Void> {
 
 		@Override
-		public boolean handle(AccessibleObject object) {
+		public boolean handle(AnnotatedElement object) {
 			return object instanceof Field && ((Field) object).getType().equals(Integer.class);
 		}
 
 		@Override
 		public Void map(Node node) {
 			
-			Field f = (Field) node.accessibleObject();
+			Field f = (Field) node.annotatedElement();
 			
 			Integer value = null;
 			try {
@@ -361,7 +361,7 @@ public class UniversalVisitorTest {
 
 		@Override
 		public Integer map(Node node)  {
-			Field f = (Field) node.accessibleObject();
+			Field f = (Field) node.annotatedElement();
 			
 			Integer value = null;
 			try {
@@ -376,7 +376,7 @@ public class UniversalVisitorTest {
 		}
 
 		@Override
-		public boolean handle(AccessibleObject object) {
+		public boolean handle(AnnotatedElement object) {
 			return object instanceof Field && ((Field) object).getType().equals(Integer.class);
 		}
 		
@@ -389,7 +389,7 @@ public class UniversalVisitorTest {
 
 		@Override
 		public Integer map(Node node) {
-			System.out.println("node " + node.accessibleObject() +   " -> " + node.instance() + " type = " + node.instance().getClass());
+			System.out.println("node " + node.annotatedElement() +   " -> " + node.instance() + " type = " + node.instance().getClass());
 			
 			counter ++;
 			maxLevel = Math.max(maxLevel, node.level());
@@ -405,7 +405,7 @@ public class UniversalVisitorTest {
 		}
 		
 		@Override
-		public boolean handle(AccessibleObject object) {
+		public boolean handle(AnnotatedElement object) {
 			return object instanceof Field &&  ((Field)   object) .getType(). getAnnotation(Alphabet.class) != null;
 		}
 		

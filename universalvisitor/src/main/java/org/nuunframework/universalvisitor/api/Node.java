@@ -3,7 +3,7 @@
  */
 package org.nuunframework.universalvisitor.api;
 
-import java.lang.reflect.AccessibleObject;
+import java.lang.reflect.AnnotatedElement;
 
 /**
  *
@@ -13,7 +13,7 @@ import java.lang.reflect.AccessibleObject;
  */
 public interface Node {
 
-	AccessibleObject accessibleObject();
+	AnnotatedElement annotatedElement();
 
 	Metadata metadata();
 

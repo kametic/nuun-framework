@@ -1,6 +1,6 @@
 package org.nuunframework.universalvisitor;
 
-import java.lang.reflect.AccessibleObject;
+import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -36,18 +36,18 @@ import org.nuunframework.universalvisitor.core.NodeDefault;
  */
 public class UniversalVisitor {
 
-//	@SuppressWarnings("unchecked")
-//	public <T> void visit(Class<?> o, Mapper<T> mapper) {
-////		visit(o, (Predicate) null, new MapReduceDefault<T>(mapper));
-//	}
-//
-//	@SuppressWarnings("unchecked")
-//	public <T> void visit(Object o, Mapper<T> mapper) {
-//		visit(o, (Predicate) null, new MapReduceDefault<T>(mapper));
-//	}
+	@SuppressWarnings("unchecked")
+	public <T> void visit(AnnotatedElement ae, Mapper<T> mapper) {
+		visit(ae, (Filter) null, new MapReduceDefault<T>(mapper));
+	}
+
+	@SuppressWarnings("unchecked")
+	public <T> void visit(Object o, Mapper<T> mapper) {
+		visit(o, (Filter) null, new MapReduceDefault<T>(mapper));
+	}
 	
 	@SuppressWarnings("unchecked")
-	public <T> void visit(Class<?> o, Filter filter, Mapper<T> mapper) {
+	public <T> void visit(AnnotatedElement o, Filter filter, Mapper<T> mapper) {
 		visit(o, filter, new MapReduceDefault<T>(mapper));
 	}
 	@SuppressWarnings("unchecked")
@@ -69,15 +69,48 @@ public class UniversalVisitor {
 		visit(o, null, mapReduces);
 	}
 	
-//	@SuppressWarnings({ "rawtypes", "unchecked" })
-//	public void visit(Class<?> o, Filter filter, MapReduce<?> ...mapReduces) {
-//
-//	}
+	@SuppressWarnings("rawtypes")
+	public void visit(AnnotatedElement ae, Filter filter, MapReduce<?> ...mapReduces) {
+		visit(ae,filter,new JobDefault( mapReduces));
+	}
 	
 	@SuppressWarnings({ "rawtypes" })
 	public void visit(Object o, Filter filter, MapReduce ...mapReduces) {
 		visit(o,filter,new JobDefault( mapReduces));
 	}
+	
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	public void visit(AnnotatedElement ae, Filter filter, Job job) {
+		Set<Object> cache = new HashSet<Object>();
+		ChainedNode node = ChainedNode.createRoot();
+		if (filter == null) {
+			filter = Filter.TRUE;
+		}
+
+		recursiveVisit(ae, cache, node, filter);
+		doMapReduce(job, node);
+	}
+
+	/**
+	 * @param job
+	 * @param node
+	 * @return
+	 */
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	private void doMapReduce(Job<?> job, ChainedNode node) {
+		for (node = node.next; node != null; node = node.next) {
+			for ( MapReduce mapReduce : job.mapReduces()) {
+				if (mapReduce.getMapper().handle(node.annotatedElement())) {
+					Object t = mapReduce.getMapper().map(node);
+					
+					for (Reducer<Object, Object> reducer : mapReduce.getReducers()) {
+						reducer.collect(t);
+					}
+				}
+			}
+		}
+	}
+	
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public void visit(Object o, Filter filter, Job job) {
@@ -92,63 +125,15 @@ public class UniversalVisitor {
 
 		recursiveVisit(o, cache, node, filter);
 
-		for (node = node.next; node != null; node = node.next) {
-			for ( MapReduce mapReduce : job.mapReduces()) {
-				if (mapReduce.getMapper().handle(node.accessibleObject())) {
-					Object t = mapReduce.getMapper().map(node);
-					
-					for (Reducer<Object, Object> reducer : mapReduce.getReducers()) {
-						reducer.collect(t);
-					}
-				}
-			
-			}
-		}
+		doMapReduce(job, node);
 
 	}
 	
-	
-//	@SuppressWarnings("unchecked")
-//	public Object[] visitReflectionN(AnnotatedElement o, Predicate predicate, Mapper<T> mapper, @SuppressWarnings("rawtypes") Reducer... reducers) {
-//
-//		Set<Object> cache = new HashSet<Object>();
-//
-//		ChainedNode node = ChainedNode.createRoot();
-//
-//		if (predicate == null) {
-//			predicate = Predicate.TRUE;
-//		}
-//
-//		recursiveVisit(o, cache, node, predicate);
-//
-//		if (reducers == null) {
-//			reducers = new Reducer[0];
-//		}
-//
-//		for (node = node.next; node != null; node = node.next) {
-//			if (mapper.handle(node.accessibleObject())) {
-//				T t = mapper.map(node);
-//
-//				for (Reducer<T, ?> reducer : reducers) {
-//					reducer.collect(t);
-//				}
-//			}
-//		}
-//
-//		List<Object> reducedResult = new ArrayList<Object>(reducers.length);
-//
-//		for (int i = 0; i < reducers.length; i++) {
-//			reducedResult.add(i, reducers[i].reduce());
-//		}
-//		return reducedResult.toArray();
-//
-//	}
-
 	private static class ChainedNode extends NodeDefault {
 		ChainedNode next;
 
-		protected ChainedNode(Object instance, AccessibleObject accessibleObject, int level, ChainedNode next) {
-			super(instance, accessibleObject, level);
+		protected ChainedNode(Object instance, AnnotatedElement annotatedElement, int level, ChainedNode next) {
+			super(instance, annotatedElement, level);
 			this.next = next;
 		}
 
@@ -164,7 +149,7 @@ public class UniversalVisitor {
 			return new ChainedNode(new Object(), null, -1, null);
 		}
 
-		public ChainedNode append(Object o, AccessibleObject ao, int level,Metadata metadata) {
+		public ChainedNode append(Object o, AnnotatedElement ao, int level,Metadata metadata) {
 
 			next(new ChainedNode(o, ao, level, null).metadata(metadata));
 
@@ -191,41 +176,59 @@ public class UniversalVisitor {
 			for (int i = 0 ; i < level ; i ++) {
 				indentation += "\t";
 			} // instance()=
-			String rep = String.format("%sChainedNode [ %s@%s , level=%s , accessibleObject=%s] \n%s", indentation ,  instance().getClass().getSimpleName(), Integer.toHexString(instance().hashCode()) , level()
-					,accessibleObject(),next);
+			String rep = String.format("%sChainedNode [ %s@%s , level=%s , annotatedElement=%s] \n%s", indentation ,  instance().getClass().getSimpleName(), Integer.toHexString(instance().hashCode()) , level()
+					,annotatedElement(),next);
 			return rep;
 			
 //			return "ChainedNode [instance()=" + instance() + ", level()="
-//					+ level() + ", accessibleObject()=" + accessibleObject()
+//					+ level() + ", annotatedElement()=" + annotatedElement()
 //					+ "]  ==> \n" + next;
 		}
 
 	}
 
-//	private void recursiveVisitReflection(Class<?> klass, Set<Object> cache, ChainedNode node, Predicate predicate) {
-//	int currentLevel = node.level + 1;
-//
-//		if (!cache.contains(klass)) {
-//
-//			cache.add(klass);
-//
-//			Package p = klass.getPackage();
-//
-//
-//			if (klass == null) {
-//				// ignore nulls
-//			} else if (Collection.class.isAssignableFrom(klass.getClass())) {
-//				visitAll((Collection<?>) klass, cache, node, currentLevel,predicate);
-//			} else if (klass.getClass().isArray()) {
-//				visitAll(Arrays.asList((Object[]) klass), cache, node,currentLevel,
-//						predicate);
-//			} else if (Map.class.isAssignableFrom(klass.getClass())) {
-//				visitMap((Map<?, ?>) klass, cache, node,currentLevel, predicate);
-//			} else {
-//				visitObject(klass, cache, node, currentLevel,predicate);
-//			}
-//		}
-//	}
+
+	private void recursiveVisit(AnnotatedElement ae, Set<Object> cache, ChainedNode node, Filter filter) {
+
+		int currentLevel = node.level() + 1;
+		
+		if (!cache.contains(ae)) {
+
+			cache.add(ae);
+			
+			if (ae == null)
+			{
+				// ignore nulls
+			}
+			else if (Constructor.class.isAssignableFrom(ae.getClass()))
+			{
+				visitConstructor((Constructor) ae, cache, node, currentLevel,filter);
+			}
+			else if (Method.class.isAssignableFrom(ae.getClass()))
+			{
+				visitMethod((Method) ae, cache, node, currentLevel,filter);
+			}
+			else if (Field.class.isAssignableFrom(ae.getClass()))
+			{
+				visitField((Field) ae, cache, node, currentLevel,filter);
+			}
+			else if (Package.class.isAssignableFrom(ae.getClass()))
+			{
+				visitPackage((Package) ae, cache, node, currentLevel,filter);
+			}
+			else if ( Class.class.isAssignableFrom(ae.getClass()) && ae.getClass().isAnnotation() )
+			{
+				visitClass((Constructor) ae, cache, node, currentLevel,filter);
+			}
+		
+			 else
+			{
+				// visitObject(object, cache, node, currentLevel,filter);
+				 throw new IllegalStateException("Can not visist " + ae);
+			}
+		}
+	}
+
 	
 	
 	private void recursiveVisit(Object object, Set<Object> cache, ChainedNode node, Filter filter) {
@@ -262,6 +265,51 @@ public class UniversalVisitor {
 	private void visitObject(Object object, Set<Object> cache, ChainedNode node, int currentLevel,  Filter filter) {
 		visitObject(object, cache, node, currentLevel, filter, null);
 	}
+	
+	private <T> void visitConstructor(Constructor<T> ae, Set<Object> cache, ChainedNode node, int currentLevel,  Filter filter , Metadata metadata) {
+		// Params 
+		//   Annotations
+		// Exceptions
+		Class<? extends Object> currentClass = ae.getClass();
+		
+		ChainedNode current = node;
+		
+		Class<?>[] family = getAllInterfacesAndClasses(currentClass);
+		for (Class<?> elementClass : family) { // We iterate over all the family
+												// tree of the current class
+												//
+			if (elementClass != null && !isJdkMember(elementClass)) {
+
+				for (Constructor<?> c : elementClass.getDeclaredConstructors()) {
+					if (!isJdkMember(c) && !c.isSynthetic()) {
+						current = current.append(ae, c, currentLevel, metadata);
+					}
+				}
+				//
+				for (Method m : elementClass.getDeclaredMethods()) {
+					if (!isJdkMember(m) && !m.isSynthetic()) {
+						current = current.append(ae, m, currentLevel, metadata);
+					}
+				}
+
+				for (Field f : elementClass.getDeclaredFields()) {
+					if (!isJdkMember(f) && !f.isSynthetic()) {
+
+						current = current.append(ae, f, currentLevel, metadata);
+
+						if (filter != null && filter.retains(f)) {
+							Object deeperObject = readField(f, ae);
+
+							recursiveVisit(deeperObject, cache, current, filter);
+							current = current.last();
+						}
+					}
+				}
+			}
+
+		}
+	}
+	
 	private void visitObject(Object object, Set<Object> cache, ChainedNode node, int currentLevel,  Filter filter , Metadata metadata) {
 
 		Class<? extends Object> currentClass = object.getClass();

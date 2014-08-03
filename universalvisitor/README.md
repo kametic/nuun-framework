@@ -49,7 +49,7 @@ This Mapper will return Integer from its mapping. Although the AnnotatedElement 
     
     	@Override
     	public Integer map(Node node)  {
-    		Field f = (Field) node.accessibleObject();
+    		Field f = (Field) node.annotatedElement();
     		
     		Integer value = null;
     		try {
@@ -64,7 +64,7 @@ This Mapper will return Integer from its mapping. Although the AnnotatedElement 
     	}
     
     	@Override
-    	public boolean handle(AccessibleObject object) {
+    	public boolean handle(AnnotatedElement object) {
     		return object instanceof Field && ((Field) object).getType().equals(Integer.class);
     	}
     }

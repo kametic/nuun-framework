@@ -1,5 +1,6 @@
 package org.nuunframework.universalvisitor;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
@@ -202,23 +203,23 @@ public class UniversalVisitor {
 			}
 			else if (Constructor.class.isAssignableFrom(ae.getClass()))
 			{
-				visitConstructor((Constructor) ae, cache, node, currentLevel,filter);
+//				visitConstructor((Constructor) ae, cache, node, currentLevel,filter);
 			}
 			else if (Method.class.isAssignableFrom(ae.getClass()))
 			{
-				visitMethod((Method) ae, cache, node, currentLevel,filter);
+//				visitMethod((Method) ae, cache, node, currentLevel,filter);
 			}
 			else if (Field.class.isAssignableFrom(ae.getClass()))
 			{
-				visitField((Field) ae, cache, node, currentLevel,filter);
+//				visitField((Field) ae, cache, node, currentLevel,filter);
 			}
 			else if (Package.class.isAssignableFrom(ae.getClass()))
 			{
-				visitPackage((Package) ae, cache, node, currentLevel,filter);
+//				visitPackage((Package) ae, cache, node, currentLevel,filter);
 			}
 			else if ( Class.class.isAssignableFrom(ae.getClass()) && ae.getClass().isAnnotation() )
 			{
-				visitClass((Constructor) ae, cache, node, currentLevel,filter);
+				visitClass((Class<?>) ae, cache, node, currentLevel,filter);
 			}
 		
 			 else
@@ -230,7 +231,87 @@ public class UniversalVisitor {
 	}
 
 	
+	private void doVisitPackage(AnnotatedElement ae, Package p, Set<Object> cache, ChainedNode node, int currentLevel, Filter filter, Metadata metadata) {
+		ChainedNode current = node;
+		
+		// annotations on package
+		for (Annotation annotation : p.getDeclaredAnnotations()) {
+			doVisitAnnotation(p, annotation, cache, current, currentLevel, filter, metadata);
+			current = current.last();
+			
+		}
+		
+	    // then Append the package it self
+		current = current.append(ae, p, currentLevel, null);
+	}
 	
+	
+	private void doVisitAnnotation(AnnotatedElement ae, Annotation a, Set<Object> cache, ChainedNode node, int currentLevel, Filter filter, Metadata metadata) {
+		
+	}
+	
+
+	private void visitClass(Class<?> cläss, Set<Object> cache, ChainedNode node, int currentLevel,  Filter filter ) {
+		visitClass( cläss, cache, node, currentLevel,  filter , (Metadata) null);
+	}
+		
+		
+	private void visitClass(Class<?> cläss, Set<Object> cache, ChainedNode node, int currentLevel, Filter filter, Metadata metadata) {
+		Class<? extends Object> currentClass = cläss;
+		ChainedNode current = node;
+
+		if (!isJdkMember(currentClass)) {
+			
+            
+
+			if (currentClass != null && !isJdkMember(currentClass)) {
+				// package
+				
+				Package p = currentClass.getPackage();
+				
+				doVisitPackage(currentClass, p, cache, node, currentLevel, filter , metadata);
+				
+				// annotations
+				
+				
+				// extends
+				// implements
+				// declared classes
+				// constructors
+				// methods
+				// fields
+
+				for (Constructor<?> c : currentClass.getDeclaredConstructors()) {
+					if (!isJdkMember(c) && !c.isSynthetic()) {
+						current = current.append(currentClass, c, currentLevel, metadata);
+					}
+				}
+				//
+				for (Method m : currentClass.getDeclaredMethods()) {
+					if (!isJdkMember(m) && !m.isSynthetic()) {
+						current = current.append(currentClass, m, currentLevel, metadata);
+					}
+				}
+
+				for (Field f : currentClass.getDeclaredFields()) {
+					if (!isJdkMember(f) && !f.isSynthetic()) {
+
+						current = current.append(currentClass, f, currentLevel, metadata);
+
+						if (filter != null && filter.retains(f)) {
+							Object deeperObject = readField(f, currentClass);
+
+							recursiveVisit(deeperObject, cache, current, filter);
+							current = current.last();
+						}
+					}
+				}
+			}
+
+		}
+	}
+	
+
 	private void recursiveVisit(Object object, Set<Object> cache, ChainedNode node, Filter filter) {
 
 		int currentLevel = node.level() + 1;
@@ -267,7 +348,7 @@ public class UniversalVisitor {
 	}
 	
 	private <T> void visitConstructor(Constructor<T> ae, Set<Object> cache, ChainedNode node, int currentLevel,  Filter filter , Metadata metadata) {
-		// Params 
+		// Params
 		//   Annotations
 		// Exceptions
 		Class<? extends Object> currentClass = ae.getClass();

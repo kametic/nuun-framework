@@ -4,16 +4,23 @@ public class Metadata {
 
 	private int index = -1;
 	private Object key = null;
+	private Kind kind = null;
 
 	public Metadata() {
 	}
 
 	public Metadata(Object key) {
 		this.key = key;
+		kind = Kind.OBJECT_MAP_KEY;
 	}
 
 	public Metadata(int index) {
 		this.index = index;
+		kind = Kind.OBJECT_INDEX;
+	}
+	
+	public Kind kind () {
+		return kind;
 	}
 
 	public int index() {

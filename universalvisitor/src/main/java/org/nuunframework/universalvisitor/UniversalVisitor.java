@@ -80,7 +80,12 @@ public class UniversalVisitor {
 		visit(o,filter,new JobDefault( mapReduces));
 	}
 	
-	@SuppressWarnings({ "rawtypes", "unchecked" })
+	@SuppressWarnings({ "rawtypes" })
+	public void visit(AnnotatedElement ae,  Job job) {
+		visit(ae, (Filter) null, job);
+	}
+	
+	@SuppressWarnings({ "rawtypes" })
 	public void visit(AnnotatedElement ae, Filter filter, Job job) {
 		Set<Object> cache = new HashSet<Object>();
 		ChainedNode node = ChainedNode.createRoot();
@@ -113,7 +118,12 @@ public class UniversalVisitor {
 	}
 	
 	
-	@SuppressWarnings({ "rawtypes", "unchecked" })
+	@SuppressWarnings({ "rawtypes" })
+	public void visit(Object o, Job job) {
+		visit(o, (Filter)null , job);
+	}
+	
+	@SuppressWarnings({ "rawtypes" })
 	public void visit(Object o, Filter filter, Job job) {
 
 		Set<Object> cache = new HashSet<Object>();

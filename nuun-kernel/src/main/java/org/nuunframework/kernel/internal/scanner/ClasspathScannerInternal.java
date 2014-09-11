@@ -693,6 +693,8 @@ class ClasspathScannerInternal implements ClasspathScanner
             }
         }
 
+        urls.addAll(ClasspathHelper.forManifest(urls));
+
         return urls;
     }
 
